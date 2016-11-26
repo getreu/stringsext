@@ -1,0 +1,19 @@
+#!/bin/sh
+
+mkdir -p ./doc/build
+
+
+# Man page
+rst2man.py ./doc/src/stringsext--man.rst > ./man/stringsext.1
+rst2html.py --stylesheet=./doc/src/docutils_basic.css ./doc/src/stringsext--man.rst ./doc/build/stringsext--man.html
+
+
+# index page
+#rst2html.py --stylesheet=./doc/src/voidspace.css ./doc/src/README.rst ./doc/build/README.html
+rst2html.py --stylesheet=./doc/src/docutils_basic.css ./doc/src/README.rst ./doc/build/README.html
+
+
+ln -sf ./doc/build/README.html ./README.html
+
+
+cargo rustdoc  -p stringsext -- --no-defaults --passes "collapse-docs" --passes "unindent-comments"

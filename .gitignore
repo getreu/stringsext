@@ -1,0 +1,5 @@
+doc/build
+target
+*.sw?
+*.html
+*.1

@@ -1,0 +1,9 @@
+#!/bin/sh
+
+find target -mindepth 2 -not -path "*/release/stringsext" \
+                        -not -path "*/release/stringsext.exe" \
+                        -not -path "*/release" \
+                        -not -path "target/doc*"  \
+                        -exec rm -r {} \;
+
+rm -r target/debug
