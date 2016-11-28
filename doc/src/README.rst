@@ -3,6 +3,8 @@
 
 
 
+
+
 ============
  stringsext
 ============
@@ -56,11 +58,11 @@ Documentation
 
 User documentation
     `manual
-    page <http://getreu.net/public/downloads/doc/stringsext/./doc/build/stringsext--man.html>`__
+    page <https://getreu.net/public/downloads/doc/stringsext/./doc/build/stringsext--man.html>`__
 
 Developer documentation
     `API
-    documentation <http://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html>`__
+    documentation <https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html>`__
 
 Source code
 ===========
@@ -72,10 +74,11 @@ Distribution
 ============
 
 Binaries
-    `stringsext
-    binaries <http://getreu.net/public/downloads/doc/stringsext/./target/>`__
+    Download `stringsext binaries`_ and verify  hashes_.
 
 Manual page
-    `stringsext.1 <http://getreu.net/public/downloads/doc/stringsext/./man/stringsext.1>`__
+    `stringsext.1`_
 
-
+.. _`stringsext binaries`: https://getreu.net/public/downloads/doc/stringsext/./target/
+.. _hashes: https://getreu.net/public/sha256sum.txt
+.. _`stringsext.1`: https://getreu.net/public/downloads/doc/stringsext/./man/stringsext.1
