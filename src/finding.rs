@@ -92,7 +92,7 @@ impl Finding {
                 Some(Radix::O) => format!("{:0o}\t", self.ptr),
                 None           => "".to_string(),
             };
-    
+
         let enc_str = if ARGS.flag_encoding.len() > 1 {
                 enc_str!(self)+"\t"
         } else {
@@ -226,10 +226,11 @@ macro_rules! filter {
             {
                 let mut chunks = (&$fc).v.last().unwrap().s
                     .split_terminator(|c: char|
-                                      c.is_control()
-                                      && c != ' ' && c !='\t'
-                                      || (((c as u32)& $mission.u_and_mask)
+                                      c != ' ' && c !='\t' &&
+                                      ( c.is_control()
+                                        || (((c as u32)& $mission.u_and_mask)
                                               != $mission.u_and_result)
+                                      )
                      )
                     .enumerate()
                     .filter(|&(n,s)| (s.len() >= minsize ) ||
@@ -631,17 +632,18 @@ mod tests {
 
        // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
+       // (space and tab pass always)
        let mut input = FindingCollection{ v: vec![
                 Finding{ ptr:  0, enc: encoding::all::UTF_8,
                          u_and_mask: 0xffe00000,
                     u_and_result:0,
-                    s: "Hi! \u{0263a}How are{}++1234you++\u{0263a}doing?"
+                    s: "Hi! \u{0263a}How are{}\t++1234you++\u{0263a}doing?"
                                                     .to_string() },
                 ], completes_last_str: false};
 
        let expected = FindingCollection{ v: vec![
                 Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{fffd}ow\u{fffd}are{}\u{fffd}you\u{fffd}doing"
+                    u_and_result:0, s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing"
                                                     .to_string() },
                 ], completes_last_str: false};
 
