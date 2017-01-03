@@ -86,7 +86,22 @@ use Mission;
 use Missions;
 use finding::FindingCollection;
 
+/// As the scan_window() function itself is stateless, the following variables store some
+/// data that will be transfered from iteration to iteration.
+/// Each thread has an associated `Mission` with a `ScannerState`.
+pub struct ScannerState {
+    /// The position relative to a WIN_LEN window used to start the next iteration search at.
+    /// This value is updated after each iteration to ensuring that the next
+    /// iteration starts the scanning exactly where the previous stopped.
+    /// This variable together with
+    pub offset: usize,
 
+    /// When a finding exceeds WIN_LEN it has to be cut, the remaining part
+    /// of the string might be shorter then . This variable informs the next
+    /// iteration to ignore the minimum size restriction for the first string in found
+    /// at the beginning of the next window.
+    pub completes_last_str: bool,
+}
 
 /// Holds the runtime environment for `Scanner::launch_scanner()`.
 pub struct Scanner <'a> {
@@ -116,9 +131,9 @@ impl <'a> Scanner <'a> {
                              pool: Pool::new(n_threads as u32),
                              tx: &tx,
                  }
-        
+
     }
-    
+
     /// Takes an input slice, searches for valid strings according
     /// to the encoding specified in `Scanner::missions` and sends the results
     /// as a `FindingCollection` package to the Merger-thread using a `SyncSender`.
@@ -148,18 +163,18 @@ impl <'a> Scanner <'a> {
                    for mission in missions.iter_mut() {
                         let tx = tx.clone();
                         scope.execute(move || {
-                            let (m, end_pos) = Scanner::scan_window ( mission,
+                            let (m, end_pos,completes_last_str) = Scanner::scan_window ( mission,
                                                            byte_counter,
                                                            input_slice );
 
                             // Update `mission.offset` to indicate the position
                             // Where the next iteration should resume the work.
-                            mission.offset = if end_pos >= WIN_STEP {
+                            mission.state.offset = if end_pos >= WIN_STEP {
                                 end_pos - WIN_STEP
                             } else {
                                 0
                             };
-                            
+                            mission.state.completes_last_str = completes_last_str;
                             match tx.send(m) {
                                 Ok(_) => {},
                                 Err(_) => { panic!("Can not send FindingCollection:"); },
@@ -192,28 +207,30 @@ impl <'a> Scanner <'a> {
     ///
     fn scan_window <'b> (mission:&Mission,
                          byte_counter: &usize,
-                         input: &'b [u8]) -> (FindingCollection, usize) {
+                         input: &'b [u8]) -> (FindingCollection, usize, bool) {
         // True if `mission.offset` is in the last UTF8_LEN_MAX Bytes of WIN_OVERLAP
         // (*mission.offset  >= WIN_OVERLAP as usize - UTF8_LEN_MAX as usize) ;
         // Above: human readable, below: equivalent and more secure
-        let completes_last_str = mission.offset + UTF8_LEN_MAX as usize >= WIN_OVERLAP as usize ;
-    
-        let mut ret = Box::new(FindingCollection::new(mission, completes_last_str));
+        let completes_last_str = mission.state.completes_last_str;
+
+
+        let mut ret = Box::new(FindingCollection::new(mission));
         let mut decoder = mission.encoding.raw_decoder();
 
-        let mut unprocessed = mission.offset;
-        let mut remaining = mission.offset;
+        //let mut unprocessed = mission.state.offset;
+        let mut remaining = mission.state.offset;
 
-        while remaining < WIN_STEP { // Never mission.offset new search in overlapping space
+        while remaining < WIN_STEP { // Never do mission.offset new search in overlapping space
             ret.close_old_init_new_finding(byte_counter+remaining,
                                            mission);
             let (offset, err) = decoder.raw_feed(&input[remaining..], &mut *ret);
-            unprocessed = remaining + offset;
+            //unprocessed = remaining + offset;
             if let Some(err) = err {
                 remaining = (remaining as isize + err.upto) as usize;
                 //we do not care what the error was, instead we continue
             }
             else {
+                remaining += offset;
                 // we have reached the end. Somewhere between
                 // WIN_LEN-UTF8_LEN_MAX and WIN_LEN
                 let _ = decoder.raw_finish(&mut *ret); // Is this really necessary? Why?
@@ -227,10 +244,16 @@ impl <'a> Scanner <'a> {
 
         // Remove empty surplus
         ret.close_finding_collection();
-        let end_pos = unprocessed;
-        // For debugging we remember that `completes_last_str` was set.
+        // unprocessed points to the first erroneous byte, remaining 1 byte beyond:
+        // -> remaining is a bit faster
+        let end_pos = remaining;
+        // For debugging/testing we remember that `completes_last_str` was set.
         ret.completes_last_str = completes_last_str;
-        (*ret, end_pos)
+
+        let is_incomplete = (end_pos + (UTF8_LEN_MAX as usize) >= WIN_OVERLAP + WIN_STEP)
+                            && ret.v.len() != 0  ;
+
+        (*ret, end_pos, is_incomplete)
     }
 }
 
@@ -251,9 +274,9 @@ mod tests {
     use finding::Finding;
     use finding::FindingCollection;
 
-    pub const WIN_STEP: usize = 17;
-    pub const WIN_OVERLAP: u8 = 5+3; // flag_bytes + UTF8_LEN_MAX
-    pub const WIN_LEN: usize = WIN_STEP + WIN_OVERLAP as usize;
+    pub const WIN_STEP: usize  = 17;
+    pub const WIN_OVERLAP: usize  = 5 + 3; // flag_bytes + UTF8_LEN_MAX
+    pub const WIN_LEN:  usize  = WIN_STEP + WIN_OVERLAP as usize; // =25
     pub const UTF8_LEN_MAX: u8 = 3;
 
     lazy_static! {
@@ -316,10 +339,10 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: false,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 18);
@@ -340,13 +363,13 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
-       assert_eq!(start, 17);
+       assert_eq!(start, 18);
     }
 
     /// Test sample is an extract of a raw dist image
@@ -377,10 +400,10 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res, mut start) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
+       let (res, mut start, _) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, WIN_LEN);
@@ -399,12 +422,13 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: start,
+                        state: ScannerState {offset: start, completes_last_str: true}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
+       let (res,start,incomplete) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
        assert_eq!(res, expected_fc);
-       assert_eq!(start, 16);
+       assert_eq!(start, 17);
+       assert_eq!(incomplete, false);
     }
 
 
@@ -427,12 +451,14 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start,incomplete) = Scanner::scan_window(&m, &start, &inp[..]);
+
        assert_eq!(res, expected_fc);
        assert_eq!(start, 25);
+       assert_eq!(incomplete, true);
 
 
 
@@ -448,13 +474,15 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start,incomplete) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 4);
+       assert_eq!(incomplete, false);
+
     }
 
 
@@ -477,18 +505,19 @@ mod tests {
                 ], completes_last_str: false};
 
        let start = 0;
-       let m = Mission {encoding: encoding::all::UTF_8,
+       let mut m = Mission {encoding: encoding::all::UTF_8,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res, mut start) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
+       let (res, mut start,incomplete) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 23);
+       assert_eq!(incomplete, true);
 
        // Simulate next iteration.
        // The following is problematic because "€" is shorter then ARGS.flag_bytes and
@@ -499,18 +528,14 @@ mod tests {
                 ], completes_last_str: true};
 
        start -= WIN_STEP;
-       let m = Mission {encoding: encoding::all::UTF_8 as EncodingRef,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
-                        nbytes_min: 5,
-                        enable_filter: true,
-                        offset: start,
-       };
+       m.state.offset = start;
+       m.state.completes_last_str = incomplete;
 
-       let (res,start) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
+       let (res,start,incomplete) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 9);
+       assert_eq!(incomplete, false);
     }
 
 
@@ -535,10 +560,10 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 25);
@@ -565,10 +590,10 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 17);
@@ -583,13 +608,13 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
-       assert_eq!(start, 17);
+       assert_eq!(start, 18);
 
     }
 
@@ -614,13 +639,13 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
-       assert_eq!(start, 17);
+       assert_eq!(start, 18);
 
 
 
@@ -641,10 +666,10 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res,start) = Scanner::scan_window(&m, &start, &inp[..]);
+       let (res,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 30);
@@ -665,18 +690,19 @@ mod tests {
        let start = 0;
        let inp = "Hello world! How do you do?".as_bytes();
 
-       let m = Mission {encoding: encoding::all::ASCII,
+       let mut m = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
 
-       let (res, mut start) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
+       let (res, mut start, incomplete) = Scanner::scan_window(&m, &start, &inp[..WIN_LEN]);
 
        assert_eq!(res, expected_fc);
        assert_eq!(start, 25);
+       assert_eq!(incomplete,true);
 
 
        // The following is problematic because "o?" is shorter then ARGS.flag_bytes and
@@ -686,19 +712,16 @@ mod tests {
                     u_and_result:0, s: "o?".to_string() },
                 ], completes_last_str: true};
 
+       // Prepare next iteration
        start -= WIN_STEP;
+       m.state.offset = start;
+       m.state.completes_last_str = incomplete;
 
-       let m = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
-                        nbytes_min: 5,
-                        enable_filter: true,
-                        offset: start,
-       };
-       let (res,start) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
+       let (res,start,incomplete) = Scanner::scan_window(&m, &WIN_STEP, &inp[WIN_STEP..]);
 
        assert_eq!(res, expected2);
        assert_eq!(start, 10);
+       assert_eq!(incomplete,false);
 
     }
 
@@ -750,8 +773,8 @@ mod tests {
             });
 
             sc.launch_scanner (&1000usize, &"hallo1234üduüso567890".as_bytes() );
-            assert_eq!(sc.missions[0].offset, 6);
-            assert_eq!(sc.missions[1].offset, 6);
+            assert_eq!(sc.missions[0].state.offset, 6);
+            assert_eq!(sc.missions[1].state.offset, 6);
 
         } // tx drops here
 
@@ -776,9 +799,9 @@ mod tests {
                             u_and_result: 0,
                             nbytes_min: 5,
                             enable_filter: true,
-                            offset: 0,
+                            state: ScannerState {offset: 0, completes_last_str: false}
             };
-            let (res1,start) = Scanner::scan_window(&m, &start, &inp[..]);
+            let (res1,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
 
             let start=0;
@@ -787,9 +810,9 @@ mod tests {
                             u_and_result: 0,
                             nbytes_min: 5,
                             enable_filter: true,
-                            offset: 0,
+                            state: ScannerState {offset: 0, completes_last_str: false}
             };
-            let (res2,start) = Scanner::scan_window(&m, &start, &inp[..]);
+            let (res2,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
             let start=0;
             let m = Mission {encoding: encoding::all::UTF_16BE as EncodingRef,
@@ -797,9 +820,9 @@ mod tests {
                             u_and_result: 0,
                             nbytes_min: 5,
                             enable_filter: true,
-                            offset: 0,
+                            state: ScannerState {offset: 0, completes_last_str: false}
             };
-            let (res3,start) = Scanner::scan_window(&m, &start, &inp[..]);
+            let (res3,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
 
             let start=0;
@@ -808,9 +831,9 @@ mod tests {
                             u_and_result: 0,
                             nbytes_min: 5,
                             enable_filter: true,
-                            offset: 0,
+                            state: ScannerState {offset: 0, completes_last_str: false}
             };
-            let (res4,start) = Scanner::scan_window(&m, &start, &inp[..]);
+            let (res4,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
 
 
@@ -820,9 +843,9 @@ mod tests {
                             u_and_result: 0,
                             nbytes_min: 5,
                             enable_filter: true,
-                            offset: 0,
+                            state: ScannerState {offset: 0, completes_last_str: false}
             };
-            let (res5,start) = Scanner::scan_window(&m, &start, &inp[..]);
+            let (res5,start, _) = Scanner::scan_window(&m, &start, &inp[..]);
 
 
             // To see println! output:  cargo test   -- --nocapture

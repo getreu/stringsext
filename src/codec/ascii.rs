@@ -113,7 +113,7 @@ mod tests {
         let enc = ASCII_GRAPHIC as EncodingRef;
         let mut decoder = enc.raw_decoder();
         let mut ret = String::new();
-        let input = "abc\u{3}\u{0}def\nghijk".as_bytes();
+        let input = "abc\u{3}\u{3}\u{3}\u{0}def\nghijk".as_bytes();
         let (offset, err) = decoder.raw_feed(&input[..], &mut ret);
         assert_eq!(ret, "abc");
         assert_eq!(offset, 3);

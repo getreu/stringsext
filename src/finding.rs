@@ -41,7 +41,8 @@ use Mission;
 /// Initial capacity of the findings vector is
 /// set to WIN_STEP / 32.
 pub const FINDING_COLLECTION_CAPACITY: usize = WIN_STEP >> 5;
-
+/// Initial capacity of finding string in bytes
+pub const FINDING_STR_CAPACITY: usize = 100;
 
 
 
@@ -222,15 +223,18 @@ macro_rules! filter {
         } else if $mission.enable_filter {
         // filter control chars, group and delete short ones in between.
             let len = $fc.v.last().unwrap().s.len();
-            let mut out = String::with_capacity(len);
+            let mut out = String::with_capacity(len + 0x10); // a bit bigger, just in case
             {
                 let mut chunks = (&$fc).v.last().unwrap().s
                     .split_terminator(|c: char|
-                                      c != ' ' && c !='\t' &&
-                                      ( c.is_control()
-                                        || (((c as u32)& $mission.u_and_mask)
-                                              != $mission.u_and_result)
-                                      )
+                       c !=' '  &&  c !='\t'
+                       &&( c.is_control()
+                           || (
+                             (((c as u32)& $mission.u_and_mask)!= $mission.u_and_result)
+                             // print ASCII 0x20-0x3F whatever the filter is
+                             && (((c as u32)& !0x0001f)!= 0x00020)
+                           )
+                       )
                      )
                     .enumerate()
                     .filter(|&(n,s)| (s.len() >= minsize ) ||
@@ -284,15 +288,15 @@ pub struct FindingCollection {
 
 
 impl FindingCollection {
-    pub fn new(m: &Mission, completes_last_str: bool) -> FindingCollection{
+    pub fn new(m: &Mission) -> FindingCollection{
         let mut fc = FindingCollection{
                 v: Vec::with_capacity(FINDING_COLLECTION_CAPACITY),
-                completes_last_str: completes_last_str };
+                completes_last_str: m.state.completes_last_str };
         fc.v.push( Finding{ ptr: 0,
                             enc: (*m).encoding,
                             u_and_mask: (*m).u_and_mask,
                             u_and_result: (*m).u_and_result,
-                            s: String::new() } );
+                            s: String::with_capacity(FINDING_STR_CAPACITY) } );
         fc
     }
 
@@ -328,7 +332,7 @@ impl FindingCollection {
                                  enc: mission.encoding,
                                  u_and_mask: mission.u_and_mask,
                                  u_and_result: mission.u_and_result,
-                                 s: String::new() });
+                                 s: String::with_capacity(FINDING_STR_CAPACITY) });
         } else {
                     // The current finding is empty, we do not
                     // push a new finding, instead we
@@ -386,6 +390,7 @@ mod tests {
     extern crate encoding;
     use std::str;
     extern crate rand;
+    use scanner::ScannerState;
 
     pub const WIN_STEP: usize = 17;
     pub const CONTROL_REPLACEMENT_STR: &'static &'static str = &"\u{fffd}";
@@ -429,7 +434,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
        assert_eq!(input, expected);
@@ -451,7 +456,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
 
@@ -475,7 +480,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
        assert_eq!(input, expected);
@@ -498,7 +503,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
 
@@ -521,7 +526,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
 
@@ -547,7 +552,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: false,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m);
        assert_eq!(input, expected);
@@ -571,7 +576,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: false,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c p (print all)
 
@@ -595,7 +600,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: false,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c p (print all)
 
@@ -624,7 +629,7 @@ mod tests {
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
        assert_eq!(input, expected);
@@ -637,13 +642,44 @@ mod tests {
                 Finding{ ptr:  0, enc: encoding::all::UTF_8,
                          u_and_mask: 0xffe00000,
                     u_and_result:0,
-                    s: "Hi! \u{0263a}How are{}\t++1234you++\u{0263a}doing?"
+                    s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?"
                                                     .to_string() },
                 ], completes_last_str: false};
 
        let expected = FindingCollection{ v: vec![
                 Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing"
+                    u_and_result:0, s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?"
+                                                    .to_string() },
+                ], completes_last_str: false};
+
+       let m = Mission {encoding: encoding::all::ASCII,
+                        u_and_mask: 0xffffffe0,
+                        u_and_result: 0x60,
+                        nbytes_min: 3,
+                        enable_filter: true,
+                        state: ScannerState {offset: 0, completes_last_str: false}
+       };
+       filter!(input, m); // Mode -c r (replace)
+
+       assert_eq!(input, expected);
+
+
+       // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
+       // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
+       // (space and tab pass always)
+       // Test if chars in 0x20-0x3f pass always whatever the filter is.
+       let mut input = FindingCollection{ v: vec![
+                Finding{ ptr:  0, enc: encoding::all::UTF_8,
+                         u_and_mask: 0xffe00000,
+                    u_and_result:0,
+                    s: "Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?"
+                                                    .to_string() },
+                ], completes_last_str: false};
+
+       let expected = FindingCollection{ v: vec![
+                Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
+                    u_and_result:0,
+                    s: "\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?"
                                                     .to_string() },
                 ], completes_last_str: false};
 
@@ -652,7 +688,7 @@ mod tests {
                         u_and_result: 0x60,
                         nbytes_min: 2,
                         enable_filter: true,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
        };
        filter!(input, m); // Mode -c r (replace)
 

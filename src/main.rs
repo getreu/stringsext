@@ -51,6 +51,7 @@ use encoding::label::encoding_from_whatwg_label;
 use encoding::all;
 use itertools::kmerge;
 use itertools::Itertools;
+use scanner::ScannerState;
 
 // Version is defined in ../Cargo.toml
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
@@ -80,15 +81,15 @@ pub struct Mission {
     /// scanner::filter!()
     enable_filter: bool,
 
-    /// The position relative to a WIN_LEN window used to start the next iteration search at.
-    /// This value is updated after each iteration to ensuring that the next
-    /// iteration starts the scanning exactly where the previous stopped.
-    offset: usize,
+    /// `state` stores some data that will be transfered from iteration to iteration.
+    state: ScannerState,
 }
 
 impl fmt::Debug for Mission {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Encoding: {}, Offset:{}", self.encoding.name(), self.offset)
+        write!(f, "Encoding: {}, Offset:{}, Ignore size restriction: {}",
+                  self.encoding.name(), self.state.offset,
+                  self.state.completes_last_str)
     }
 }
 
@@ -136,7 +137,7 @@ impl Missions {
                         u_and_result: unicode_and_result,
                         nbytes_min: nbytes_min,
                         enable_filter: unicode_filtering,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
                     })
                 } else {
                     v.push(Mission {
@@ -145,7 +146,7 @@ impl Missions {
                         u_and_result: unicode_and_result,
                         nbytes_min: nbytes_min,
                         enable_filter: control_char_filtering || unicode_filtering,
-                        offset: 0,
+                        state: ScannerState {offset: 0, completes_last_str: false}
                     })
                 }
                 continue;
@@ -160,7 +161,7 @@ impl Missions {
                             u_and_result: unicode_and_result,
                             nbytes_min: nbytes_min,
                             enable_filter: control_char_filtering || unicode_filtering,
-                            offset: 0
+                            state: ScannerState {offset: 0, completes_last_str: false}
                         },
                 None => {
                     writeln!(&mut std::io::stderr(),
@@ -182,7 +183,7 @@ impl Missions {
     /// Helper function to parse enc_opt.
     fn parse_enc_opt <'a>(enc_opt:&'a str, nbytes_min_default:u8)
                      -> Result<(&'a str,u8,u32,u32,bool),ParseIntError> {
-    
+
         // Parse ',' separated strings
         let mut i = enc_opt.split_terminator(',');
         let enc_name = i.next().unwrap_or("");
@@ -192,27 +193,27 @@ impl Missions {
             None    => nbytes_min_default
         };
         let range:&str = i.next().unwrap_or("");
-    
+
         // Separate and parse the range string
         let mut j = range.split_terminator("..")
                          .map(|s|s.trim_left_matches("U+"))
                          .map(|s|  u32::from_str_radix(s,16) );
-    
+
         let u_lower:u32 = try!(j.next().unwrap_or(Ok(0)));
         let u_upper:u32 = try!(j.next().unwrap_or(Ok(std::char::MAX as u32)));
-    
-    
+
+
         // CALCULATE FILTER PARAMETERS
-    
+
         // u_and_mask is 0 from right up to the highest bit that has changed
         let u_changed_bits:u32 = u_upper ^ u_lower;
         let u_next_pow = u_changed_bits.next_power_of_two();
         let u_and_mask = !(u_next_pow -1);
-    
+
         // enlarge boundaries to fit u_and_mask
         let u_lower_ext = u_lower & u_and_mask;
         let u_upper_ext = u_upper | !u_and_mask;
-    
+
         // if enlarged, print a warning
         if !((u_lower == 0) && (u_upper == std::char::MAX as u32)) &&
             ((u_lower != u_lower_ext) || (u_upper != u_upper_ext)) {
@@ -223,11 +224,11 @@ impl Missions {
 
         // Check if the filter is restrictive
         let filtering = u_and_mask != !((std::char::MAX as u32).next_power_of_two()-1);
-    
+
         // these 2 are need by filter
         let filter_and_mask = u_and_mask;
         let filter_and_result = u_lower_ext;
-    
+
         // Return the results
         Ok((enc_name, nbytes_min, filter_and_mask, filter_and_result, filtering))
     }

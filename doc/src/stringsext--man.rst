@@ -8,11 +8,14 @@
 search for multi-byte encoded strings in binary data.
 -----------------------------------------------------
 
+.. Previous versions
+   :Date:   2016-11-25
+   :Version: 1.1.0
 
 :Author: Jens Getreu
-:Date:   2025-11-25
+:Date: 2017-01-03
+:Version: 1.2.0
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
-:Version: 1.1.0
 :Manual section: 1
 :Manual group: Forensic Tools
 
@@ -130,6 +133,11 @@ OPTIONS
         this case a warning specifying the enlarged *UNICODEBLOCK* is
         emitted.
 
+        The following characters do not observe *UNICODEBLOCK*
+        restrictions and are always printed even if they are out of range:
+        ``\t !"#$%&'()*+,-./0123456789:;<=>?``
+        (U+0009, U+0020..U+003F).
+
     See the output of **--help** for the default value of *ENC*.
 
 **-h, --help**
@@ -235,25 +243,53 @@ The following settings are designed to produce bit-identical output with
     stringsext -e ascii -c i -t x    # equals `strings -t x`
     stringsext -e ascii -c i -t o    # equals `strings -t o`
 
+
+
 LIMITATIONS
 ===========
 
-It is guaranteed that all valid string sequences are detected and
-printed whatever their size is. However due to potential false positives
-when interpreting binary data as multi-byte-strings, it may happen that
-the first characters of a valid string may not be recognised
-immediately. In practice, this effect occurs very rarely and the scanner
-synchronises with the correct character boundaries quickly.
+It is guaranteed that all valid string sequences are detected and printed
+whatever their size is. However due to potential false positives when
+interpreting binary data as multi-byte-strings, it may happen that the first
+characters of a valid string may not be recognised immediately. In practice,
+this effect occurs very rarely and the scanner synchronises with the correct
+character boundaries quickly.
 
-Valid strings not longer than FLAG\_BYTES\_MAX are never split and
-printed in full length. However, when the size of a valid string exceeds
-FLAG\_BYTES\_MAX bytes it may be split into two or more strings and then
-printed separately. Note that this limitation refers to the *valid*
-string length. A valid string may consist of several *graphic* strings.
-If a valid string is longer than WIN\_LEN bytes, then it is always
-split. To know the values of the constants please refer to the
-definition in the source code of your **stringsext** build. Original
+Valid strings not longer than FLAG\_BYTES\_MAX are never split and printed in
+full length. However, when the size of a valid string exceeds FLAG\_BYTES\_MAX
+bytes it may be split into two or more strings and then printed separately. Note
+that this limitation refers to the *valid* string length. A valid string may
+consist of several *graphic* strings.  If a valid string is longer than WIN\_LEN
+bytes, it is always split. To know the values of the constants please refer
+to the definition in the source code of your **stringsext** build. Original
 values are: FLAG\_BYTES\_MAX = 6144 bytes, WIN\_LEN = 14342 bytes.
+
+In practise the above limitation may appear when the search field contains large
+vectors of Null (0x00) delimited strings. For most multi-byte encodings, as well
+as for the Unicode-scanner, the Null (0x00) character is regarded as a valid
+control character. Thus the Unicode scanner will detect such a string vector as
+one big string which might exceed the WIN\_LEN buffer size. The scanner then
+cuts the big string into pieces of length WIN\_LEN and it may happen that at the
+cutting edge a short string is cut into 2 pieces. It will later appear as 2
+separate findings. In the work case it might even happen that the first piece is
+to short to be printed at all! This is because: only when the scanning process
+for valid strings in the WIN\_LEN buffer is terminated, a second filter splits
+the long valid strings into a sequence of short graphic strings.
+These short graphic strings are subject to additional restrictions like
+minimum length or a Unicode-block-filter (see above).
+
+As a workaround, in case you search for certain character sequence in such large
+Null (0x00) delimited string vectors, the ASCII scanner is recommended. The
+ASCII scanner regards Null (0x00) as invalid character, so the string vector
+will be detected as sequence of short distinguished strings. These short strings
+will most likely never exceed the WIN\_LEN buffer and therefor will never be
+split.  In such a scenario it is a good practise to run Unicode and ASCII
+scanners in parallel.
+
+
+
+
+
 
 RESOURCES
 =========

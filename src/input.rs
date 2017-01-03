@@ -135,7 +135,7 @@ pub const FINISH_STR_BUF: usize = 0x1800;
 /// FINISH_STR_BUF  + UTF8_LEN_MAX  =  WIN_OVERLAP
 /// ```
 ///
-pub const WIN_OVERLAP: usize = FINISH_STR_BUF + UTF8_LEN_MAX as usize;
+pub const WIN_OVERLAP: usize = FINISH_STR_BUF + (UTF8_LEN_MAX as usize);
 
 
 /// As Files are accessed through 4KiB memory pages we choose `WIN_STEP` to be a multiple of
