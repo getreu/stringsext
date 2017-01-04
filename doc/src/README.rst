@@ -5,9 +5,9 @@
 
 
 
-============
+************
  stringsext
-============
+************
 
 
 
@@ -82,3 +82,33 @@ Manual page
 .. _`stringsext binaries`: https://getreu.net/public/downloads/doc/stringsext/./target/
 .. _hashes: https://getreu.net/public/sha256sum.txt
 .. _`stringsext.1`: https://getreu.net/public/downloads/doc/stringsext/./man/stringsext.1
+
+
+
+Building and installing
+=======================
+
+1. Install *Rust* with rustup_::
+
+      curl https://sh.rustup.rs -sSf | sh
+
+2. Build
+
+   Enter the *Stringsext* source directory where the file ``Cargo.toml`` resides. Then execute::
+
+      cargo build --release
+
+
+3. Install
+
+   a. Linux ::
+
+         sudo cp target/release/stringsext /usr/local/bin/
+         sudo cp man/stringsext.1 /usr/local/man/man1/
+
+   b. Windows
+
+      Copy the binary ``target/release/stringsext.exe`` in a directory
+      listed in your ``PATH`` environment variable.
+
+.. _rustup: https://www.rustup.rs/

@@ -293,20 +293,30 @@ fn main() {
         });
 
         // Default for <file> is stdin.
-        let file_path_str = if let Some(ref s) = ARGS.arg_FILE {
-            s
+        if (ARGS.arg_FILE.len() == 0) ||
+           ( (ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
+            match process_input(None, &mut sc) {
+                Err(e)=> {
+                        writeln!(&mut std::io::stderr(),
+                              "Error while reading from stdin: {}.",
+                              e.to_string()).unwrap();
+                        process::exit(2);
+                },
+                _ => {},
+            }
         } else {
-            "-"
-        };
+            for ref file_path_str in ARGS.arg_FILE.iter() {
+                match process_input(Some(&file_path_str), &mut sc) {
+                    Err(e)=> {
+                            writeln!(&mut std::io::stderr(),
+                                  "Error: `{}` while processing file: `{}`.",
+                                  e.to_string(), file_path_str).unwrap();
+                            process::exit(2);
+                    },
+                    _ => {},
+                }
 
-        match process_input(&file_path_str, &mut sc) {
-            Err(e)=> {
-                    writeln!(&mut std::io::stderr(),
-                          "Error: {}.",
-                          e.to_string()).unwrap();
-                    process::exit(2);
-            },
-            _ => {},
+            }
         }
 
     } // `tx` drops here, which "break"s the merger-loop.

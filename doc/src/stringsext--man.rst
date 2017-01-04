@@ -12,9 +12,12 @@ search for multi-byte encoded strings in binary data.
    :Date:   2016-11-25
    :Version: 1.1.0
 
+   :Date: 2017-01-03
+   :Version: 1.2.0
+
 :Author: Jens Getreu
-:Date: 2017-01-03
-:Version: 1.2.0
+:Date: 2017-01-04
+:Version: 1.2.1
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
@@ -30,7 +33,7 @@ SYNOPSIS
 
 ::
 
-    stringsext [options] [-e ENC...] [--] [FILE]
+    stringsext [options] [-e ENC...] [--] [FILE...]
     stringsext [options] [-e ENC...] [--] [-]
 
 DESCRIPTION

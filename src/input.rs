@@ -174,15 +174,16 @@ pub const UTF8_LEN_MAX: u8 = 6;
 
 /// Read the appropriate input chunk by chunk and launch the scanners on each
 /// Chunk.
-/// If `file_path_str` == `-` read from `stdin`, otherwise
+/// If `file_path_str` == None read from `stdin`, otherwise
 /// read from file.
-pub fn process_input(file_path_str: &str, mut sc: &mut Scanner)
+pub fn process_input(file_path_str: Option<&str>, mut sc: &mut Scanner)
                                             -> Result<(), Box<Error>> {
-    if file_path_str != "-" {
-        let f = try!(File::open(&Path::new(file_path_str)));
-        from_file(&mut sc, &f)
-    } else {
-        from_stdin(&mut sc)
+    match file_path_str {
+        Some(p) => {
+                     let f = try!(File::open(&Path::new(p)));
+                     from_file(&mut sc, &f)
+                   }
+        None    =>   from_stdin(&mut sc)
     }
 }
 
@@ -196,16 +197,16 @@ pub fn from_file(sc: &mut Scanner, file: &File) -> Result<(), Box<Error>> {
     let len = try!(file.metadata()).len() as usize;
     let mut byte_counter: usize = 0;
     while byte_counter + WIN_LEN <= len {
-        let mmap = Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,WIN_LEN).unwrap();
+        let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
+                                          byte_counter,WIN_LEN));
         let chunk = unsafe { mmap.as_slice() };
         sc.launch_scanner(&byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
     // The last is usually shorter
     if byte_counter < len {
-        let mmap = Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,len-byte_counter).unwrap();
+        let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
+                                          byte_counter,len-byte_counter));
         let chunk = unsafe { mmap.as_slice() };
         sc.launch_scanner(&byte_counter, &chunk);
     }
@@ -284,7 +285,7 @@ mod tests {
 
     lazy_static! {
         pub static ref ARGS:Args = Args {
-           arg_FILE: Some("myfile.txt".to_string()),
+           arg_FILE: vec!["myfile.txt".to_string()],
            flag_control_chars:  ControlChars::R,
            flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
            flag_list_encodings: false,
@@ -314,12 +315,9 @@ mod tests {
     fn test_from_file(){
         let tempdir = TempDir::new("test_from_file").expect("Can not create tempdir.");
 
-        let file_path_str = if let Some(ref s) = ARGS.arg_FILE {
-            s
-        } else {
-            "-"
-        };
-        let path = tempdir.path().join(file_path_str.to_string());
+        let file_path_str = ARGS.arg_FILE[0].to_string();
+
+        let path = tempdir.path().join(file_path_str);
         {
             let mut f = File::create(&path).unwrap();
             let inp = "hallo1234üduüso567890".as_bytes();

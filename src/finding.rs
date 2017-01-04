@@ -397,7 +397,7 @@ mod tests {
 
     lazy_static! {
         pub static ref ARGS:Args = Args {
-           arg_FILE: Some("myfile.txt".to_string()),
+           arg_FILE: vec!["myfile.txt".to_string()],
            flag_control_chars:  ControlChars::R,
            flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
            flag_list_encodings: false,

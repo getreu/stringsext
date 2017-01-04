@@ -7,7 +7,7 @@ pub const FLAG_BYTES_MAX : usize = 0xff; // max of Args.flag_bytes
 
 /// Help message and string for `Docopt` used to populate the `Args` structure.
 const USAGE: &'static str = "
-Usage: stringsext [options] [-e ENC...] [--] [FILE]
+Usage: stringsext [options] [-e ENC...] [--] [FILE...]
        stringsext [options] [-e ENC...] [--] [-]
 
 Options:
@@ -32,7 +32,7 @@ Options:
 #[derive(Debug, RustcDecodable)]
 pub struct Args {
     /// Pathname of the input data file. `None` defaults to `stdin`.
-    pub arg_FILE: Option<String>,
+    pub arg_FILE: Vec<String>,
     /// Do not filter (valid) control chars.
     pub flag_control_chars: ControlChars,
     /// A vector holding encodings to scan for.
@@ -95,14 +95,16 @@ mod tests {
         // The argv. Normally you'd just use `parse` which will automatically
         // use `std::env::args()`.
         let argv = || vec!["stringsext", "-c", "r", "-n", "10", "-e", "ascii", "-e",
-                            "utf-8", "-V", "-l", "-p", "outfile", "-t", "o", "infile"];
+                            "utf-8", "-V", "-l", "-p", "outfile", "-t", "o", "infile1",
+                            "infile2"];
         let args: Args = Docopt::new(USAGE)
                         .and_then(|d| d.argv(argv().into_iter()).decode())
                         .unwrap_or_else(|e| e.exit());
         //println!("{:?}",args);
 
         fn s(x: &str) -> String { x.to_string() }
-        assert_eq!(args.arg_FILE, Some("infile".to_string()));
+        assert_eq!(args.arg_FILE[0], "infile1".to_string());
+        assert_eq!(args.arg_FILE[1], "infile2".to_string());
         assert_eq!(args.flag_control_chars, ControlChars::R);
         assert_eq!(args.flag_encoding, vec![s("ascii"), s("utf-8")]);
         assert_eq!(args.flag_version, true);
