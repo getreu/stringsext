@@ -17,7 +17,7 @@ use options::ARGS;
 use options::ControlChars;
 
 mod scanner;
-use scanner::Scanner;
+use scanner::ScannerPool;
 
 mod finding;
 
@@ -51,18 +51,19 @@ use encoding::label::encoding_from_whatwg_label;
 use encoding::all;
 use itertools::kmerge;
 use itertools::Itertools;
-use scanner::ScannerState;
 
 // Version is defined in ../Cargo.toml
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 const AUTHOR: &'static str = "(c) Jens Getreu, 2016";
 
+lazy_static! {
+    pub static ref MISSIONS: Missions = Missions::new(&ARGS.flag_encoding,
+                                                      &ARGS.flag_control_chars,
+                                                      &ARGS.flag_bytes);
+}
 
-/// `Mission` represents the instruction data provided individually to each thread in
-/// `Scanner::scan()`. Unlike the constant `encoding`, the offset variable is updated
-/// dynamically each iteration in order to always point to the starting
-/// Byte in the following WIN_LEN window. This will be used by the next
-/// `Scanner::scan_window()` call.
+/// `Mission` represents the instruction data provided to each thread in
+/// `ScannerPool::scan()`. 
 pub struct Mission {
     /// Every thread gets a constant encoding to search for.
     encoding : EncodingRef,
@@ -81,21 +82,21 @@ pub struct Mission {
     /// scanner::filter!()
     enable_filter: bool,
 
-    /// `state` stores some data that will be transfered from iteration to iteration.
-    state: ScannerState,
 }
 
 impl fmt::Debug for Mission {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Encoding: {}, Offset:{}, Ignore size restriction: {}",
-                  self.encoding.name(), self.state.offset,
-                  self.state.completes_last_str)
+        write!(f, "Mission[Bencoding:{}, u_and_mask:{:x}, u_and_result:{:x}, nbytes_min:{}, \
+                   enable_filter:{:?}]",
+                  self.encoding.name(), self.u_and_mask, self.u_and_result, self.nbytes_min,
+                  self.enable_filter
+        )
     }
 }
 
 /// Every `--encoding` option is stored in a `Mission` object which are bound together in a
-/// `Missions` object. This is used later in `Scanner::launch_scanner()` where every
-/// `Mission` will be assigned to one thread for execution.
+/// `Missions` object. This is used later in `ScannerPool::launch_scanner()` where every
+/// scanner-thread has `ScannerState` pointing to the `Mission` of the thread.
 #[derive(Debug)]
 pub struct Missions {
     /// Vector of `Mission`s.
@@ -104,7 +105,8 @@ pub struct Missions {
 
 impl Missions {
     /// Constructor. We assume that at least one encoding exist.
-    pub fn new(encodings: &Vec<String>, control_chars: &ControlChars) -> Self {
+    pub fn new(encodings: &Vec<String>, control_chars: &ControlChars,
+               flag_bytes:&Option<u8>) -> Self {
         let mut v = Vec::new();
 
         let control_char_filtering = match *control_chars {
@@ -115,7 +117,7 @@ impl Missions {
 
         for enc_opt in encodings.iter() {
             let (enc_name, nbytes_min, unicode_and_mask, unicode_and_result, unicode_filtering) =
-                match Self::parse_enc_opt(&enc_opt, ARGS.flag_bytes.unwrap() ) {
+                match Self::parse_enc_opt(&enc_opt, flag_bytes.unwrap() ) {
                     Ok(r)  => r,
                     Err(e) => {
                         writeln!(&mut std::io::stderr(),
@@ -137,7 +139,6 @@ impl Missions {
                         u_and_result: unicode_and_result,
                         nbytes_min: nbytes_min,
                         enable_filter: unicode_filtering,
-                        state: ScannerState {offset: 0, completes_last_str: false}
                     })
                 } else {
                     v.push(Mission {
@@ -146,7 +147,6 @@ impl Missions {
                         u_and_result: unicode_and_result,
                         nbytes_min: nbytes_min,
                         enable_filter: control_char_filtering || unicode_filtering,
-                        state: ScannerState {offset: 0, completes_last_str: false}
                     })
                 }
                 continue;
@@ -161,7 +161,6 @@ impl Missions {
                             u_and_result: unicode_and_result,
                             nbytes_min: nbytes_min,
                             enable_filter: control_char_filtering || unicode_filtering,
-                            state: ScannerState {offset: 0, completes_last_str: false}
                         },
                 None => {
                     writeln!(&mut std::io::stderr(),
@@ -254,14 +253,12 @@ fn main() {
     }
 
 
-    let missions = Missions::new(&ARGS.flag_encoding, &ARGS.flag_control_chars);
-
     let merger: JoinHandle<()>;
     // Scope for threads
     {
-        let n_threads = missions.len();
+        let n_threads = MISSIONS.len();
         let (tx, rx) = mpsc::sync_channel(n_threads);
-        let mut sc = Scanner::new(missions, &tx);
+        let mut sc = ScannerPool::new(&MISSIONS, &tx);
 
         // Receive `FindingCollection`s from scanner threads.
         merger = thread::spawn(move || {

@@ -1,5 +1,5 @@
 //! This module abstracts the data-input channels i.e. file and stdin.
-use scanner::Scanner;
+use scanner::ScannerPool;
 
 use std::path::Path;
 use std::io::prelude::*;
@@ -176,7 +176,7 @@ pub const UTF8_LEN_MAX: u8 = 6;
 /// Chunk.
 /// If `file_path_str` == None read from `stdin`, otherwise
 /// read from file.
-pub fn process_input(file_path_str: Option<&str>, mut sc: &mut Scanner)
+pub fn process_input(file_path_str: Option<&str>, mut sc: &mut ScannerPool)
                                             -> Result<(), Box<Error>> {
     match file_path_str {
         Some(p) => {
@@ -188,12 +188,12 @@ pub fn process_input(file_path_str: Option<&str>, mut sc: &mut Scanner)
 }
 
 
-/// Streams a file by cutting the input into overlapping chunks and feeds the `Scanner`.
+/// Streams a file by cutting the input into overlapping chunks and feeds the `ScannerPool`.
 /// After each iteration the `byte_counter` is updated.
 /// In order to avoid additional copying the trait `memmap` is used to access
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
-pub fn from_file(sc: &mut Scanner, file: &File) -> Result<(), Box<Error>> {
+pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<Error>> {
     let len = try!(file.metadata()).len() as usize;
     let mut byte_counter: usize = 0;
     while byte_counter + WIN_LEN <= len {
@@ -214,10 +214,10 @@ pub fn from_file(sc: &mut Scanner, file: &File) -> Result<(), Box<Error>> {
 }
 
 
-/// Streams the input pipe by cutting it into overlapping chunks and feeds the `Scanner`.
+/// Streams the input pipe by cutting it into overlapping chunks and feeds the `ScannerPool`.
 /// This functions implements is own rotating input buffer.
 /// After each iteration the `byte_counter` is updated.
-fn from_stdin(sc: &mut Scanner) -> Result<(), Box<Error>> {
+fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<Error>> {
     let mut byte_counter: usize = 0;
     let stdin = stdin();
     let mut stdin = stdin.lock();
@@ -277,7 +277,7 @@ mod tests {
     use Missions;
     use finding::FindingCollection;
     use finding::Finding;
-    use scanner::Scanner;
+    use scanner::ScannerPool;
     use std::thread;
     extern crate encoding;
     use options::FLAG_BYTES_MAX;
@@ -296,6 +296,12 @@ mod tests {
         };
     }
 
+    lazy_static! {
+       pub static ref MISSIONS: Missions = Missions::new(&ARGS.flag_encoding,
+                                                         &ARGS.flag_control_chars,
+                                                         &ARGS.flag_bytes);
+    }
+
     /// Test the constraints for constants. The test checks all the necessary conditions on
     /// constants to guarantee a correct functionality of the program.
     #[test]
@@ -312,6 +318,8 @@ mod tests {
 
     /// Test the reading and processing of file data.
     #[test]
+
+
     fn test_from_file(){
         let tempdir = TempDir::new("test_from_file").expect("Can not create tempdir.");
 
@@ -324,32 +332,27 @@ mod tests {
             f.write_all(&inp[..]).unwrap();
         }
 
+
         {
             let (tx, rx) = mpsc::sync_channel(0);
-            let missions = Missions::new(&vec!["ascii".to_string(),"utf8".to_string()],
-                                         &ARGS.flag_control_chars
-            );
-            let mut sc = Scanner::new(missions, &tx);
+            let mut sc = ScannerPool::new(&MISSIONS,&tx);
 
             let f = File::open(path).unwrap();
 
             let _ = thread::spawn(move || {
 
                 let expected1 = FindingCollection{ v: vec![
-                    Finding{ ptr: 0, enc: encoding::all::ASCII,
-                             u_and_mask: 0xffe00000,
-                             u_and_result:0,
+                    Finding{ ptr: 0,
+                             mission: &MISSIONS.v[0] ,
                              s: "hallo1234".to_string() },
-                    Finding{ ptr: 15, enc: encoding::all::ASCII,
-                             u_and_mask: 0xffe00000,
-                             u_and_result:0,
+                    Finding{ ptr: 15,
+                             mission: &MISSIONS.v[0] ,
                              s: "so567890".to_string() },
                     ], completes_last_str: false};
 
                 let expected2 = FindingCollection{ v: vec![
-                    Finding{ ptr: 0, enc: encoding::all::UTF_8,
-                             u_and_mask: 0xffe00000,
-                             u_and_result:0,
+                    Finding{ ptr: 0,
+                             mission: &MISSIONS.v[0],
                              s: "hallo1234üduüso567890".to_string() },
                     ], completes_last_str: false};
 

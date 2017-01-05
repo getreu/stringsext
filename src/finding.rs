@@ -6,10 +6,12 @@ extern crate itertools;
 
 
 extern crate encoding;
-use encoding::{EncodingRef, StringWriter};
+use encoding::{StringWriter};
 use std::fmt;
 use std::cmp::{Ord,Eq};
 use std::cmp;
+
+use scanner::ScannerState;
 
 #[cfg(not(test))]
 use options::ARGS;
@@ -52,12 +54,8 @@ pub const FINDING_STR_CAPACITY: usize = 100;
 pub struct Finding {
     /// A copy of the `byte_counter` pointing at the found location of the result string.
     pub ptr: usize,
-    /// Original encoding of string when it was found before re-encoding.
-    pub enc: EncodingRef,
-    /// "and mask" of the filter that was used to find this string.
-    pub u_and_mask: u32,
-    /// "and result" of the filter that was used to find this string.
-    pub u_and_result: u32,
+    /// Mission associated with this finding
+    pub mission: &'static Mission,
     /// Whatever the original encoding was the result string `s` is always stored as UTF-8.
     pub s: String,
 }
@@ -67,14 +65,14 @@ pub struct Finding {
 macro_rules! enc_str {
     ($finding:ident) => {{
                 // Check if the filter is restrictive
-                let filtering = $finding.u_and_mask
+                let filtering = $finding.mission.u_and_mask
                                != !((std::char::MAX as u32).next_power_of_two()-1);
                 format!("({}{})",
-                        $finding.enc.name(),
+                        $finding.mission.encoding.name(),
                         if filtering {
                             format!("/{:x}..{:x}",
-                                 $finding.u_and_result,
-                                 $finding.u_and_result|!($finding.u_and_mask))
+                                 $finding.mission.u_and_result,
+                                 $finding.mission.u_and_result|!($finding.mission.u_and_mask))
                         } else { "".to_string() }
                 )
     }}
@@ -136,9 +134,9 @@ impl Eq for Finding  {
 impl PartialEq for Finding  {
     fn eq(&self, other: &Self) -> bool {
         (self.ptr == other.ptr) &&
-        (self.enc.name() == other.enc.name()) &&
-        (self.u_and_mask == other.u_and_mask) &&
-        (self.u_and_result == other.u_and_result) &&
+        (self.mission.encoding.name() == other.mission.encoding.name()) &&
+        (self.mission.u_and_mask == other.mission.u_and_mask) &&
+        (self.mission.u_and_result == other.mission.u_and_result) &&
         (self.s == other.s)
     }
 }
@@ -150,12 +148,12 @@ impl Ord for Finding {
     fn cmp(&self, other: &Self) -> cmp::Ordering {
         if self.ptr != other.ptr {
             self.ptr.cmp(&other.ptr)
-        } else if self.enc.name() != other.enc.name() {
-                    self.enc.name().cmp(&other.enc.name())
-               } else if self.u_and_result != other.u_and_result {
-                        self.u_and_result.cmp(&other.u_and_result)
+        } else if self.mission.encoding.name() != other.mission.encoding.name() {
+                    self.mission.encoding.name().cmp(&other.mission.encoding.name())
+               } else if self.mission.u_and_result != other.mission.u_and_result {
+                        self.mission.u_and_result.cmp(&other.mission.u_and_result)
                       } else {
-                        (!self.u_and_mask).cmp(&!other.u_and_mask)
+                        (!self.mission.u_and_mask).cmp(&!other.mission.u_and_mask)
                       }
     }
 }
@@ -168,12 +166,12 @@ impl PartialOrd for Finding {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
         if self.ptr != other.ptr {
             self.ptr.partial_cmp(&other.ptr)
-        } else if self.enc.name() != other.enc.name() {
-                    self.enc.name().partial_cmp(&other.enc.name())
-               } else if self.u_and_result != other.u_and_result {
-                        self.u_and_result.partial_cmp(&other.u_and_result)
+        } else if self.mission.encoding.name() != other.mission.encoding.name() {
+                    self.mission.encoding.name().partial_cmp(&other.mission.encoding.name())
+               } else if self.mission.u_and_result != other.mission.u_and_result {
+                        self.mission.u_and_result.partial_cmp(&other.mission.u_and_result)
                       } else {
-                        (!self.u_and_mask).partial_cmp(&!other.u_and_mask)
+                        (!self.mission.u_and_mask).partial_cmp(&!other.mission.u_and_mask)
                       }
     }
 }
@@ -181,7 +179,7 @@ impl PartialOrd for Finding {
 
 impl fmt::Debug for Finding {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-            write!(f, "\n{}\t({})\t{}", self.ptr, self.enc.name(),
+            write!(f, "\n{}\t({})\t{}", self.ptr, self.mission.encoding.name(),
                 self.s.replace("\n"," \\n ").replace("\r\n"," \\r\\n "))
     }
 }
@@ -288,14 +286,12 @@ pub struct FindingCollection {
 
 
 impl FindingCollection {
-    pub fn new(m: &Mission) -> FindingCollection{
+    pub fn new(ms: &ScannerState) -> FindingCollection{
         let mut fc = FindingCollection{
                 v: Vec::with_capacity(FINDING_COLLECTION_CAPACITY),
-                completes_last_str: m.state.completes_last_str };
+                completes_last_str: ms.completes_last_str };
         fc.v.push( Finding{ ptr: 0,
-                            enc: (*m).encoding,
-                            u_and_mask: (*m).u_and_mask,
-                            u_and_result: (*m).u_and_result,
+                            mission: &(*ms).mission,
                             s: String::with_capacity(FINDING_STR_CAPACITY) } );
         fc
     }
@@ -319,7 +315,7 @@ impl FindingCollection {
     /// in the new `Finding`. The actual content will be added with the next call of a
     /// `StringWriter` function (see below).
 
-     pub fn close_old_init_new_finding(&mut self, text_ptr: usize, mission: &Mission) {
+     pub fn close_old_init_new_finding(&mut self, text_ptr: usize, mission: &'static Mission) {
 
         if self.v.last().unwrap().s.len() != 0 {  // last is not empty
 
@@ -329,9 +325,7 @@ impl FindingCollection {
         // We have check again because len() may have changed in the line above
         if self.v.last().unwrap().s.len() != 0 {
             self.v.push(Finding{ ptr: text_ptr,
-                                 enc: mission.encoding,
-                                 u_and_mask: mission.u_and_mask,
-                                 u_and_result: mission.u_and_result,
+                                 mission: mission,
                                  s: String::with_capacity(FINDING_STR_CAPACITY) });
         } else {
                     // The current finding is empty, we do not
@@ -390,7 +384,6 @@ mod tests {
     extern crate encoding;
     use std::str;
     extern crate rand;
-    use scanner::ScannerState;
 
     pub const WIN_STEP: usize = 17;
     pub const CONTROL_REPLACEMENT_STR: &'static &'static str = &"\u{fffd}";
@@ -414,197 +407,196 @@ mod tests {
     fn test_scan_filter(){
        use Mission;
        // Replace mode: the last 1234 is too short
+
+       static M1:Mission = Mission{ encoding: encoding::all::ASCII,
+                        u_and_mask: 0xffe00000,
+                        u_and_result: 0,
+                        nbytes_min: 5,
+                        enable_filter: true,
+       };
+
        let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0,
-                    s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string() },
-            ], completes_last_str: false
+                Finding{ ptr:0, mission:&M1,
+                    s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
+                },
+            ],
+            completes_last_str: false
        };
 
        let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{fffd}34567890\u{fffd}2345678".to_string() },
+                Finding{ ptr:0, mission:&M1, s:"\u{fffd}34567890\u{fffd}2345678".to_string() },
             ], completes_last_str: false
        };
 
-       let m = Mission{ encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
-                        nbytes_min: 5,
-                        enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
-       };
-       filter!(input, m); // Mode -c r (replace)
+       filter!(input, M1); // Mode -c r (replace)
        assert_eq!(input, expected);
 
 
        // With completes_last_str set "ab" is printed (exception) but "1234" not
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "ab\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: true};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "ab".to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M2: Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M2, s:"ab\u{0}1234\u{0}\u{0}".to_string() },
+                ], completes_last_str: true};
+
+       let expected = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M2, s:"ab".to_string() },
+                ], completes_last_str: false};
+
+       filter!(input, M2); // Mode -c r (replace)
 
        assert_eq!(input, expected);
 
 
 
        // With completes_last_str unset "ab" is not printed
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}ab\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "".to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M3:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M3, s:"\u{0}ab\u{0}1234\u{0}\u{0}".to_string() },
+                ], completes_last_str: false};
+
+       let expected = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M3, s:"".to_string() },
+                ], completes_last_str: false};
+
+       filter!(input, M3); // Mode -c r (replace)
        assert_eq!(input, expected);
 
 
 
        // Replace mode: the last 1234 is too short
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "".to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M4:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+
+       let mut input = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M4, s:"\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string() },
+                ], completes_last_str: false};
+
+       let expected = FindingCollection{ v: vec![
+                Finding{ ptr:0, mission:&M4, s:"".to_string() },
+                ], completes_last_str: false};
+       filter!(input, M4); // Mode -c r (replace)
 
        assert_eq!(input, expected);
 
 
        // Replace mode: 12 is too short
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "12\u{0}\u{0}34567\u{0}89012\u{0}".to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{fffd}34567\u{fffd}89012".to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M5:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{ v: vec![
+                Finding{ ptr:  0, mission:&M5, s: "12\u{0}\u{0}34567\u{0}89012\u{0}".to_string() },
+                ], completes_last_str: false};
+
+       let expected = FindingCollection{ v: vec![
+                Finding{ ptr:  0, mission:&M5, s: "\u{fffd}34567\u{fffd}89012".to_string() },
+                ], completes_last_str: false};
+
+
+       filter!(input, M5); // Mode -c r (replace)
 
        assert_eq!(input, expected);
 
 
 
        // Print all mode (-c p): all should pass
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+      static M6:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: false,
-                        state: ScannerState {offset: 0, completes_last_str: false}
-       };
-       filter!(input, m);
-       assert_eq!(input, expected);
+      };
+
+      let mut input = FindingCollection{
+            v: vec![
+                Finding{ ptr:0, mission:&M6,
+                         s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
+                },
+            ], completes_last_str: false
+      };
+
+      let expected = FindingCollection{
+            v: vec![
+                Finding{ ptr:0, mission:&M6,
+                         s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string() },
+            ], completes_last_str: false
+      };
+
+      filter!(input, M6);
+      assert_eq!(input, expected);
 
 
 
-       // Print all mode (-c p): even though the input string is too short, print
-       // because completes_last_str is set.
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}34".to_string() },
-                ], completes_last_str: true};
+      // Print all mode (-c p): even though the input string is too short, print
+      // because completes_last_str is set.
+      static M7:Mission = Mission {encoding: encoding::all::ASCII,
+                       u_and_mask: 0xffe00000,
+                       u_and_result: 0,
+                       nbytes_min: 5,
+                       enable_filter: false,
+      };
+      let mut input = FindingCollection{
+            v: vec![
+               Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
+            ], completes_last_str: true
+      };
 
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}34".to_string() },
-                ], completes_last_str: false};
+      let expected = FindingCollection{
+            v: vec![
+               Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
+            ], completes_last_str: false
+      };
 
-       let m = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
-                        nbytes_min: 5,
-                        enable_filter: false,
-                        state: ScannerState {offset: 0, completes_last_str: false}
-       };
-       filter!(input, m); // Mode -c p (print all)
+      filter!(input, M7); // Mode -c p (print all)
 
-       assert_eq!(input, expected);
+      assert_eq!(input, expected);
 
 
 
-       // Print all mode (-c p): the this input string is too short
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{0}\u{0}34".to_string() },
-                ], completes_last_str: false};
+      // Print all mode (-c p): the this input string is too short
+      static M8:Mission = Mission {encoding: encoding::all::ASCII,
+                       u_and_mask: 0xffe00000,
+                       u_and_result: 0,
+                       nbytes_min: 5,
+                       enable_filter: false,
+      };
 
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::ASCII, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "".to_string() },
-                ], completes_last_str: false};
+      let mut input = FindingCollection{
+            v: vec![ Finding{ ptr:0, mission:&M8, s:"\u{0}\u{0}34".to_string() }, ],
+            completes_last_str: false
+      };
 
-       let m = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
-                        nbytes_min: 5,
-                        enable_filter: false,
-                        state: ScannerState {offset: 0, completes_last_str: false}
-       };
-       filter!(input, m); // Mode -c p (print all)
+      let expected = FindingCollection{
+            v: vec![ Finding{ ptr:  0, mission:&M8, s: "".to_string() }, ],
+            completes_last_str: false
+      };
 
-       assert_eq!(input, expected);
+
+      filter!(input, M8); // Mode -c p (print all)
+
+      assert_eq!(input, expected);
     }
 
     /// Test the Unicode filter in macro
@@ -612,54 +604,59 @@ mod tests {
     fn test_scan_unicode_filter(){
        use Mission;
        // This filter is not restrictive, everything should pass
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M9:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffe00000,
                         u_and_result: 0,
                         nbytes_min: 5,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{
+            v: vec![
+                Finding{ ptr:0, mission:&M9,
+                         s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
+                ],
+            completes_last_str: false
+       };
+
+       let expected = FindingCollection{
+            v: vec![
+                Finding{ ptr:0, mission:&M9,
+                         s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
+                ],
+            completes_last_str: false
+       };
+
+       filter!(input, M9); // Mode -c r (replace)
        assert_eq!(input, expected);
 
 
        // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
        // (space and tab pass always)
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8,
-                         u_and_mask: 0xffe00000,
-                    u_and_result:0,
-                    s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0, s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M10:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffffffe0,
                         u_and_result: 0x60,
                         nbytes_min: 3,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{
+            v: vec![
+                Finding{ ptr:  0, mission:&M10,
+                         s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?".to_string() },
+                ], completes_last_str: false
+       };
+
+       let expected = FindingCollection{
+            v: vec![
+                Finding{ ptr:  0, mission:&M10,
+                         s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?".to_string() },
+                ],
+            completes_last_str: false
+       };
+
+       filter!(input, M10); // Mode -c r (replace)
 
        assert_eq!(input, expected);
 
@@ -668,29 +665,30 @@ mod tests {
        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
        // (space and tab pass always)
        // Test if chars in 0x20-0x3f pass always whatever the filter is.
-       let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8,
-                         u_and_mask: 0xffe00000,
-                    u_and_result:0,
-                    s: "Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, enc: encoding::all::UTF_8, u_and_mask: 0xffe00000,
-                    u_and_result:0,
-                    s: "\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?"
-                                                    .to_string() },
-                ], completes_last_str: false};
-
-       let m = Mission {encoding: encoding::all::ASCII,
+       static M11:Mission = Mission {encoding: encoding::all::ASCII,
                         u_and_mask: 0xffffffe0,
                         u_and_result: 0x60,
                         nbytes_min: 2,
                         enable_filter: true,
-                        state: ScannerState {offset: 0, completes_last_str: false}
        };
-       filter!(input, m); // Mode -c r (replace)
+
+       let mut input = FindingCollection{
+            v: vec![
+                Finding{ ptr:0, mission:&M11,
+                         s:"Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?".to_string() },
+            ],
+            completes_last_str: false
+       };
+
+       let expected = FindingCollection{
+            v: vec![
+                Finding{ ptr:  0, mission:&M11,
+                         s:"\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?".to_string() },
+            ],
+            completes_last_str: false
+       };
+
+       filter!(input, M11); // Mode -c r (replace)
 
        assert_eq!(input, expected);
     }
