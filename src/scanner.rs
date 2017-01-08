@@ -87,7 +87,7 @@ use Missions;
 
 use finding::FindingCollection;
 
-/// As the `ScannerPool.scan_window()` function itself is stateless, the following variables 
+/// As the `ScannerPool.scan_window()` function itself is stateless, the following variables
 /// store some data that will be transfered from iteration to iteration.
 /// Each thread has a unique `ScannerState` which holds a reference to a unique `Mission`.
 #[derive(Debug)]

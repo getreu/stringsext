@@ -65,15 +65,21 @@ pub struct Finding {
 macro_rules! enc_str {
     ($finding:ident) => {{
                 // Check if the filter is restrictive
-                let filtering = $finding.mission.u_and_mask
-                               != !((std::char::MAX as u32).next_power_of_two()-1);
-                format!("({}{})",
+                format!("({}{}{})",
                         $finding.mission.encoding.name(),
-                        if filtering {
+                        if $finding.mission.filter1.is_some {
                             format!("/{:x}..{:x}",
-                                 $finding.mission.u_and_result,
-                                 $finding.mission.u_and_result|!($finding.mission.u_and_mask))
+                                 $finding.mission.filter1.and_result,
+                                 $finding.mission.filter1.and_result|!(
+                                             $finding.mission.filter1.and_mask))
+                        } else { "".to_string() },
+                        if $finding.mission.filter2.is_some {
+                            format!("/{:x}..{:x}",
+                                 $finding.mission.filter2.and_result,
+                                 $finding.mission.filter2.and_result|!(
+                                             $finding.mission.filter2.and_mask))
                         } else { "".to_string() }
+
                 )
     }}
 }
@@ -82,7 +88,6 @@ impl Finding {
     /// Format and dump a Finding to the output channel,
     /// usually stdout.
     pub fn print(&self, out: &mut Box<Write>) {
-        use std;
 
         if ARGS.flag_control_chars == ControlChars::R {
             let ptr_str = match ARGS.flag_radix {
@@ -135,8 +140,8 @@ impl PartialEq for Finding  {
     fn eq(&self, other: &Self) -> bool {
         (self.ptr == other.ptr) &&
         (self.mission.encoding.name() == other.mission.encoding.name()) &&
-        (self.mission.u_and_mask == other.mission.u_and_mask) &&
-        (self.mission.u_and_result == other.mission.u_and_result) &&
+        (self.mission.filter1 == other.mission.filter1) &&
+        (self.mission.filter2 == other.mission.filter2) &&
         (self.s == other.s)
     }
 }
@@ -150,10 +155,10 @@ impl Ord for Finding {
             self.ptr.cmp(&other.ptr)
         } else if self.mission.encoding.name() != other.mission.encoding.name() {
                     self.mission.encoding.name().cmp(&other.mission.encoding.name())
-               } else if self.mission.u_and_result != other.mission.u_and_result {
-                        self.mission.u_and_result.cmp(&other.mission.u_and_result)
+               } else if self.mission.filter1 != other.mission.filter1 {
+                        self.mission.filter1.cmp(&other.mission.filter1)
                       } else {
-                        (!self.mission.u_and_mask).cmp(&!other.mission.u_and_mask)
+                        self.mission.filter2.cmp(&other.mission.filter2)
                       }
     }
 }
@@ -168,10 +173,10 @@ impl PartialOrd for Finding {
             self.ptr.partial_cmp(&other.ptr)
         } else if self.mission.encoding.name() != other.mission.encoding.name() {
                     self.mission.encoding.name().partial_cmp(&other.mission.encoding.name())
-               } else if self.mission.u_and_result != other.mission.u_and_result {
-                        self.mission.u_and_result.partial_cmp(&other.mission.u_and_result)
+               } else if self.mission.filter1 != other.mission.filter1 {
+                        self.mission.filter1.partial_cmp(&other.mission.filter1)
                       } else {
-                        (!self.mission.u_and_mask).partial_cmp(&!other.mission.u_and_mask)
+                        self.mission.filter2.partial_cmp(&other.mission.filter2)
                       }
     }
 }
@@ -227,13 +232,26 @@ macro_rules! filter {
                     .split_terminator(|c: char|
                        c !=' '  &&  c !='\t'
                        &&( c.is_control()
-                           || (
-                             (((c as u32)& $mission.u_and_mask)!= $mission.u_and_result)
-                             // print ASCII 0x20-0x3F whatever the filter is
-                             && (((c as u32)& !0x0001f)!= 0x00020)
+                           ||
+                           !(
+                                (   // no filter
+                                    !($mission.filter1.is_some || $mission.filter2.is_some)
+                                )
+                                ||
+                                (
+                                    $mission.filter1.is_some &&
+                                    (((c as u32)& $mission.filter1.and_mask)
+                                                 == $mission.filter1.and_result)
+                                )
+                                ||  // Union
+                                (
+                                    $mission.filter2.is_some &&
+                                    (((c as u32)& $mission.filter2.and_mask)
+                                                 == $mission.filter2.and_result)
+                                )
                            )
                        )
-                     )
+                    )
                     .enumerate()
                     .filter(|&(n,s)| (s.len() >= minsize ) ||
                                      ((n == 0) && $fc.completes_last_str)
@@ -381,6 +399,7 @@ impl StringWriter for FindingCollection {
 mod tests {
     use super::*;
     use options::{Args, Radix, ControlChars};
+    use UnicodeBlockFilter;
     extern crate encoding;
     use std::str;
     extern crate rand;
@@ -409,8 +428,10 @@ mod tests {
        // Replace mode: the last 1234 is too short
 
        static M1:Mission = Mission{ encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -436,8 +457,10 @@ mod tests {
 
        // With completes_last_str set "ab" is printed (exception) but "1234" not
        static M2: Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -458,8 +481,10 @@ mod tests {
 
        // With completes_last_str unset "ab" is not printed
        static M3:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -479,8 +504,10 @@ mod tests {
 
        // Replace mode: the last 1234 is too short
        static M4:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -500,8 +527,10 @@ mod tests {
 
        // Replace mode: 12 is too short
        static M5:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                      is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -523,8 +552,10 @@ mod tests {
 
        // Print all mode (-c p): all should pass
       static M6:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: false,
       };
@@ -552,8 +583,10 @@ mod tests {
       // Print all mode (-c p): even though the input string is too short, print
       // because completes_last_str is set.
       static M7:Mission = Mission {encoding: encoding::all::ASCII,
-                       u_and_mask: 0xffe00000,
-                       u_and_result: 0,
+                       filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                       filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                        nbytes_min: 5,
                        enable_filter: false,
       };
@@ -577,8 +610,10 @@ mod tests {
 
       // Print all mode (-c p): the this input string is too short
       static M8:Mission = Mission {encoding: encoding::all::ASCII,
-                       u_and_mask: 0xffe00000,
-                       u_and_result: 0,
+                       filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                       filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                        nbytes_min: 5,
                        enable_filter: false,
       };
@@ -605,8 +640,10 @@ mod tests {
        use Mission;
        // This filter is not restrictive, everything should pass
        static M9:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffe00000,
-                        u_and_result: 0,
+                        filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
+                        filter2: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
+                                                          is_some:false },
                         nbytes_min: 5,
                         enable_filter: true,
        };
@@ -635,8 +672,12 @@ mod tests {
        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
        // (space and tab pass always)
        static M10:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffffffe0,
-                        u_and_result: 0x60,
+                        filter1: UnicodeBlockFilter { and_mask: 0xffffffe0,
+                                                      and_result: 0x60,
+                                                      is_some: true },
+                        filter2: UnicodeBlockFilter { and_mask: !0x0001f,
+                                                      and_result: 0x00020,
+                                                      is_some:true },
                         nbytes_min: 3,
                         enable_filter: true,
        };
@@ -664,10 +705,14 @@ mod tests {
        // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
        // (space and tab pass always)
-       // Test if chars in 0x20-0x3f pass always whatever the filter is.
+       // Second filter prints also 0x20-0x3f.
        static M11:Mission = Mission {encoding: encoding::all::ASCII,
-                        u_and_mask: 0xffffffe0,
-                        u_and_result: 0x60,
+                        filter1: UnicodeBlockFilter { and_mask:0xffffffe0,
+                                                      and_result: 0x60,
+                                                      is_some:true },
+                        filter2: UnicodeBlockFilter { and_mask: !0x0001f,
+                                                      and_result: 0x00020,
+                                                      is_some:true },
                         nbytes_min: 2,
                         enable_filter: true,
        };

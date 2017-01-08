@@ -15,9 +15,18 @@ search for multi-byte encoded strings in binary data.
    :Date: 2017-01-03
    :Version: 1.2.0
 
+   :Date: 2017-01-04
+   :Version: 1.2.1
+
+   :Date: 2017-01-05
+   :Version: 1.2.2
+
+   :Date: 2017-01-07
+   :Version: 1.3.0
+
 :Author: Jens Getreu
-:Date: 2017-01-04
-:Version: 1.2.1
+:Date: 2017-01-08
+:Version: 1.3.1
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
@@ -104,7 +113,7 @@ OPTIONS
 **-e** *ENC*, **--encoding**\ =\ *ENC*
     Set (multiple) input search encodings.
 
-    *ENC*\ ==\ *ENCNAME*\ [,\ *MIN*\ [,\ *UNICODEBLOCK*\ ]]
+    *ENC*\ ==\ *ENCNAME*\ [,\ *MIN*\ [,\ *UNICODEBLOCK*\ [,\ *UNICODEBLOCK*\ ]]]
 
     *ENCNAME*
         Search for strings in encoded in ENCNAME. Encoding names
@@ -119,7 +128,7 @@ OPTIONS
     *UNICODEBLOCK*
         Restrict the search to characters within *UNICODEBLOCK*. This
         can be used to search for a certain script or to reduce false
-        positives when searching for UTF-16 encoded strings. See
+        positives, especially when searching for UTF-16 encoded strings. See
         ``https://en.wikipedia.org/wiki/Unicode_block`` for a list of
         scripts and their corresponding Unicode-block-ranges.
         *UNICODEBLOCK* has the following syntax:
@@ -136,10 +145,8 @@ OPTIONS
         this case a warning specifying the enlarged *UNICODEBLOCK* is
         emitted.
 
-        The following characters do not observe *UNICODEBLOCK*
-        restrictions and are always printed even if they are out of range:
-        ``\t !"#$%&'()*+,-./0123456789:;<=>?``
-        (U+0009, U+0020..U+003F).
+        When a second optional *UNICODEBLOCK* is given, the total
+        Unicode-point search range is the union of the first and the second.
 
     See the output of **--help** for the default value of *ENC*.
 
@@ -218,17 +225,19 @@ When used with pipes ``-c r`` is required:
     stringsext -e iso-8859-7  -c r  -t x  someimage.raw | grep "Ιστορία"
 
 Reduce the number of false positives, when scanning an image file for
-UTF-16:
+UTF-16. In the following example we search for Cyrillic, Arabic and Siriac
+strings, which may contain these additional these symbols:
+``\t !"#$%&'()*+,-./0123456789:;<=>?``
 
 ::
 
-    stringsext -e UTF-16le,20,U+0..U+3FF -e UTF-16le,20,U+400..U+7FF someimage.raw
+    stringsext -e UTF-16le,30,U+20..U+3f,U+400..U+07ff someimage.raw
 
 The same but shorter:
 
 ::
 
-    stringsext -e UTF-16le,20,0..3FF -e UTF-16le,20,400..7FF someimage.raw
+    stringsext -e UTF-16le,30,20..3f,400..07ff someimage.raw
 
 Combine Little-Endian and Big-Endian scanning:
 
@@ -246,6 +255,13 @@ The following settings are designed to produce bit-identical output with
     stringsext -e ascii -c i -t x    # equals `strings -t x`
     stringsext -e ascii -c i -t o    # equals `strings -t o`
 
+The following examples perform the same search, but the output format is
+slightly different:
+
+::
+
+    stringsext -e UTF-16LE,10,0..7f  # equals `strings -n 10 -e l`
+    stringsext -e UTF-16BE,10,0..7f  # equals `strings -n 10 -e b`
 
 
 LIMITATIONS
@@ -289,7 +305,10 @@ will most likely never exceed the WIN\_LEN buffer and therefor will never be
 split.  In such a scenario it is a good practise to run Unicode and ASCII
 scanners in parallel.
 
-
+When a graphic string has to be cut at the WIN_LEN buffer boundary, *stringsext*
+can not in all cases determine the length of the first piece. In these rare
+cases *stringsext* always prints the second piece, even when it is shorter than
+**--bytes** would require.
 
 
 

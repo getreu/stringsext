@@ -4,12 +4,8 @@ rustup target add x86_64-unknown-linux-musl
 rustup target add i686-unknown-linux-musl
 #apt-get install libc6-dev-i386
 rustup target add i686-unknown-linux-gnu
-#rustup target add i686-pc-windows-gnu
-#rustup target add x86_64-pc-windows-gnu
 
 cargo build --target x86_64-unknown-linux-gnu  --release
 cargo build --target x86_64-unknown-linux-musl --release
 cargo build --target i686-unknown-linux-musl   --release
 cargo build --target i686-unknown-linux-gnu    --release
-#cargo build --target i686-pc-windows-gnu       --release
-#cargo build --target x86_64-pc-windows-gnu     --release
