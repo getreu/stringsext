@@ -11,7 +11,7 @@ use std::fmt;
 use std::cmp::{Ord,Eq};
 use std::cmp;
 
-use scanner::ScannerState;
+use helper::IdentifyFirstLast;
 
 #[cfg(not(test))]
 use options::ARGS;
@@ -37,6 +37,7 @@ lazy_static! {
             if  ARGS.flag_control_chars == ControlChars::R { "\u{fffd}" } else { "\n" };
 }
 
+pub const CUT_LABEL: char = '\u{2691}';
 
 use Mission;
 
@@ -220,15 +221,17 @@ macro_rules! filter {
      $mission:ident) => {{
         let minsize = $mission.nbytes_min as usize;
 
-        if ($fc.v.last().unwrap().s.len() < minsize) && !$fc.completes_last_str {
+        let inplen = $fc.v.last().unwrap().s.len();
+
+        if (inplen < minsize) && !$fc.completes_last_str {
                 $fc.v.last_mut().unwrap().s.clear();
 
         } else if $mission.enable_filter {
-        // filter control chars, group and delete short ones in between.
-            let len = $fc.v.last().unwrap().s.len();
-            let mut out = String::with_capacity(len + 0x10); // a bit bigger, just in case
+            let mut out = String::with_capacity(inplen + 0x10); // a bit bigger, just in case
+            // filter control chars, group and delete short ones in between.
             {
-                let mut chunks = (&$fc).v.last().unwrap().s
+                let inp = &$fc.v.last().unwrap().s;
+                let mut _no_chunks = inp
                     .split_terminator(|c: char|
                        c !=' '  &&  c !='\t'
                        &&( c.is_control()
@@ -252,33 +255,41 @@ macro_rules! filter {
                            )
                        )
                     )
-                    .enumerate()
-                    .filter(|&(n,s)| (s.len() >= minsize ) ||
-                                     ((n == 0) && $fc.completes_last_str)
-                           )
-                    //.inspect(|&(n,s)| println!("n: {}, s: {}, len(s): {}",n,s,s.len()))
-                    .map(|(_, s)| s );
+                    .identify_first_last()
+                    .filter(|&(_,_,s)|s.len() > 0)
+                    .inspect(|&(is_first, is_last, s)| {// generate output
+                        if is_first && inp.starts_with(&s) {
+                                if $fc.completes_last_str
+                                   && s.len() >= ARGS.flag_split_bytes.unwrap() as usize {
+                                      out.push(CUT_LABEL);
+                                      if s.len() < minsize { // avoid printing s it twice
+                                         out.push_str(s);
+                                      }
+                                }
+                        } else if s.len() >= minsize {
+                                    out.push_str(&CONTROL_REPLACEMENT_STR);
+                        }
+                        if is_last && $fc.last_str_is_incomplete 
+                                   && s.len() >= ARGS.flag_split_bytes.unwrap() as usize
+                                   && inp.ends_with(&s) {
+                                  if s.len() < minsize { // avoid printing twice
+                                      out.push_str(&CONTROL_REPLACEMENT_STR);
+                                  }
+                                  out.push_str(s);
+                                  out.push(CUT_LABEL);
+                        } else  if s.len() >= minsize {
+                                  out.push_str(s);
+                        }
 
-                if let Some(first_chunk) = chunks.next() {
-                    if !$fc.v.last().unwrap().s.starts_with(&first_chunk) {
-                        out.push_str(&CONTROL_REPLACEMENT_STR); // only if Some(first_chunk)
-                    }
-                    out.push_str(first_chunk);  // push the first
-                    for chunk in chunks {       // and the rest if there is
-                        out.push_str(&CONTROL_REPLACEMENT_STR);
-                        out.push_str(chunk);
-                    }
-                }
+                    })
+                    .count();  // consume the iterator
             };
 
             // Replace current string with filtered one
-            $fc.v.last_mut().unwrap().s.clear();
-            $fc.v.last_mut().unwrap().s.push_str(&*out);
+            let mut outp = &mut $fc.v.last_mut().unwrap().s;
+            outp.clear();
+            outp.push_str(&*out);
         }
-
-        // Apply `completes_last_str` exactly one time only
-        $fc.completes_last_str = false;
-
     }};
 }
 
@@ -300,17 +311,23 @@ pub struct FindingCollection {
     /// `close_old_init_new_finding()` will then retain the first finding even if
     /// it is normally too short according to `ARG.flag_bytes` instructions.
     pub completes_last_str: bool,
+    /// The last `Finding` of this `FindingCollection` contains a string that was cut
+    /// and may be incomplete.
+    pub last_str_is_incomplete: bool,
 }
 
 
 impl FindingCollection {
-    pub fn new(ms: &ScannerState) -> FindingCollection{
+    /// Constructor which also adds a new `Finding`.
+    pub fn new(text_ptr: usize, mission: &'static Mission) -> FindingCollection{
         let mut fc = FindingCollection{
                 v: Vec::with_capacity(FINDING_COLLECTION_CAPACITY),
-                completes_last_str: ms.completes_last_str };
-        fc.v.push( Finding{ ptr: 0,
-                            mission: &(*ms).mission,
-                            s: String::with_capacity(FINDING_STR_CAPACITY) } );
+                completes_last_str: false,
+                last_str_is_incomplete: false
+        };
+        fc.v.push( Finding{ ptr:text_ptr, mission:mission,
+                            s:String::with_capacity(FINDING_STR_CAPACITY) } );
+
         fc
     }
 
@@ -323,6 +340,7 @@ impl FindingCollection {
             finding.print(out);
         }
     }
+
 
     /// `close_old_init_new_finding` works closely together with `StringWriter` functions
     /// (see below) who append Bytes in stages at the end of the current finding string in a
@@ -350,7 +368,9 @@ impl FindingCollection {
                     // push a new finding, instead we
                     // only update the pointer of the current
                     // one. Content will come later anyway.
-            self.v.last_mut().unwrap().ptr = text_ptr;
+            let last_finding = self.v.last_mut().unwrap();
+            last_finding.ptr = text_ptr;
+            last_finding.mission = mission;
         };
     }
 
@@ -400,6 +420,8 @@ mod tests {
     use super::*;
     use options::{Args, Radix, ControlChars};
     use UnicodeBlockFilter;
+    use helper::IdentifyFirstLast;
+
     extern crate encoding;
     use std::str;
     extern crate rand;
@@ -415,6 +437,7 @@ mod tests {
            flag_list_encodings: false,
            flag_version: false,
            flag_bytes:  Some(5),
+           flag_split_bytes:  Some(2),
            flag_radix:  Some(Radix::X),
            flag_output: None,
         };
@@ -442,13 +465,13 @@ mod tests {
                     s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
                 },
             ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
        };
 
        let expected = FindingCollection{
             v: vec![
                 Finding{ ptr:0, mission:&M1, s:"\u{fffd}34567890\u{fffd}2345678".to_string() },
-            ], completes_last_str: false
+            ], completes_last_str: false, last_str_is_incomplete: false
        };
 
        filter!(input, M1); // Mode -c r (replace)
@@ -467,11 +490,11 @@ mod tests {
 
        let mut input = FindingCollection{ v: vec![
                 Finding{ ptr:0, mission:&M2, s:"ab\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: true};
+                ], completes_last_str: true, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M2, s:"ab".to_string() },
-                ], completes_last_str: false};
+                Finding{ ptr:0, mission:&M2, s:"\u{2691}ab".to_string() },
+                ], completes_last_str: true, last_str_is_incomplete: false};
 
        filter!(input, M2); // Mode -c r (replace)
 
@@ -491,11 +514,11 @@ mod tests {
 
        let mut input = FindingCollection{ v: vec![
                 Finding{ ptr:0, mission:&M3, s:"\u{0}ab\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
                 Finding{ ptr:0, mission:&M3, s:"".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
 
        filter!(input, M3); // Mode -c r (replace)
        assert_eq!(input, expected);
@@ -515,11 +538,11 @@ mod tests {
 
        let mut input = FindingCollection{ v: vec![
                 Finding{ ptr:0, mission:&M4, s:"\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
                 Finding{ ptr:0, mission:&M4, s:"".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
        filter!(input, M4); // Mode -c r (replace)
 
        assert_eq!(input, expected);
@@ -537,11 +560,11 @@ mod tests {
 
        let mut input = FindingCollection{ v: vec![
                 Finding{ ptr:  0, mission:&M5, s: "12\u{0}\u{0}34567\u{0}89012\u{0}".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
                 Finding{ ptr:  0, mission:&M5, s: "\u{fffd}34567\u{fffd}89012".to_string() },
-                ], completes_last_str: false};
+                ], completes_last_str: false, last_str_is_incomplete: false};
 
 
        filter!(input, M5); // Mode -c r (replace)
@@ -565,14 +588,14 @@ mod tests {
                 Finding{ ptr:0, mission:&M6,
                          s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
                 },
-            ], completes_last_str: false
+            ], completes_last_str: false, last_str_is_incomplete: false
       };
 
       let expected = FindingCollection{
             v: vec![
                 Finding{ ptr:0, mission:&M6,
                          s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string() },
-            ], completes_last_str: false
+            ], completes_last_str: false, last_str_is_incomplete: false
       };
 
       filter!(input, M6);
@@ -593,13 +616,13 @@ mod tests {
       let mut input = FindingCollection{
             v: vec![
                Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
-            ], completes_last_str: true
+            ], completes_last_str: true, last_str_is_incomplete: false
       };
 
       let expected = FindingCollection{
             v: vec![
                Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
-            ], completes_last_str: false
+            ], completes_last_str: true, last_str_is_incomplete: false
       };
 
       filter!(input, M7); // Mode -c p (print all)
@@ -620,12 +643,12 @@ mod tests {
 
       let mut input = FindingCollection{
             v: vec![ Finding{ ptr:0, mission:&M8, s:"\u{0}\u{0}34".to_string() }, ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
       };
 
       let expected = FindingCollection{
             v: vec![ Finding{ ptr:  0, mission:&M8, s: "".to_string() }, ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
       };
 
 
@@ -653,7 +676,7 @@ mod tests {
                 Finding{ ptr:0, mission:&M9,
                          s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
                 ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
        };
 
        let expected = FindingCollection{
@@ -661,8 +684,7 @@ mod tests {
                 Finding{ ptr:0, mission:&M9,
                          s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
                 ],
-            completes_last_str: false
-       };
+            completes_last_str: false, last_str_is_incomplete: false       };
 
        filter!(input, M9); // Mode -c r (replace)
        assert_eq!(input, expected);
@@ -686,7 +708,7 @@ mod tests {
             v: vec![
                 Finding{ ptr:  0, mission:&M10,
                          s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?".to_string() },
-                ], completes_last_str: false
+                ], completes_last_str: false, last_str_is_incomplete: false
        };
 
        let expected = FindingCollection{
@@ -694,7 +716,7 @@ mod tests {
                 Finding{ ptr:  0, mission:&M10,
                          s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?".to_string() },
                 ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
        };
 
        filter!(input, M10); // Mode -c r (replace)
@@ -722,7 +744,7 @@ mod tests {
                 Finding{ ptr:0, mission:&M11,
                          s:"Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?".to_string() },
             ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
        };
 
        let expected = FindingCollection{
@@ -730,7 +752,7 @@ mod tests {
                 Finding{ ptr:  0, mission:&M11,
                          s:"\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?".to_string() },
             ],
-            completes_last_str: false
+            completes_last_str: false, last_str_is_incomplete: false
        };
 
        filter!(input, M11); // Mode -c r (replace)

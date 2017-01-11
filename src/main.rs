@@ -21,6 +21,8 @@ use scanner::ScannerPool;
 
 mod finding;
 
+mod helper;
+
 mod codec {
     pub mod ascii;
 }

@@ -291,6 +291,7 @@ mod tests {
            flag_list_encodings: false,
            flag_version: false,
            flag_bytes:  Some(5),
+           flag_split_bytes:  Some(2),
            flag_radix:  Some(Radix::X),
            flag_output: None,
         };
@@ -347,19 +348,23 @@ mod tests {
                              s: "hallo1234".to_string() },
                     Finding{ ptr: 15,
                              mission: &MISSIONS.v[0] ,
-                             s: "so567890".to_string() },
-                    ], completes_last_str: false};
+                             s: "so567890\u{2691}".to_string() },
+                    ], completes_last_str: false, last_str_is_incomplete: true};
 
                 let expected2 = FindingCollection{ v: vec![
                     Finding{ ptr: 0,
-                             mission: &MISSIONS.v[0],
-                             s: "hallo1234üduüso567890".to_string() },
-                    ], completes_last_str: false};
+                             mission: &MISSIONS.v[1],
+                             s: "hallo1234üduüso567890\u{2691}".to_string() },
+                    ], completes_last_str: false, last_str_is_incomplete: true};
 
                 let res1 = rx.recv().unwrap();
                 let res2 = rx.recv().unwrap();
-                //println!("{:?}",res1);
-                //println!("{:?}",res2);
+                /*
+                println!("expected 1: {:?}",expected1);
+                println!("res 1: {:?}",res1);
+                println!("expected 2: {:?}",expected2);
+                println!("res 2: {:?}",res2);
+                */
 
                 assert!((expected1 == res1) || (expected1 == res2));
                 assert!((expected2 == res1) || (expected2 == res2));

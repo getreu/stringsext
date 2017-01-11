@@ -21,6 +21,7 @@ Options:
  -h, --help                     Display this message.
  -l, --list-encodings           List available encoding-names for ENCNAME.
  -n MIN, --bytes=MIN            Minimum length of printed strings. [default: 4]
+ -s MIN, --split-bytes=MIN      Minimum length of printed split strings. [default: 1]
  -p FILE, --output=FILE         Print not to stdout but in file.
  -t RADIX, --radix=RADIX        Enable Byte counter with radix `o`, `x` or `d`.
  -V, --version                  Print version info and exit.
@@ -43,6 +44,8 @@ pub struct Args {
     pub flag_version: bool,
     /// Required minimum length of printed strings in UTF8-Bytes.
     pub flag_bytes: Option<u8>,
+    /// Required minimum length of a split strings to be printed.
+    pub flag_split_bytes: Option<u8>,
     /// The radix of the Byte counter when printed.
     pub flag_radix: Option<Radix>,
     /// Pathname of the output file. `None` defaults to `stdout`.
@@ -82,8 +85,6 @@ lazy_static! {
 
 
 
-
-
 #[cfg(test)]
 mod tests {
 
@@ -94,7 +95,7 @@ mod tests {
         use super::{Args, USAGE, Radix, ControlChars};
         // The argv. Normally you'd just use `parse` which will automatically
         // use `std::env::args()`.
-        let argv = || vec!["stringsext", "-c", "r", "-n", "10", "-e", "ascii", "-e",
+        let argv = || vec!["stringsext", "-c", "r", "-n", "10", "-s", "11", "-e", "ascii", "-e",
                             "utf-8", "-V", "-l", "-p", "outfile", "-t", "o", "infile1",
                             "infile2"];
         let args: Args = Docopt::new(USAGE)
@@ -110,6 +111,7 @@ mod tests {
         assert_eq!(args.flag_version, true);
         assert_eq!(args.flag_list_encodings, true);
         assert_eq!(args.flag_bytes, Some(10u8));
+        assert_eq!(args.flag_split_bytes, Some(11u8));
         assert_eq!(args.flag_radix, Some(Radix::O));
         assert_eq!(args.flag_output, Some(s("outfile")));
     }

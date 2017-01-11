@@ -24,9 +24,12 @@ search for multi-byte encoded strings in binary data.
    :Date: 2017-01-07
    :Version: 1.3.0
 
+   :Date: 2017-01-08
+   :Version: 1.3.1
+
 :Author: Jens Getreu
-:Date: 2017-01-08
-:Version: 1.3.1
+:Date: 2017-01-10
+:Version: 1.4.0
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
@@ -157,11 +160,27 @@ OPTIONS
     List available encodings as WHATWG Encoding Standard names and exit.
 
 **-n** *MIN*, **--bytes**\ =\ *MIN*
-    Print only strings at least *min* bytes long. The length is measured
+    Print only strings at least *MIN* bytes long. The length is measured
     in UTF-8 encoded bytes. **--help** shows the default value.
 
 **-p** *FILE*, **--output**\ =\ *FILE*
     Print to *FILE* instead of *stdout*.
+
+**-s** *SPLIT-MIN*, **--split_bytes**\ =\ *SPLIT-MIN*
+    Print only split pieces at least *SPLIT-MIN* bytes long. The length is
+    measured in UTF-8 encoded bytes and applies to all scanners. *SPLIT-MIN=1*
+    (default) ensures that no byte can get lost (never any true negatives, but
+    false positives possible). With a value *SPLIT-MIN>1* the first or the second
+    piece can get lost, but the probability of false positives is reduced.
+
+    You only need this option when your output contains too many flag symbols
+    ⚑ next to very short strings.
+
+    Explanation: In some rare circumstances a graphic string is split
+    into two smaller pieces (see LIMITATIONS). Their cutting edges are labelled
+    with a flag symbol ⚑ (U+2691). This option controls the minimum length
+    of a split piece to be printed.
+
 
 **-t** *RADIX*, **--radix**\ =\ *RADIX*
     Print the offset within the file before each valid string. The
@@ -179,7 +198,7 @@ OPTIONS
     consider **--control-chars=r** to keep multi-line strings in one
     line.
 
-**-V, --version**
+**-v, --version**
     Print version info and exit.
 
 EXIT STATUS
@@ -264,51 +283,85 @@ slightly different:
     stringsext -e UTF-16BE,10,0..7f  # equals `strings -n 10 -e b`
 
 
+
+OPERATING PRINCIPLE
+===================
+
+
+A *valid* string is a sequence a valid characters according to the
+encoding chosen with **--encoding**. A valid string may contain
+*control* characters and *graphic* (visible and human readable)
+characters. **stringsext** is a tool to extract sequences of graphic
+characters out of a binary data stream.
+
+A *scanner* is defined with the **--encoding ENC** option. Multiple
+scanners operate in parallel. The search field is divided into input
+chunks of WIN_LEN bytes (see source code for exact size) in size. A
+scanner is a module that extracts valid character sequences, valid
+strings, of an input chunk.
+
+A valid strings is then fed into a **filter** that extracts multiple
+graphic strings out of a valid string. A filter may apply additional
+criteria such as *MIN* or *UNICODEBLOCK*.
+
+
+
 LIMITATIONS
 ===========
 
-It is guaranteed that all valid string sequences are detected and printed
-whatever their size is. However due to potential false positives when
-interpreting binary data as multi-byte-strings, it may happen that the first
-characters of a valid string may not be recognised immediately. In practice,
-this effect occurs very rarely and the scanner synchronises with the correct
-character boundaries quickly.
+1. Valid strings smaller than WIN_LEN are never cut. When valid string
+   exceeds WIN_LEN bytes it will be cut. It may happen that at the
+   cutting edge locates a short graphic string that is then split into
+   two pieces which are printed on separate lines. The cutting edge is
+   labelled with two flag symbols ⚑ (U+2691). Furthermore, one or both
+   pieces may then become to short to meet the *MIN* bytes condition.
+   In order not to loose any bytes of a piece the *MIN* option is
+   temporary disabled for split strings. The downside of this is the
+   appearance of some undesirable false positives. Therefor the
+   **--splite-bytes** option allows to set an additional condition to
+   control the appearance of these false positives: The *SPLIT-MIN*
+   value determines the minimum number of bytes a split piece must have
+   to be printed. Note that with a value *SPLIT-MIN > 1* some bytes of
+   the split graphic string may not appear in the output.
 
-Valid strings not longer than FLAG\_BYTES\_MAX are never split and printed in
-full length. However, when the size of a valid string exceeds FLAG\_BYTES\_MAX
-bytes it may be split into two or more strings and then printed separately. Note
-that this limitation refers to the *valid* string length. A valid string may
-consist of several *graphic* strings.  If a valid string is longer than WIN\_LEN
-bytes, it is always split. To know the values of the constants please refer
-to the definition in the source code of your **stringsext** build. Original
-values are: FLAG\_BYTES\_MAX = 6144 bytes, WIN\_LEN = 14342 bytes.
+   In practise the above limitation occurs when the search field
+   contains large vectors of Null (0x00) terminated strings. For most
+   multi-byte encodings, as well as for the Unicode-scanner, the Null
+   (0x00) character is regarded as a valid control character. Thus the
+   Unicode scanner will detect such a string vector as one big string
+   which might exceed the WIN\_LEN buffer size.
 
-In practise the above limitation may appear when the search field contains large
-vectors of Null (0x00) delimited strings. For most multi-byte encodings, as well
-as for the Unicode-scanner, the Null (0x00) character is regarded as a valid
-control character. Thus the Unicode scanner will detect such a string vector as
-one big string which might exceed the WIN\_LEN buffer size. The scanner then
-cuts the big string into pieces of length WIN\_LEN and it may happen that at the
-cutting edge a short string is cut into 2 pieces. It will later appear as 2
-separate findings. In the work case it might even happen that the first piece is
-to short to be printed at all! This is because: only when the scanning process
-for valid strings in the WIN\_LEN buffer is terminated, a second filter splits
-the long valid strings into a sequence of short graphic strings.
-These short graphic strings are subject to additional restrictions like
-minimum length or a Unicode-block-filter (see above).
+   For searching in with large Null (0x00) terminated string vectors,
+   the ASCII scanner is recommended. The ASCII scanner regards Null
+   (0x00) as invalid character, so the string vector will be detected
+   as sequence of short distinguished strings. These short strings will
+   most likely never exceed the WIN\_LEN buffer and therefor will never
+   be split.  In such a scenario it is a good practise to run Unicode
+   and ASCII scanners in parallel.
 
-As a workaround, in case you search for certain character sequence in such large
-Null (0x00) delimited string vectors, the ASCII scanner is recommended. The
-ASCII scanner regards Null (0x00) as invalid character, so the string vector
-will be detected as sequence of short distinguished strings. These short strings
-will most likely never exceed the WIN\_LEN buffer and therefor will never be
-split.  In such a scenario it is a good practise to run Unicode and ASCII
-scanners in parallel.
+   It is guaranteed that valid strings not longer than FLAG\_BYTES\_MAX
+   are never split. However, when the size of a valid string exceeds
+   FLAG\_BYTES\_MAX bytes it may be split into two or more valid
+   strings and then filtered separately. Note that this limitation
+   refers to the *valid* string length. A valid string may consist of
+   several *graphic* strings.  If a valid string is longer than
+   WIN\_LEN bytes, it is always split. To know the values of the
+   constants please refer to the definition in the source code of your
+   **stringsext** build. Original values are: FLAG\_BYTES\_MAX = 6144
+   bytes, WIN\_LEN = 14342 bytes.
 
-When a graphic string has to be cut at the WIN_LEN buffer boundary, *stringsext*
-can not in all cases determine the length of the first piece. In these rare
-cases *stringsext* always prints the second piece, even when it is shorter than
-**--bytes** would require.
+
+
+2. It is guaranteed that all string sequences are detected and printed
+   according to the search criteria. However due to potential false
+   positives when interpreting binary data as multi-byte-strings, it
+   may happen that the first characters of a valid string may not be
+   recognised immediately. In practice, this effect occurs very rarely
+   and the scanner synchronises with the correct character boundaries
+   quickly.
+
+
+
 
 
 
