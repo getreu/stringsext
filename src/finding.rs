@@ -1,6 +1,7 @@
 //! This module defines data structures to store and process found strings (findings) in memory.
 use std::io::prelude::*;
 use std::str;
+use std;
 extern crate memmap;
 extern crate itertools;
 
@@ -88,7 +89,7 @@ macro_rules! enc_str {
 impl Finding {
     /// Format and dump a Finding to the output channel,
     /// usually stdout.
-    pub fn print(&self, out: &mut Box<Write>) {
+    pub fn print(&self, out: &mut Box<Write>) -> Result<(), Box<std::io::Error>> {
 
         if ARGS.flag_control_chars == ControlChars::R {
             let ptr_str = match ARGS.flag_radix {
@@ -98,15 +99,15 @@ impl Finding {
                 None           => "".to_string(),
             };
 
-        let enc_str = if ARGS.flag_encoding.len() > 1 {
-                enc_str!(self)+"\t"
-        } else {
-                "".to_string()
-        };
+           let enc_str = if ARGS.flag_encoding.len() > 1 {
+                    enc_str!(self)+"\t"
+            } else {
+                    "".to_string()
+            };
 
             for l in  self.s.lines() {
-                &out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() );
-            }
+                try!(out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() ));
+            };
         } else {
             let mut ptr_str = match ARGS.flag_radix {
                 Some(Radix::X) => format!("{:7x} ",  self.ptr),
@@ -119,17 +120,18 @@ impl Finding {
                 None           => "",
             };
 
-        let enc_str = if ARGS.flag_encoding.len() > 1 {
+            let enc_str = if ARGS.flag_encoding.len() > 1 {
                 format!("{:14}\t",enc_str!(self))
-        } else {
+            } else {
                 "".to_string()
-        };
+            };
 
             for l in  self.s.lines() {
-                &out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() );
+                try!(out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() ));
                 ptr_str = ptr_str_ff.to_string();
-            }
-        }
+            };
+        };
+        Ok(())
     }
 }
 
@@ -269,7 +271,7 @@ macro_rules! filter {
                         } else if s.len() >= minsize {
                                     out.push_str(&CONTROL_REPLACEMENT_STR);
                         }
-                        if is_last && $fc.last_str_is_incomplete 
+                        if is_last && $fc.last_str_is_incomplete
                                    && s.len() >= ARGS.flag_split_bytes.unwrap() as usize
                                    && inp.ends_with(&s) {
                                   if s.len() < minsize { // avoid printing twice
@@ -334,11 +336,11 @@ impl FindingCollection {
     /// This method formats and dumps a `FindingCollection` to the output channel,
     /// usually `stdout`.
     #[allow(dead_code)]
-    pub fn print(&self, out: &mut Box<Write>) {
-        if (&self).v.len() == 0 { return };
+    pub fn print(&self, out: &mut Box<Write>) -> Result<(), Box<std::io::Error>>  {
         for finding in &self.v {
-            finding.print(out);
-        }
+            try!(finding.print(out));
+        };
+        Ok(())
     }
 
 
@@ -351,8 +353,9 @@ impl FindingCollection {
     /// in the new `Finding`. The actual content will be added with the next call of a
     /// `StringWriter` function (see below).
 
-     pub fn close_old_init_new_finding(&mut self, text_ptr: usize, mission: &'static Mission) {
+     pub fn close_old_init_new_finding(&mut self, text_ptr: usize) {
 
+        let mission =  self.v.last().unwrap().mission;
         if self.v.last().unwrap().s.len() != 0 {  // last is not empty
 
            filter!(self, mission);
@@ -364,13 +367,13 @@ impl FindingCollection {
                                  mission: mission,
                                  s: String::with_capacity(FINDING_STR_CAPACITY) });
         } else {
-                    // The current finding is empty, we do not
-                    // push a new finding, instead we
-                    // only update the pointer of the current
-                    // one. Content will come later anyway.
-            let last_finding = self.v.last_mut().unwrap();
-            last_finding.ptr = text_ptr;
-            last_finding.mission = mission;
+            // The current finding is empty, we do not
+            // push a new finding, instead we
+            // only update the pointer of the current
+            // one. Content will come later anyway.
+            self.v.last_mut().unwrap().ptr= text_ptr;
+            // we don't need `self.v.last_mut().unwrap().mission = mission`
+            // because it is always the same mission
         };
     }
 

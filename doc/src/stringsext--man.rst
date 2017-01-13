@@ -27,9 +27,12 @@ search for multi-byte encoded strings in binary data.
    :Date: 2017-01-08
    :Version: 1.3.1
 
+   :Date: 2017-01-10
+   :Version: 1.4.0
+
 :Author: Jens Getreu
-:Date: 2017-01-10
-:Version: 1.4.0
+:Date: 2017-01-13
+:Version: 1.4.1
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
@@ -81,6 +84,10 @@ when **FILE** is ``-``, it reads standard input *stdin*.
 
 When invoked with ``stringsext -e ascii -c i`` **stringsext** can be
 used as *GNU strings* replacement.
+
+Under Windows a Unicode editor is required. For first tests ``wordpad``
+should do. Choose the ``Courir new`` font or ``Segoe UI symbol`` font to
+see the flag symbols ⚑ (U+2691).
 
 OPTIONS
 =======

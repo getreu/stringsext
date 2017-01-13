@@ -54,7 +54,10 @@
 //! 15. Repeat until the last chunk is reached.
 
 
+use std;
 use std::str;
+use std::io::Write;
+use std::process;
 extern crate memmap;
 extern crate itertools;
 
@@ -197,8 +200,13 @@ impl <'a> ScannerPool <'a> {
                             };
                             scanner_state.completes_last_str = m.last_str_is_incomplete;
                             match tx.send(m) {
-                                Ok(_) => {},
-                                Err(_) => { panic!("Can not send FindingCollection:"); },
+                                Ok(_)  => {},
+                                Err(e) => {
+                                    writeln!(&mut std::io::stderr(),
+                                        "Error: `{}`. Is the output stream writeable? Is there \
+                                         enough space? ",e).unwrap();
+                                    process::exit(1);
+                                },
                             };
                         });
                    }
@@ -221,9 +229,7 @@ impl <'a> ScannerPool <'a> {
     /// The `Finding`s are returned as a `FindingCollection` vector.
     /// After execution the `start` variable points to the first unprocessed Byte
     /// in `input`, usually in WIN_OVERLAP.
-
     ///
-
     /// Please note that this function is stateless (static)!
     ///
     fn scan_window <'b> (scanner_state:&ScannerState,
@@ -244,7 +250,7 @@ impl <'a> ScannerPool <'a> {
         ret.completes_last_str = scanner_state.completes_last_str;
 
 
-        while remaining < WIN_STEP { // Never do mission.offset new search in overlapping space
+        loop {
             let (offset, err) = decoder.raw_feed(&input[remaining..], &mut *ret);
 
             //unprocessed = remaining + offset;
@@ -259,12 +265,14 @@ impl <'a> ScannerPool <'a> {
                 let _ = decoder.raw_finish(&mut *ret); // Is this really necessary? Why?
                 break;
             }
-
-            ret.close_old_init_new_finding(byte_counter+remaining,
-                                           scanner_state.mission);
+            // Never start new search in overlapping space
+            if remaining >= WIN_STEP {
+                let _ = decoder.raw_finish(&mut *ret); // Is this really necessary? Why?
+                break;
+            }
+            ret.close_old_init_new_finding(byte_counter+remaining);
             // only the first finding should have this true
             ret.completes_last_str = false;
-
         };
 
         // unprocessed points to the first erroneous byte, remaining 1 byte beyond:
@@ -282,7 +290,7 @@ impl <'a> ScannerPool <'a> {
         // This closes the current finding strings and adds an
         // empty one we have to remove with `close_finding_collection()` later.
         // Before processing the last finding,
-        ret.close_old_init_new_finding(byte_counter+remaining, scanner_state.mission);
+        ret.close_old_init_new_finding(byte_counter+remaining);
 
         // Remove empty surplus
         ret.close_finding_collection();

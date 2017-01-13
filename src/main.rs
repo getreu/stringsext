@@ -36,6 +36,10 @@ use std::fmt;
 use std::process;
 use std::cmp::{Ord,Eq};
 use std::cmp;
+use std::thread::JoinHandle;
+use std::io;
+use std::num::ParseIntError;
+use std::str::FromStr;
 
 extern crate memmap;
 extern crate itertools;
@@ -45,10 +49,6 @@ extern crate scoped_threadpool;
 use std::thread;
 
 extern crate encoding;
-use std::thread::JoinHandle;
-use std::io;
-use std::num::ParseIntError;
-use std::str::FromStr;
 use encoding::EncodingRef;
 use encoding::label::encoding_from_whatwg_label;
 use encoding::all;
@@ -332,14 +332,13 @@ impl Missions {
         }
 
         Ok( (enc_name, nbytes_min, filter1, filter2) )
-
     }
 }
 
 
 /// This function spawns and defines the behaviour of the _merger-thread_ who
 /// collects and prints the results produced by the worker threads.
-fn main() {
+fn main2() -> Result<(), Box<std::io::Error>> {
 
     if ARGS.flag_list_encodings  {
         let list = all::encodings().iter().filter_map(|&e|e.whatwg_name()).sorted();
@@ -347,16 +346,16 @@ fn main() {
         for e in list {
             println!("{}",e);
         }
-        return;
+        return Ok(());
     }
 
     if ARGS.flag_version {
         println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR );
-        return;
+        return Ok(());
     }
 
 
-    let merger: JoinHandle<()>;
+    let merger: JoinHandle<Result<(), Box<std::io::Error>>>;
     // Scope for threads
     {
         let n_threads = MISSIONS.len();
@@ -367,13 +366,15 @@ fn main() {
         merger = thread::spawn(move || {
             let mut output = match ARGS.flag_output {
                Some(ref fname) => {
-                            let f = File::create(&Path::new(fname.as_str())).unwrap();
+                            let f = try!(File::create(&Path::new(fname.as_str())));
                             Box::new(f) as Box<Write>
                         },
                None  => Box::new(io::stdout()) as Box<Write>,
             };
+            try!(output.write_all("\u{feff}".as_bytes()));
 
             'outer: loop {
+                // collect
                 let mut results = Vec::with_capacity(n_threads);
                 for _ in 0..n_threads {
                     results.push(match  rx.recv() {
@@ -384,47 +385,36 @@ fn main() {
                         Err(_) => {break 'outer},
                     });
                 };
-                //   merge
+                // merge
                 for finding in kmerge(&results) {
-                    finding.print(&mut output);
+                    try!(finding.print(&mut output));
                 };
-            }
+            };
             //println!("Merger terminated.");
+            Ok(())
         });
 
         // Default for <file> is stdin.
         if (ARGS.arg_FILE.len() == 0) ||
            ( (ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
-            match process_input(None, &mut sc) {
-                Err(e)=> {
-                        writeln!(&mut std::io::stderr(),
-                              "Error while reading from stdin: {}.",
-                              e.to_string()).unwrap();
-                        process::exit(2);
-                },
-                _ => {},
-            }
+            try!(process_input(None, &mut sc));
         } else {
             for ref file_path_str in ARGS.arg_FILE.iter() {
-                match process_input(Some(&file_path_str), &mut sc) {
-                    Err(e)=> {
-                            writeln!(&mut std::io::stderr(),
-                                  "Error: `{}` while processing file: `{}`.",
-                                  e.to_string(), file_path_str).unwrap();
-                            process::exit(2);
-                    },
-                    _ => {},
-                }
-
-            }
-        }
-
+                try!(process_input(Some(&file_path_str), &mut sc));
+            };
+        };
     } // `tx` drops here, which "break"s the merger-loop.
-    merger.join().unwrap();
+    merger.join().unwrap()
 
     //println!("All threads terminated.");
 }
 
+fn main() {
+    if let Err(e) = main2() {
+        writeln!(&mut std::io::stderr(), "Error: `{}`.",e).unwrap();
+        process::exit(1);
+    }
+}
 
 
 #[cfg(test)]

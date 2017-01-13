@@ -4,7 +4,7 @@ use scanner::ScannerPool;
 use std::path::Path;
 use std::io::prelude::*;
 use std::io::stdin;
-use std::error::Error;
+use std;
 extern crate memmap;
 use self::memmap::{Mmap, Protection};
 extern crate itertools;
@@ -177,7 +177,7 @@ pub const UTF8_LEN_MAX: u8 = 6;
 /// If `file_path_str` == None read from `stdin`, otherwise
 /// read from file.
 pub fn process_input(file_path_str: Option<&str>, mut sc: &mut ScannerPool)
-                                            -> Result<(), Box<Error>> {
+                                            -> Result<(), Box<std::io::Error>> {
     match file_path_str {
         Some(p) => {
                      let f = try!(File::open(&Path::new(p)));
@@ -193,7 +193,7 @@ pub fn process_input(file_path_str: Option<&str>, mut sc: &mut ScannerPool)
 /// In order to avoid additional copying the trait `memmap` is used to access
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
-pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<Error>> {
+pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<std::io::Error>> {
     let len = try!(file.metadata()).len() as usize;
     let mut byte_counter: usize = 0;
     while byte_counter + WIN_LEN <= len {
@@ -217,7 +217,7 @@ pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<Error>> {
 /// Streams the input pipe by cutting it into overlapping chunks and feeds the `ScannerPool`.
 /// This functions implements is own rotating input buffer.
 /// After each iteration the `byte_counter` is updated.
-fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<Error>> {
+fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
     let mut byte_counter: usize = 0;
     let stdin = stdin();
     let mut stdin = stdin.lock();
