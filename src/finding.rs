@@ -40,7 +40,7 @@ lazy_static! {
 
 pub const CUT_LABEL: char = '\u{2691}';
 
-use Mission;
+use mission::Mission;
 
 /// Initial capacity of the findings vector is
 /// set to WIN_STEP / 32.
@@ -54,6 +54,8 @@ pub const FINDING_STR_CAPACITY: usize = 100;
 /// `Finding` represents a valid result string with it's found location and
 /// original encoding.
 pub struct Finding {
+    /// Pointer to the filename of the file from which the input stream comes.
+    pub filename: Option<&'static str>,
     /// A copy of the `byte_counter` pointing at the found location of the result string.
     pub ptr: usize,
     /// Mission associated with this finding
@@ -90,6 +92,15 @@ impl Finding {
     /// Format and dump a Finding to the output channel,
     /// usually stdout.
     pub fn print(&self, out: &mut Box<Write>) -> Result<(), Box<std::io::Error>> {
+        let filename_str = if ARGS.flag_print_file_name {
+                               if let Some(f) = self.filename {
+                                   format!("{}: ",f)
+                               } else {
+                                   "".to_string()
+                               }
+                           } else {
+                               "".to_string()
+                           };
 
         if ARGS.flag_control_chars == ControlChars::R {
             let ptr_str = match ARGS.flag_radix {
@@ -127,7 +138,8 @@ impl Finding {
             };
 
             for l in  self.s.lines() {
-                try!(out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() ));
+                try!(out.write_all(
+                        format!("{}{}{}{}\n",filename_str, ptr_str, enc_str, l).as_bytes() ));
                 ptr_str = ptr_str_ff.to_string();
             };
         };
@@ -321,13 +333,14 @@ pub struct FindingCollection {
 
 impl FindingCollection {
     /// Constructor which also adds a new `Finding`.
-    pub fn new(text_ptr: usize, mission: &'static Mission) -> FindingCollection{
+    pub fn new(filename:Option<&'static str>, text_ptr:usize, mission:&'static Mission)
+                                                                -> FindingCollection{
         let mut fc = FindingCollection{
                 v: Vec::with_capacity(FINDING_COLLECTION_CAPACITY),
                 completes_last_str: false,
                 last_str_is_incomplete: false
         };
-        fc.v.push( Finding{ ptr:text_ptr, mission:mission,
+        fc.v.push( Finding{ filename: filename, ptr:text_ptr, mission:mission,
                             s:String::with_capacity(FINDING_STR_CAPACITY) } );
 
         fc
@@ -362,8 +375,9 @@ impl FindingCollection {
         };
 
         // We have check again because len() may have changed in the line above
+        let filename = self.v.last().unwrap().filename;
         if self.v.last().unwrap().s.len() != 0 {
-            self.v.push(Finding{ ptr: text_ptr,
+            self.v.push(Finding{ filename: filename, ptr: text_ptr,
                                  mission: mission,
                                  s: String::with_capacity(FINDING_STR_CAPACITY) });
         } else {
@@ -422,7 +436,8 @@ impl StringWriter for FindingCollection {
 mod tests {
     use super::*;
     use options::{Args, Radix, ControlChars};
-    use UnicodeBlockFilter;
+    use mission::UnicodeBlockFilter;
+    use mission::Mission;
     use helper::IdentifyFirstLast;
 
     extern crate encoding;
@@ -443,6 +458,7 @@ mod tests {
            flag_split_bytes:  Some(2),
            flag_radix:  Some(Radix::X),
            flag_output: None,
+           flag_print_file_name: false,
         };
     }
 
@@ -450,7 +466,6 @@ mod tests {
     /// Test the filter macro
     #[test]
     fn test_scan_filter(){
-       use Mission;
        // Replace mode: the last 1234 is too short
 
        static M1:Mission = Mission{ encoding: encoding::all::ASCII,
@@ -464,7 +479,7 @@ mod tests {
 
        let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M1,
+                Finding{ filename:None, ptr:0, mission:&M1,
                     s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
                 },
             ],
@@ -473,7 +488,8 @@ mod tests {
 
        let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M1, s:"\u{fffd}34567890\u{fffd}2345678".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M1,
+                         s:"\u{fffd}34567890\u{fffd}2345678".to_string() },
             ], completes_last_str: false, last_str_is_incomplete: false
        };
 
@@ -492,11 +508,12 @@ mod tests {
        };
 
        let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M2, s:"ab\u{0}1234\u{0}\u{0}".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M2,
+                         s:"ab\u{0}1234\u{0}\u{0}".to_string() },
                 ], completes_last_str: true, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M2, s:"\u{2691}ab".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M2, s:"\u{2691}ab".to_string() },
                 ], completes_last_str: true, last_str_is_incomplete: false};
 
        filter!(input, M2); // Mode -c r (replace)
@@ -516,11 +533,12 @@ mod tests {
        };
 
        let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M3, s:"\u{0}ab\u{0}1234\u{0}\u{0}".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M3,
+                         s:"\u{0}ab\u{0}1234\u{0}\u{0}".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M3, s:"".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M3, s:"".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
 
        filter!(input, M3); // Mode -c r (replace)
@@ -540,11 +558,12 @@ mod tests {
 
 
        let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M4, s:"\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M4,
+                         s:"\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
-                Finding{ ptr:0, mission:&M4, s:"".to_string() },
+                Finding{ filename:None, ptr:0, mission:&M4, s:"".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
        filter!(input, M4); // Mode -c r (replace)
 
@@ -562,11 +581,13 @@ mod tests {
        };
 
        let mut input = FindingCollection{ v: vec![
-                Finding{ ptr:  0, mission:&M5, s: "12\u{0}\u{0}34567\u{0}89012\u{0}".to_string() },
+                Finding{ filename:None, ptr:  0, mission:&M5,
+                         s:"12\u{0}\u{0}34567\u{0}89012\u{0}".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
 
        let expected = FindingCollection{ v: vec![
-                Finding{ ptr:  0, mission:&M5, s: "\u{fffd}34567\u{fffd}89012".to_string() },
+                Finding{ filename:None, ptr:  0, mission:&M5,
+                         s:"\u{fffd}34567\u{fffd}89012".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false};
 
 
@@ -588,7 +609,7 @@ mod tests {
 
       let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M6,
+                Finding{ filename:None, ptr:0, mission:&M6,
                          s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string()
                 },
             ], completes_last_str: false, last_str_is_incomplete: false
@@ -596,7 +617,7 @@ mod tests {
 
       let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M6,
+                Finding{ filename:None, ptr:0, mission:&M6,
                          s:"\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string() },
             ], completes_last_str: false, last_str_is_incomplete: false
       };
@@ -618,13 +639,13 @@ mod tests {
       };
       let mut input = FindingCollection{
             v: vec![
-               Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
+               Finding{ filename:None, ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
             ], completes_last_str: true, last_str_is_incomplete: false
       };
 
       let expected = FindingCollection{
             v: vec![
-               Finding{ ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
+               Finding{ filename:None, ptr:  0, mission:&M7, s: "\u{0}\u{0}34".to_string() },
             ], completes_last_str: true, last_str_is_incomplete: false
       };
 
@@ -645,12 +666,12 @@ mod tests {
       };
 
       let mut input = FindingCollection{
-            v: vec![ Finding{ ptr:0, mission:&M8, s:"\u{0}\u{0}34".to_string() }, ],
+            v: vec![ Finding{ filename:None, ptr:0, mission:&M8, s:"\u{0}\u{0}34".to_string() }, ],
             completes_last_str: false, last_str_is_incomplete: false
       };
 
       let expected = FindingCollection{
-            v: vec![ Finding{ ptr:  0, mission:&M8, s: "".to_string() }, ],
+            v: vec![ Finding{ filename:None, ptr:  0, mission:&M8, s: "".to_string() }, ],
             completes_last_str: false, last_str_is_incomplete: false
       };
 
@@ -663,7 +684,7 @@ mod tests {
     /// Test the Unicode filter in macro
     #[test]
     fn test_scan_unicode_filter(){
-       use Mission;
+       use mission::Mission;
        // This filter is not restrictive, everything should pass
        static M9:Mission = Mission {encoding: encoding::all::ASCII,
                         filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,
@@ -676,7 +697,7 @@ mod tests {
 
        let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M9,
+                Finding{ filename:None, ptr:0, mission:&M9,
                          s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
                 ],
             completes_last_str: false, last_str_is_incomplete: false
@@ -684,7 +705,7 @@ mod tests {
 
        let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M9,
+                Finding{ filename:None, ptr:0, mission:&M9,
                          s:"Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string() },
                 ],
             completes_last_str: false, last_str_is_incomplete: false       };
@@ -709,14 +730,14 @@ mod tests {
 
        let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:  0, mission:&M10,
+                Finding{ filename:None, ptr:  0, mission:&M10,
                          s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?".to_string() },
                 ], completes_last_str: false, last_str_is_incomplete: false
        };
 
        let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:  0, mission:&M10,
+                Finding{ filename:None, ptr:  0, mission:&M10,
                          s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?".to_string() },
                 ],
             completes_last_str: false, last_str_is_incomplete: false
@@ -744,7 +765,7 @@ mod tests {
 
        let mut input = FindingCollection{
             v: vec![
-                Finding{ ptr:0, mission:&M11,
+                Finding{ filename:None, ptr:0, mission:&M11,
                          s:"Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?".to_string() },
             ],
             completes_last_str: false, last_str_is_incomplete: false
@@ -752,7 +773,7 @@ mod tests {
 
        let expected = FindingCollection{
             v: vec![
-                Finding{ ptr:  0, mission:&M11,
+                Finding{ filename:None, ptr:  0, mission:&M11,
                          s:"\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?".to_string() },
             ],
             completes_last_str: false, last_str_is_incomplete: false

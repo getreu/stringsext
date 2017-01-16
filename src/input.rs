@@ -1,20 +1,21 @@
 //! This module abstracts the data-input channels i.e. file and stdin.
 use scanner::ScannerPool;
 
+use std;
 use std::path::Path;
 use std::io::prelude::*;
 use std::io::stdin;
-use std;
+use std::fs::File;
+
 extern crate memmap;
 use self::memmap::{Mmap, Protection};
-extern crate itertools;
 
+extern crate itertools;
 
 extern crate scoped_threadpool;
 
 extern crate encoding;
 
-use std::fs::File;
 
 
 /// `WIN_LEN` is the length of the memory chunk in which strings are searched in
@@ -176,14 +177,11 @@ pub const UTF8_LEN_MAX: u8 = 6;
 /// Chunk.
 /// If `file_path_str` == None read from `stdin`, otherwise
 /// read from file.
-pub fn process_input(file_path_str: Option<&str>, mut sc: &mut ScannerPool)
+pub fn process_input(filename: Option<&'static str>, mut sc: &mut ScannerPool)
                                             -> Result<(), Box<std::io::Error>> {
-    match file_path_str {
-        Some(p) => {
-                     let f = try!(File::open(&Path::new(p)));
-                     from_file(&mut sc, &f)
-                   }
-        None    =>   from_stdin(&mut sc)
+    match filename {
+        Some(filename) => from_file(&mut sc, &filename),
+        None           => from_stdin(&mut sc)
     }
 }
 
@@ -193,14 +191,15 @@ pub fn process_input(file_path_str: Option<&str>, mut sc: &mut ScannerPool)
 /// In order to avoid additional copying the trait `memmap` is used to access
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
-pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<std::io::Error>> {
+pub fn from_file(sc: &mut ScannerPool, filename: &'static str) -> Result<(), Box<std::io::Error>> {
+    let file = try!(File::open(&Path::new(filename)));
     let len = try!(file.metadata()).len() as usize;
     let mut byte_counter: usize = 0;
     while byte_counter + WIN_LEN <= len {
         let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
                                           byte_counter,WIN_LEN));
         let chunk = unsafe { mmap.as_slice() };
-        sc.launch_scanner(&byte_counter, &chunk);
+        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
     // The last is usually shorter
@@ -208,7 +207,7 @@ pub fn from_file(sc: &mut ScannerPool, file: &File) -> Result<(), Box<std::io::E
         let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
                                           byte_counter,len-byte_counter));
         let chunk = unsafe { mmap.as_slice() };
-        sc.launch_scanner(&byte_counter, &chunk);
+        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
     }
     Ok(())
 }
@@ -246,14 +245,14 @@ fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
         }
         // Handle data.
         while data_start + WIN_LEN <= data_end {
-            sc.launch_scanner(&byte_counter, &buf[data_start..data_start + WIN_LEN]);
+            sc.launch_scanner(None, &byte_counter, &buf[data_start..data_start + WIN_LEN]);
             data_start += WIN_STEP;
             byte_counter += WIN_STEP;
         }
     }
     // The last is usually shorter
     if data_start < data_end {
-        sc.launch_scanner(&byte_counter, &buf[data_start..data_end]);
+        sc.launch_scanner(None, &byte_counter, &buf[data_start..data_end]);
     }
     Ok(())
 }
@@ -273,8 +272,9 @@ mod tests {
     use std::fs::File;
     use std::io::Write;
     use self::tempdir::TempDir;
+    use std::path::PathBuf;
     use std::sync::mpsc;
-    use Missions;
+    use mission::Missions;
     use finding::FindingCollection;
     use finding::Finding;
     use scanner::ScannerPool;
@@ -294,6 +294,7 @@ mod tests {
            flag_split_bytes:  Some(2),
            flag_radix:  Some(Radix::X),
            flag_output: None,
+           flag_print_file_name: true,
         };
     }
 
@@ -316,43 +317,42 @@ mod tests {
     }
 
 
+    lazy_static! {
+       pub static ref PATH: PathBuf = TempDir::new("test_from_file")
+                                      .expect("Can not create tempdir.")
+                                      .path()
+                                      .to_path_buf();
+    }
+
+
 
     /// Test the reading and processing of file data.
     #[test]
-
-
     fn test_from_file(){
-        let tempdir = TempDir::new("test_from_file").expect("Can not create tempdir.");
-
-        let file_path_str = ARGS.arg_FILE[0].to_string();
-
-        let path = tempdir.path().join(file_path_str);
         {
-            let mut f = File::create(&path).unwrap();
+            let mut f = File::create(&PATH.as_path()).unwrap();
             let inp = "hallo1234üduüso567890".as_bytes();
             f.write_all(&inp[..]).unwrap();
         }
-
 
         {
             let (tx, rx) = mpsc::sync_channel(0);
             let mut sc = ScannerPool::new(&MISSIONS,&tx);
 
-            let f = File::open(path).unwrap();
 
             let _ = thread::spawn(move || {
 
                 let expected1 = FindingCollection{ v: vec![
-                    Finding{ ptr: 0,
+                    Finding{ filename: None, ptr: 0,
                              mission: &MISSIONS.v[0] ,
                              s: "hallo1234".to_string() },
-                    Finding{ ptr: 15,
+                    Finding{ filename: None, ptr: 15,
                              mission: &MISSIONS.v[0] ,
                              s: "so567890\u{2691}".to_string() },
                     ], completes_last_str: false, last_str_is_incomplete: true};
 
                 let expected2 = FindingCollection{ v: vec![
-                    Finding{ ptr: 0,
+                    Finding{ filename: None, ptr: 0,
                              mission: &MISSIONS.v[1],
                              s: "hallo1234üduüso567890\u{2691}".to_string() },
                     ], completes_last_str: false, last_str_is_incomplete: true};
@@ -370,7 +370,7 @@ mod tests {
                 assert!((expected2 == res1) || (expected2 == res2));
                 //println!("Merger terminated.");
             });
-            from_file(&mut sc, &f).unwrap();
+            from_file(&mut sc, PATH.as_path().to_str().unwrap()).unwrap();
 
         }
     }

@@ -30,9 +30,12 @@ search for multi-byte encoded strings in binary data.
    :Date: 2017-01-10
    :Version: 1.4.0
 
+   :Date: 2017-01-13
+   :Version: 1.4.1
+
 :Author: Jens Getreu
-:Date: 2017-01-13
-:Version: 1.4.1
+:Date: 2017-01-16
+:Version: 1.4.2
 :Copyright: Apache License, Version 2.0 (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
@@ -159,6 +162,9 @@ OPTIONS
         Unicode-point search range is the union of the first and the second.
 
     See the output of **--help** for the default value of *ENC*.
+
+**-f, --print-file-name**
+    Print the name of the file before each string.
 
 **-h, --help**
     Print a synopsis of available options and default values.
@@ -338,7 +344,7 @@ LIMITATIONS
    Unicode scanner will detect such a string vector as one big string
    which might exceed the WIN\_LEN buffer size.
 
-   For searching in with large Null (0x00) terminated string vectors,
+   For searching in large Null (0x00) terminated string vectors,
    the ASCII scanner is recommended. The ASCII scanner regards Null
    (0x00) as invalid character, so the string vector will be detected
    as sequence of short distinguished strings. These short strings will

@@ -18,11 +18,12 @@ Options:
                                 MIN: overwrites general `--bytes MIN` for this ENC only.
                                 UNICODEBLOCK: search only for characters in range
                                 (defaults to all: U+0..U+10FFFF).
+ -f, --print-file-name          Print the name of the file before each string.
  -h, --help                     Display this message.
  -l, --list-encodings           List available encoding-names for ENCNAME.
  -n MIN, --bytes=MIN            Minimum length of printed strings. [default: 4]
- -s MIN, --split-bytes=MIN      Minimum length of printed split strings. [default: 1]
  -p FILE, --output=FILE         Print not to stdout but in file.
+ -s MIN, --split-bytes=MIN      Minimum length of printed split strings. [default: 1]
  -t RADIX, --radix=RADIX        Enable Byte counter with radix `o`, `x` or `d`.
  -V, --version                  Print version info and exit.
 ";
@@ -50,6 +51,8 @@ pub struct Args {
     pub flag_radix: Option<Radix>,
     /// Pathname of the output file. `None` defaults to `stdout`.
     pub flag_output: Option<String>,
+    /// Print the name of the file before each string.
+    pub flag_print_file_name: bool,
 }
 
 /// Mode how to print control characters
@@ -114,6 +117,7 @@ mod tests {
         assert_eq!(args.flag_split_bytes, Some(11u8));
         assert_eq!(args.flag_radix, Some(Radix::O));
         assert_eq!(args.flag_output, Some(s("outfile")));
+        assert_eq!(args.flag_print_file_name, false);
     }
 }
 
