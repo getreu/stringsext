@@ -33,7 +33,7 @@ many other encodings.
 
 Unlike *GNU strings* **stringsext** can be configured to search for
 valid characters not only in ASCII but also in many other input
-encodings, e.g.: utf-8, utf-16be, utf-16le, big5-2003, euc-jp, koi8-r
+encodings, e.g.: UTF-8, UTF-16BE, UTF-16LE, BIG5-2003, EUC-JP, KOI8-R
 and many others. The option **--list-encodings** shows a list of valid
 encoding names based on the WHATWG Encoding Standard. When more than one
 encoding is specified, the scan is performed in different threads
@@ -61,8 +61,11 @@ User documentation
     page <https://getreu.net/public/downloads/doc/stringsext/./doc/build/stringsext--man.html>`__
 
 Developer documentation
-    `API
-    documentation <https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html>`__
+    | `API documentation`_
+    | `Forensic Tool Development with Rust`_
+
+.. _`API documentation`: https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html_
+.. _`Forensic Tool Development with Rust`: https://getreu.net/public/downloads/doc/forensic-tool-development-with-rust
 
 Source code
 ===========
@@ -88,18 +91,22 @@ Manual page
 Building and installing
 =======================
 
-1. Install *Rust* with rustup_::
+#. Install *Rust* with rustup_::
 
       curl https://sh.rustup.rs -sSf | sh
 
-2. Build
+#. Download stringsext_::
+
+      git clone git@github.com:getreu/stringsext.git
+
+#. Build
 
    Enter the *Stringsext* source directory where the file ``Cargo.toml`` resides. Then execute::
 
       cargo build --release
 
 
-3. Install
+#. Install
 
    a. Linux ::
 
