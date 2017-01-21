@@ -89,7 +89,7 @@ When invoked with ``stringsext -e ascii -c i`` **stringsext** can be
 used as *GNU strings* replacement.
 
 Under Windows a Unicode editor is required. For first tests ``wordpad``
-should do. Choose the ``Courir new`` font or ``Segoe UI symbol`` font to
+should do. Choose the ``Courier new`` font or ``Segoe UI symbol`` font to
 see the flag symbols ⚑ (U+2691).
 
 OPTIONS
@@ -99,7 +99,7 @@ OPTIONS
     Determine if and how control characters are printed.
 
     The search algorithm first scans for valid character sequences which
-    are then are re-encoded into UTF-8 strings containing graphic
+    are then re-encoded into UTF-8 strings containing graphic
     (printable) and control (non-printable) characters.
 
     When *MODE* is set to **p** all valid (control and graphic)
@@ -313,7 +313,7 @@ chunks of WIN_LEN bytes (see source code for exact size) in size. A
 scanner is a module that extracts valid character sequences, valid
 strings, of an input chunk.
 
-A valid strings is then fed into a **filter** that extracts multiple
+A valid string is then fed into a **filter** that extracts multiple
 graphic strings out of a valid string. A filter may apply additional
 criteria such as *MIN* or *UNICODEBLOCK*.
 
@@ -330,14 +330,14 @@ LIMITATIONS
    pieces may then become to short to meet the *MIN* bytes condition.
    In order not to loose any bytes of a piece the *MIN* option is
    temporary disabled for split strings. The downside of this is the
-   appearance of some undesirable false positives. Therefor the
+   appearance of some undesirable false positives. Therefore the
    **--splite-bytes** option allows to set an additional condition to
    control the appearance of these false positives: The *SPLIT-MIN*
    value determines the minimum number of bytes a split piece must have
    to be printed. Note that with a value *SPLIT-MIN > 1* some bytes of
    the split graphic string may not appear in the output.
 
-   In practise the above limitation occurs when the search field
+   In practice, the above limitation occurs when the search field
    contains large vectors of Null (0x00) terminated strings. For most
    multi-byte encodings, as well as for the Unicode-scanner, the Null
    (0x00) character is regarded as a valid control character. Thus the
@@ -346,9 +346,9 @@ LIMITATIONS
 
    For searching in large Null (0x00) terminated string vectors,
    the ASCII scanner is recommended. The ASCII scanner regards Null
-   (0x00) as invalid character, so the string vector will be detected
-   as sequence of short distinguished strings. These short strings will
-   most likely never exceed the WIN\_LEN buffer and therefor will never
+   (0x00) as an invalid character, so the string vector will be detected
+   as a sequence of short distinguished strings. These short strings will
+   most likely never exceed the WIN\_LEN buffer and therefore will never
    be split.  In such a scenario it is a good practise to run Unicode
    and ASCII scanners in parallel.
 
