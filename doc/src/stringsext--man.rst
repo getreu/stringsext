@@ -322,56 +322,53 @@ criteria such as *MIN* or *UNICODEBLOCK*.
 LIMITATIONS
 ===========
 
-1. Valid strings smaller than WIN_LEN are never cut. When valid string
-   exceeds WIN_LEN bytes it will be cut. It may happen that at the
-   cutting edge locates a short graphic string that is then split into
-   two pieces which are printed on separate lines. The cutting edge is
-   labelled with two flag symbols ⚑ (U+2691). Furthermore, one or both
-   pieces may then become to short to meet the *MIN* bytes condition.
-   In order not to loose any bytes of a piece the *MIN* option is
-   temporary disabled for split strings. The downside of this is the
-   appearance of some undesirable false positives. Therefore the
-   **--splite-bytes** option allows to set an additional condition to
-   control the appearance of these false positives: The *SPLIT-MIN*
-   value determines the minimum number of bytes a split piece must have
-   to be printed. Note that with a value *SPLIT-MIN > 1* some bytes of
-   the split graphic string may not appear in the output.
+1. Valid strings smaller than FINISH_STR_BUF are never cut. When a valid string
+   exceeds WIN_LEN bytes it is always cut. It may happen that at the cutting
+   edge locates a short graphic string that is then split into two pieces which
+   are printed on separate lines. **stringsext** labels such a cutting edge with
+   two flag symbols ⚑ (U+2691). Furthermore, one or both of those pieces may
+   then become to short to meet the **--bytes** condition.  In order not to
+   loose any bytes of a piece the **--bytes** option is not observed for split
+   strings. The downside of this is the appearance of some undesirable false
+   positives.  Therefore the **--split-bytes** option allows to set an
+   additional condition to control the appearance of these false positives: The
+   *SPLIT-MIN* value determines the minimum number of bytes a split piece must
+   have to be printed.  Note that with a value *SPLIT-MIN > 1* some bytes of the
+   split graphic string may not appear in the output. Therefore the default is
+   *SPLIT-MIN = 1*.
 
-   In practice, the above limitation occurs when the search field
-   contains large vectors of Null (0x00) terminated strings. For most
-   multi-byte encodings, as well as for the Unicode-scanner, the Null
-   (0x00) character is regarded as a valid control character. Thus the
-   Unicode scanner will detect such a string vector as one big string
-   which might exceed the WIN\_LEN buffer size.
+   In practice, the above limitation occurs only when the search field contains
+   large vectors of Null (0x00) terminated strings. For most multi-byte
+   encodings, as well as for the Unicode-scanner, the Null (0x00) character is
+   regarded as a valid control character. Thus the Unicode scanner will detect
+   such a string vector as one big string which might exceed the WIN\_LEN buffer
+   size.
 
-   For searching in large Null (0x00) terminated string vectors,
-   the ASCII scanner is recommended. The ASCII scanner regards Null
-   (0x00) as an invalid character, so the string vector will be detected
-   as a sequence of short distinguished strings. These short strings will
-   most likely never exceed the WIN\_LEN buffer and therefore will never
-   be split.  In such a scenario it is a good practise to run Unicode
-   and ASCII scanners in parallel.
+   For searching in large Null (0x00) terminated string vectors, the ASCII
+   scanner is recommended. The ASCII scanner regards Null (0x00) as an invalid
+   character, so the string vector will be detected as a sequence of short
+   distinguishable valid strings. These short strings will most likely never
+   exceed the WIN\_LEN buffer and therefore will never be split.  In such a
+   scenario it is a good practise to run Unicode and ASCII scanners in parallel.
 
-   It is guaranteed that valid strings not longer than FLAG\_BYTES\_MAX
+   Summary: It is guaranteed that valid strings not longer than FINISH_STR_BUF
    are never split. However, when the size of a valid string exceeds
-   FLAG\_BYTES\_MAX bytes it may be split into two or more valid
-   strings and then filtered separately. Note that this limitation
-   refers to the *valid* string length. A valid string may consist of
-   several *graphic* strings.  If a valid string is longer than
-   WIN\_LEN bytes, it is always split. To know the values of the
-   constants please refer to the definition in the source code of your
-   **stringsext** build. Original values are: FLAG\_BYTES\_MAX = 6144
-   bytes, WIN\_LEN = 14342 bytes.
+   FINISH_STR_BUF bytes it may be split into two or more valid strings and then
+   filtered separately. Note that this limitation refers to the *valid* string
+   length. A valid string may consist of several *graphic* strings.  If a valid
+   string is longer than WIN\_LEN bytes, it is always split. To know the values
+   of the constants please refer to the definition in the source code of your
+   **stringsext** build. Original values are: FINISH_STR_BUF = 6144 bytes,
+   WIN\_LEN = 14342 bytes.
 
 
 
-2. It is guaranteed that all string sequences are detected and printed
-   according to the search criteria. However due to potential false
-   positives when interpreting binary data as multi-byte-strings, it
-   may happen that the first characters of a valid string may not be
-   recognised immediately. In practice, this effect occurs very rarely
-   and the scanner synchronises with the correct character boundaries
-   quickly.
+2. It is guaranteed that all string sequences are detected and printed according
+   to the search criteria. However due to potential false positives when
+   interpreting binary data as multi-byte-strings, it may happen that the first
+   characters of a valid string may not be recognised immediately. In practice,
+   this effect occurs very rarely and the scanner synchronises with the correct
+   character boundaries quickly.
 
 
 
