@@ -80,11 +80,11 @@ Binaries
     Download `stringsext binaries`_ and verify  hashes_.
 
 Manual page
-    `stringsext.1`_
+    `stringsext.1.gz`_
 
 .. _`stringsext binaries`: https://getreu.net/public/downloads/doc/stringsext/./target/
 .. _hashes: https://getreu.net/public/sha256sum.txt
-.. _`stringsext.1`: https://getreu.net/public/downloads/doc/stringsext/./man/stringsext.1
+.. _`stringsext.1.gz`: https://getreu.net/public/downloads/doc/stringsext/./man/man1/stringsext.1.gz
 
 
 
@@ -104,14 +104,20 @@ Building and installing
    Enter the *Stringsext* source directory where the file ``Cargo.toml`` resides. Then execute::
 
       cargo build --release
-
+      ./make-doc
 
 #. Install
 
-   a. Linux ::
+   a. Linux:
 
+      .. code:: bash
+
+         # install binary
          sudo cp target/release/stringsext /usr/local/bin/
-         sudo cp man/stringsext.1 /usr/local/man/man1/
+
+         # install man-page
+         sudo cp man/stringsext.1.gz /usr/local/man/man1/
+         sudo dpkg-reconfigure man-db   # e.g. Debian, Ubuntu
 
    b. Windows
 
