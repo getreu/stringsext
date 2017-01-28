@@ -8,8 +8,9 @@ use std::fmt;
 use std::process;
 use std::cmp::{Ord,Eq};
 use std::cmp;
-use std::num::ParseIntError;
 use std::str::FromStr;
+use std::num;
+use std::error;
 use options::ARGS;
 extern crate encoding;
 use encoding::EncodingRef;
@@ -134,6 +135,55 @@ impl fmt::Debug for Mission {
 }
 
 
+// We derive `Debug` because all types should probably derive `Debug`.
+// This gives us a reasonable human readable description of `CliError` values.
+#[derive(Debug,PartialEq)]
+/// Possible errors when parsing command line options
+enum CliError {
+    /// Wrapper for ParseIntError
+    Format(num::ParseIntError),
+    /// The `--encoding ` option value can have max 4 comma separated tokens:
+    /// ENC == ENCNAME,MIN,UNICODEBLOCK,UNICODEBLOCK
+    TooManyTokensError,
+}
+
+impl From<num::ParseIntError> for CliError {
+    fn from(err: num::ParseIntError) -> CliError {
+        CliError::Format(err)
+    }
+}
+
+impl fmt::Display for CliError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            // The underlying error already impl `Display`, so we defer to
+            // its implementation.
+            CliError::Format(ref err) => write!(f, "Format error: {}", err),
+            CliError::TooManyTokensError =>
+                   write!(f, "Format error: too many comma separated tokens"),
+        }
+    }
+}
+
+impl error::Error for CliError {
+    fn description(&self) -> &str {
+        // The underlying error already impl `Error`, so we defer to its
+        // implementation.
+        match *self {
+            CliError::Format(ref err) => err.description(),
+            CliError::TooManyTokensError => "too many comma separated tokens",
+        }
+    }
+
+    fn cause(&self) -> Option<&error::Error> {
+        match *self {
+            CliError::Format(ref err) => Some(err),
+            _ => None,
+        }
+    }
+}
+
+
 
 
 /// Every `--encoding` option is stored in a `Mission` object which are bound together in a
@@ -163,7 +213,7 @@ impl Missions {
                     Ok(r)  => r,
                     Err(e) => {
                         writeln!(&mut std::io::stderr(),
-                            "Error: {} parsing `{}`.",e,&enc_opt).unwrap();
+                            "Error: {} while parsing `{}`.",e,&enc_opt).unwrap();
                         process::exit(1);
                     }
                 };
@@ -225,7 +275,7 @@ impl Missions {
     /// Helper function to parse enc_opt.
     fn parse_enc_opt <'a>(enc_opt:&'a str, nbytes_min_default:u8)
                      -> Result<(&'a str, u8, UnicodeBlockFilter, UnicodeBlockFilter),
-                                ParseIntError> {
+                                CliError> {
 
         let mask = |(u_lower, u_upper):(u32, u32)| -> UnicodeBlockFilter {
 
@@ -260,7 +310,7 @@ impl Missions {
                                  is_some: filtering}
         };
 
-        let parse_range = |r:&str| -> Result<(u32, u32), ParseIntError> {
+        let parse_range = |r:&str| -> Result<(u32, u32), CliError> {
              // Separate and parse the range string
              let mut j = r.split_terminator("..")
                           .map(|s|s.trim_left_matches("U+"))
@@ -286,11 +336,8 @@ impl Missions {
         let range2:&str = i.next().unwrap_or("");
         let filter2 = mask(try!(parse_range(range2)));
 
-        if let Some(s) = i.next() {
-            writeln!(&mut std::io::stderr(),
-                          "Error: Max. 2 Unicode-block-filter supported: \
-                          Can not process `{}` in `{}`.",s,enc_opt).unwrap();
-                          process::exit(1);
+        if let Some(_) = i.next() {
+            return Err(CliError::TooManyTokensError);
         }
 
         Ok( (enc_name, nbytes_min, filter1, filter2) )
@@ -303,29 +350,29 @@ impl Missions {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use std::num::ParseIntError;
     use mission::UnicodeBlockFilter;
+    use mission::CliError;
 
     #[test]
     fn test_enc_opt_parser () {
         //let pie = ParseIntError {kind: std::num::InvalidDigit} //is private
-        let pie_invalid_digit: ParseIntError = u32::from_str("x").unwrap_err();
+        let pie_invalid_digit = CliError::Format(u32::from_str("x").unwrap_err());
         //let pie = ParseIntError {kind: std::num::Overflow} //is private
-        let pie_overflow: ParseIntError = u8::from_str("257").unwrap_err();
+        let pie_overflow      = CliError::Format(u8::from_str("257").unwrap_err());
 
 
-        assert_eq!(super::Missions::parse_enc_opt("ascii",8),
-           Ok(("ascii",8,UnicodeBlockFilter::new(),UnicodeBlockFilter::new())));
+        assert_eq!(super::Missions::parse_enc_opt("ascii",8).unwrap(),
+           ("ascii",8,UnicodeBlockFilter::new(),UnicodeBlockFilter::new()));
 
         // range in `ascii,U+41..U+67` extended to range `U+40..U+7f`
-        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+41..U+67",8),
-           Ok(("ascii",10,UnicodeBlockFilter::new2(0xffffffc0,0x40,true),
-                          UnicodeBlockFilter::new())));
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+41..U+67",8).unwrap(),
+           ("ascii",10,UnicodeBlockFilter::new2(0xffffffc0,0x40,true),
+                          UnicodeBlockFilter::new()));
 
         // small letters, range is extended to `U+60..U+7f`
-        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+61..U+7a",8),
-           Ok(("ascii",10,UnicodeBlockFilter::new2(0xffffffe0,0x60,true),
-                          UnicodeBlockFilter::new())));
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+61..U+7a",8).unwrap(),
+           ("ascii",10,UnicodeBlockFilter::new2(0xffffffe0,0x60,true),
+                          UnicodeBlockFilter::new()));
 
         assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+4?1..U+67",8).unwrap_err(),
            pie_invalid_digit );
@@ -337,14 +384,14 @@ mod tests {
            pie_invalid_digit );
 
         // range in `ascii,U+401..U+482,10` extended to range `U+400..U+4ff`
-        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+401..U+482",8),
-           Ok(("ascii",10,UnicodeBlockFilter::new2(0xffffff00,0x400,true),
-                          UnicodeBlockFilter::new())));
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+401..U+482",8).unwrap(),
+           ("ascii",10,UnicodeBlockFilter::new2(0xffffff00,0x400,true),
+                          UnicodeBlockFilter::new()));
 
         // range in `ascii,10,U+40e..U+403,10` extended to range `U+400..U+40f`
-        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+40e..U+403",8),
-           Ok(("ascii",10,UnicodeBlockFilter::new2(0xfffffff0,0x400,true),
-                          UnicodeBlockFilter::new())));
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+40e..U+403",8).unwrap(),
+           ("ascii",10,UnicodeBlockFilter::new2(0xfffffff0,0x400,true),
+                          UnicodeBlockFilter::new()));
 
         assert_eq!(super::Missions::parse_enc_opt("ascii,256,U+41..U+67",8).unwrap_err(),
            pie_overflow );
@@ -353,9 +400,12 @@ mod tests {
            pie_overflow );
 
         // range in `ascii,10,U+40e..U+403,10` extended to range `U+400..U+40f`
-        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+0..ff,U+40e..U+403",8),
-           Ok(("ascii",10,UnicodeBlockFilter::new2(0xffffff00,0x0,true),
-                          UnicodeBlockFilter::new2(0xfffffff0,0x400,true))));
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,U+0..ff,U+40e..U+403",8).unwrap(),
+           ("ascii",10,UnicodeBlockFilter::new2(0xffffff00,0x0,true),
+                          UnicodeBlockFilter::new2(0xfffffff0,0x400,true)));
+
+        assert_eq!(super::Missions::parse_enc_opt("ascii,10,0..f,10..1f,20..2f",8).unwrap_err(),
+           CliError::TooManyTokensError );
     }
 }
 

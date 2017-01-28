@@ -4,14 +4,14 @@ mkdir -p ./doc/build
 mkdir --parents ./man/man1
 
 # Man page
-rst2man.py ./doc/src/stringsext--man.rst > ./man/man1/stringsext.1
-rst2html.py --stylesheet=./doc/src/docutils_basic.css ./doc/src/stringsext--man.rst ./doc/build/stringsext--man.html
+rst2man ./doc/src/stringsext--man.rst > ./man/man1/stringsext.1
+rst2html --stylesheet=./doc/src/docutils_basic.css ./doc/src/stringsext--man.rst ./doc/build/stringsext--man.html
 # You can also use pandoc
 #pandoc -s doc/src/stringsext--man.rst -t man -o man/man1/stringsext.1
 gzip man/man1/stringsext.1
 
-# index page
-rst2html.py --stylesheet=./doc/src/docutils_basic.css ./doc/src/README.rst ./doc/build/README.html
+# Readme page
+rst2html --stylesheet=./doc/src/docutils_basic.css ./doc/src/README.rst ./doc/build/README.html
 
 
 ln -sf ./doc/build/README.html ./README.html
