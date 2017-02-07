@@ -18,9 +18,9 @@ stringsext - search for multi-byte encoded strings in binary data.
 
 :Author: Jens Getreu
 :Copyright: Apache 2 license
-
-
-
+:Build status: 
+   .. image:: https://travis-ci.org/getreu/stringsext.svg?branch=master
+      :target: https://travis-ci.org/getreu/stringsext
 
 **stringsext** is a Unicode enhancement of the *GNU strings* tool with
 additional functionalities: **stringsext** recognizes Cyrillic, CJKV
