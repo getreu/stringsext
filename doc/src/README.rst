@@ -64,7 +64,7 @@ Developer documentation
     | `API documentation`_
     | `Forensic Tool Development with Rust`_
 
-.. _`API documentation`: https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html_
+.. _`API documentation`: https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html
 .. _`Forensic Tool Development with Rust`: https://getreu.net/public/downloads/doc/forensic-tool-development-with-rust
 
 Source code
