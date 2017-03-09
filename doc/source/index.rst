@@ -6,10 +6,8 @@
 
 
 ************
- stringsext
+stringsext
 ************
-
-
 
 -------------------------------------------------------------------
 stringsext - search for multi-byte encoded strings in binary data.
@@ -21,6 +19,8 @@ stringsext - search for multi-byte encoded strings in binary data.
 :Build status: 
    .. image:: https://travis-ci.org/getreu/stringsext.svg?branch=master
       :target: https://travis-ci.org/getreu/stringsext
+
+.. excerpt-begin
 
 **stringsext** is a Unicode enhancement of the *GNU strings* tool with
 additional functionalities: **stringsext** recognizes Cyrillic, CJKV
@@ -39,6 +39,7 @@ encoding names based on the WHATWG Encoding Standard. When more than one
 encoding is specified, the scan is performed in different threads
 simultaneously.
 
+
 When searching for UTF-16 encoded strings, 96% of all possible two byte
 sequences, interpreted as UTF-16 code unit, relate directly to a Unicode
 code point. As a result, the probability of encountering valid Unicode
@@ -53,19 +54,21 @@ non-text files.
 When invoked with ``stringsext -e ascii -c i`` **stringsext** can be
 used as *GNU strings* replacement.
 
+.. excerpt-end
+
+
 Documentation
 =============
 
 User documentation
-    `manual
-    page <https://getreu.net/public/downloads/doc/stringsext/./doc/build/stringsext--man.html>`__
+   `manual page <https://blog.getreu.net/projects/stringsext/stringsext--man.html>`__
 
 Developer documentation
-    | `API documentation`_
-    | `Forensic Tool Development with Rust`_
+   | `API documentation`_
+   | `Forensic Tool Development with Rust`_
 
-.. _`API documentation`: https://getreu.net/public/downloads/doc/stringsext/./target/doc/stringsext/index.html
-.. _`Forensic Tool Development with Rust`: https://getreu.net/public/downloads/doc/forensic-tool-development-with-rust
+.. _`API documentation`: https://blog.getreu.net/projects/stringsext/stringsext/index.html
+.. _`Forensic Tool Development with Rust`: https://blog.getreu.net/projects/forensic-tool-development-with-rust
 
 Source code
 ===========
@@ -77,14 +80,12 @@ Distribution
 ============
 
 Binaries
-    Download `stringsext binaries`_ and verify  hashes_.
+    `Download <https://blog.getreu.net/projects/stringsext/_downloads/>`__
+
 
 Manual page
-    `stringsext.1.gz`_
+    `stringsext.1.gz <https://blog.getreu.net/projects/stringsext/_downloads/stringsext.1.gz>`__,
 
-.. _`stringsext binaries`: https://getreu.net/public/downloads/doc/stringsext/./target/
-.. _hashes: https://getreu.net/public/sha256sum.txt
-.. _`stringsext.1.gz`: https://getreu.net/public/downloads/doc/stringsext/./man/man1/stringsext.1.gz
 
 
 
@@ -104,7 +105,7 @@ Building and installing
    Enter the *Stringsext* source directory where the file ``Cargo.toml`` resides. Then execute::
 
       cargo build --release
-      ./make-doc
+      ./doc/make-doc
 
 #. Install
 
