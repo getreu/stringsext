@@ -295,7 +295,7 @@ macro_rules! filter {
             };
 
             // Replace current string with filtered one
-            let mut outp = &mut $fc.v.last_mut().unwrap().s;
+            let outp = &mut $fc.v.last_mut().unwrap().s;
             outp.clear();
             outp.push_str(&*out);
         }
