@@ -58,15 +58,11 @@ use std;
 use std::str;
 use std::io::Write;
 use std::process;
-extern crate memmap;
-extern crate itertools;
 
 use std::sync::mpsc::SyncSender;
 
-extern crate scoped_threadpool;
 use scoped_threadpool::Pool;
 
-extern crate encoding;
 
 #[cfg(not(test))]
 use input::WIN_STEP;
@@ -315,7 +311,6 @@ impl <'a> ScannerPool <'a> {
 mod tests {
     use super::*;
     use options::{Args, Radix, ControlChars};
-    extern crate encoding;
     use std::str;
     extern crate rand;
     use finding::Finding;

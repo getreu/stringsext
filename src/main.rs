@@ -36,7 +36,6 @@ use std::thread::JoinHandle;
 use std::io;
 use mission::MISSIONS;
 
-extern crate memmap;
 extern crate itertools;
 use std::sync::mpsc;
 

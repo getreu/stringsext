@@ -2,11 +2,6 @@
 use std::io::prelude::*;
 use std::str;
 use std;
-extern crate memmap;
-extern crate itertools;
-
-
-extern crate encoding;
 use encoding::{StringWriter};
 use std::fmt;
 use std::cmp::{Ord,Eq};
@@ -442,7 +437,6 @@ mod tests {
 
     extern crate encoding;
     use std::str;
-    extern crate rand;
 
     pub const WIN_STEP: usize = 17;
     pub const CONTROL_REPLACEMENT_STR: &'static &'static str = &"\u{fffd}";

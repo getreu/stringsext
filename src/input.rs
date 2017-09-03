@@ -10,12 +10,6 @@ use std::fs::File;
 extern crate memmap;
 use self::memmap::{Mmap, Protection};
 
-extern crate itertools;
-
-extern crate scoped_threadpool;
-
-extern crate encoding;
-
 
 
 /// `WIN_LEN` is the length of the memory chunk in which strings are searched in
@@ -279,7 +273,6 @@ mod tests {
     use finding::Finding;
     use scanner::ScannerPool;
     use std::thread;
-    extern crate encoding;
     use options::FLAG_BYTES_MAX;
 
 
