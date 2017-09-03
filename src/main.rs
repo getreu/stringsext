@@ -49,7 +49,7 @@ use itertools::Itertools;
 
 // Version is defined in ../Cargo.toml
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
-const AUTHOR: &'static str = "(c) Jens Getreu, 2016";
+const AUTHOR: &'static str = "(c) Jens Getreu, 2016-2017";
 
 
 
