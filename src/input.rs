@@ -186,20 +186,20 @@ pub fn process_input(filename: Option<&'static str>, mut sc: &mut ScannerPool)
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
 pub fn from_file(sc: &mut ScannerPool, filename: &'static str) -> Result<(), Box<std::io::Error>> {
-    let file = try!(File::open(&Path::new(filename)));
-    let len = try!(file.metadata()).len() as usize;
+    let file = File::open(&Path::new(filename))?;
+    let len = file.metadata()?.len() as usize;
     let mut byte_counter: usize = 0;
     while byte_counter + WIN_LEN <= len {
-        let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,WIN_LEN));
+        let mmap = Mmap::open_with_offset(&file, Protection::Read,
+                                          byte_counter,WIN_LEN)?;
         let chunk = unsafe { mmap.as_slice() };
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
     // The last is usually shorter
     if byte_counter < len {
-        let mmap = try!(Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,len-byte_counter));
+        let mmap = Mmap::open_with_offset(&file, Protection::Read,
+                                          byte_counter,len-byte_counter)?;
         let chunk = unsafe { mmap.as_slice() };
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
     }
@@ -230,7 +230,7 @@ fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
         // Read from stdin
         while data_end < data_start + WIN_LEN {
 
-            let bytes = try!(stdin.read(&mut buf[data_end..]));
+            let bytes = stdin.read(&mut buf[data_end..])?;
             if bytes == 0 {
                 done = true;
                 break;

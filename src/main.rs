@@ -83,12 +83,12 @@ fn main2() -> Result<(), Box<std::io::Error>> {
         merger = thread::spawn(move || {
             let mut output = match ARGS.flag_output {
                Some(ref fname) => {
-                            let f = try!(File::create(&Path::new(fname.as_str())));
+                            let f = File::create(&Path::new(fname.as_str()))?;
                             Box::new(f) as Box<Write>
                         },
                None  => Box::new(io::stdout()) as Box<Write>,
             };
-            try!(output.write_all("\u{feff}".as_bytes()));
+            output.write_all("\u{feff}".as_bytes())?;
 
             'outer: loop {
                 // collect
@@ -104,7 +104,7 @@ fn main2() -> Result<(), Box<std::io::Error>> {
                 };
                 // merge
                 for finding in kmerge(&results) {
-                    try!(finding.print(&mut output));
+                    finding.print(&mut output)?;
                 };
             };
             //println!("Merger terminated.");
@@ -114,7 +114,7 @@ fn main2() -> Result<(), Box<std::io::Error>> {
         // Default for <file> is stdin.
         if (ARGS.arg_FILE.len() == 0) ||
            ( (ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
-            try!(process_input(None, &mut sc));
+            process_input(None, &mut sc)?;
         } else {
             for ref filename in ARGS.arg_FILE.iter() {
                 if let Err(e) = process_input(Some(&filename), &mut sc) {

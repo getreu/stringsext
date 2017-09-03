@@ -112,7 +112,7 @@ impl Finding {
             };
 
             for l in  self.s.lines() {
-                try!(out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() ));
+                out.write_all(format!("{}{}{}\n",ptr_str, enc_str, l).as_bytes() )?;
             };
         } else {
             let mut ptr_str = match ARGS.flag_radix {
@@ -133,8 +133,9 @@ impl Finding {
             };
 
             for l in  self.s.lines() {
-                try!(out.write_all(
-                        format!("{}{}{}{}\n",filename_str, ptr_str, enc_str, l).as_bytes() ));
+                out.write_all(
+                        format!("{}{}{}{}\n",filename_str, ptr_str, enc_str, l).as_bytes() 
+                )?;
                 ptr_str = ptr_str_ff.to_string();
             };
         };
@@ -346,7 +347,7 @@ impl FindingCollection {
     #[allow(dead_code)]
     pub fn print(&self, out: &mut Box<Write>) -> Result<(), Box<std::io::Error>>  {
         for finding in &self.v {
-            try!(finding.print(out));
+            finding.print(out)?;
         };
         Ok(())
     }

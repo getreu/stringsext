@@ -316,8 +316,8 @@ impl Missions {
                           .map(|s|s.trim_left_matches("U+"))
                           .map(|s|  u32::from_str_radix(s,16) );
 
-             let u_lower:u32 = try!(j.next().unwrap_or(Ok(0)));
-             let u_upper:u32 = try!(j.next().unwrap_or(Ok(std::char::MAX as u32)));
+             let u_lower:u32 = j.next().unwrap_or(Ok(0))?;
+             let u_upper:u32 = j.next().unwrap_or(Ok(std::char::MAX as u32))?;
              Ok((u_lower, u_upper))
         };
 
@@ -326,15 +326,15 @@ impl Missions {
         let enc_name = i.next().unwrap_or("");
         let opt = i.next();
         let nbytes_min = match opt {
-            Some(s) => try!(u8::from_str(s)),
+            Some(s) => u8::from_str(s)?,
             None    => nbytes_min_default
         };
 
         let range1:&str = i.next().unwrap_or("");
-        let filter1 = mask(try!(parse_range(range1)));
+        let filter1 = mask(parse_range(range1)?);
 
         let range2:&str = i.next().unwrap_or("");
-        let filter2 = mask(try!(parse_range(range2)));
+        let filter2 = mask(parse_range(range2)?);
 
         if let Some(_) = i.next() {
             return Err(CliError::TooManyTokensError);
