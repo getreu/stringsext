@@ -1,10 +1,6 @@
 .. Main project page for ``stringsext``
 
 
-
-
-
-
 ************
 stringsext
 ************
@@ -15,7 +11,7 @@ stringsext - search for multi-byte encoded strings in binary data.
 
 
 :Author: Jens Getreu
-:Copyright: Apache 2 license
+:Copyright: Apache 2 license or MIT license
 :Build status: 
    .. image:: https://travis-ci.org/getreu/stringsext.svg?branch=master
       :target: https://travis-ci.org/getreu/stringsext
