@@ -260,7 +260,6 @@ fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
 mod tests {
     use super::*;
     use options::{Args, Radix, ControlChars};
-    use std::str;
     extern crate tempdir;
 
     use std::fs::File;
