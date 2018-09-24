@@ -31,7 +31,7 @@ Options:
 
 /// This structure holds the command-line-options and is populated by `docopt`.
 #[allow(non_snake_case)]
-#[derive(Debug, RustcDecodable)]
+#[derive(Debug)]
 pub struct Args {
     /// Pathname of the input data file. `None` defaults to `stdin`.
     pub arg_FILE: Vec<String>,
@@ -56,7 +56,7 @@ pub struct Args {
 }
 
 /// Mode how to print control characters
-#[derive(PartialEq, Debug, RustcDecodable)]
+#[derive(PartialEq, Debug)]
 pub enum ControlChars {
                 /// print all valid characters, without filtering
                 P,
@@ -67,7 +67,7 @@ pub enum ControlChars {
 }
 
 /// Radix of the `byte-counter` when printed.
-#[derive(PartialEq, Debug, RustcDecodable)]
+#[derive(PartialEq, Debug)]
 pub enum Radix {
                 /// octal
                 O,

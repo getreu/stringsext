@@ -8,7 +8,6 @@ mod mission;
 mod input;
 use input::{process_input};
 
-extern crate rustc_serialize;
 extern crate docopt;
 #[macro_use]
 extern crate lazy_static;
