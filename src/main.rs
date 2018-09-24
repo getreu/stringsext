@@ -3,9 +3,13 @@
 //! collects the results produced by the worker threads.
 //! The processing of the input-data is initiated by the `input`-module that itself uses
 //! the `scanner` module in which the worker-threads are spawned.
+#[macro_use]
+extern crate serde_derive;
+
 mod mission;
 
 mod input;
+
 use input::{process_input};
 
 extern crate docopt;

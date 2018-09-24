@@ -31,7 +31,7 @@ Options:
 
 /// This structure holds the command-line-options and is populated by `docopt`.
 #[allow(non_snake_case)]
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub struct Args {
     /// Pathname of the input data file. `None` defaults to `stdin`.
     pub arg_FILE: Vec<String>,
@@ -56,7 +56,7 @@ pub struct Args {
 }
 
 /// Mode how to print control characters
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Deserialize)]
 pub enum ControlChars {
                 /// print all valid characters, without filtering
                 P,
@@ -67,7 +67,7 @@ pub enum ControlChars {
 }
 
 /// Radix of the `byte-counter` when printed.
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Deserialize)]
 pub enum Radix {
                 /// octal
                 O,
@@ -81,7 +81,7 @@ lazy_static! {
     /// Static `Args` stucture.
     // TODO? compose custom error type to improve error messages
     pub static ref ARGS : Args = Docopt::new(USAGE)
-                            .and_then(|d| d.decode())
+                            .and_then(|d| d.deserialize())
                             .unwrap_or_else(|e| e.exit());
 
 }
@@ -102,7 +102,7 @@ mod tests {
                             "utf-8", "-V", "-l", "-p", "outfile", "-t", "o", "infile1",
                             "infile2"];
         let args: Args = Docopt::new(USAGE)
-                        .and_then(|d| d.argv(argv().into_iter()).decode())
+                        .and_then(|d| d.argv(argv().into_iter()).deserialize())
                         .unwrap_or_else(|e| e.exit());
         //println!("{:?}",args);
 
