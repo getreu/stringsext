@@ -20,4 +20,4 @@ ln -sf ../../../../target/* .
 ln -sf ../../../../doc/build/man/man1/stringsext.1.gz .
 
 
-cargo rustdoc  -p stringsext -- --no-defaults --passes "collapse-docs" --passes "unindent-comments"
+cargo rustdoc  -p stringsext -- --document-private-items 
