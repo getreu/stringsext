@@ -8,7 +8,7 @@ use std::io::stdin;
 use std::fs::File;
 
 extern crate memmap;
-use self::memmap::{Mmap, Protection};
+use self::memmap::MmapOptions;
 
 
 
@@ -186,21 +186,19 @@ pub fn process_input(filename: Option<&'static str>, mut sc: &mut ScannerPool)
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
 pub fn from_file(sc: &mut ScannerPool, filename: &'static str) -> Result<(), Box<std::io::Error>> {
+
     let file = File::open(&Path::new(filename))?;
     let len = file.metadata()?.len() as usize;
     let mut byte_counter: usize = 0;
+    let mmap = unsafe { self::MmapOptions::new().map(&file)? };
     while byte_counter + WIN_LEN <= len {
-        let mmap = Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,WIN_LEN)?;
-        let chunk = unsafe { mmap.as_slice() };
+        let chunk = &mmap[byte_counter..byte_counter+WIN_LEN];
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
     // The last is usually shorter
     if byte_counter < len {
-        let mmap = Mmap::open_with_offset(&file, Protection::Read,
-                                          byte_counter,len-byte_counter)?;
-        let chunk = unsafe { mmap.as_slice() };
+        let chunk = &mmap[byte_counter..len];
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
     }
     Ok(())
