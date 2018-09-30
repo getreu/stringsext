@@ -196,7 +196,14 @@ pub fn from_file(sc: &mut ScannerPool, filename: &'static str) -> Result<(), Box
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
-    // The last is usually shorter
+    // The last is shorter than WIN_LEN bytes, but can be longer than WIN_STEP
+    if byte_counter < len {
+        let chunk = &mmap[byte_counter..len];
+        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
+        byte_counter += WIN_STEP;
+    }
+
+    // Now there can be still some bytes left (maximum WIN_OVERLAP bytes)
     if byte_counter < len {
         let chunk = &mmap[byte_counter..len];
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
@@ -242,7 +249,14 @@ fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
             byte_counter += WIN_STEP;
         }
     }
-    // The last is usually shorter
+    // The last is shorter than WIN_LEN bytes, but can be longer than WIN_STEP
+    if data_start < data_end {
+        sc.launch_scanner(None, &byte_counter, &buf[data_start..data_end]);
+        data_start += WIN_STEP;
+        byte_counter += WIN_STEP;
+    }
+
+    // Now there can be still some bytes left (maximum WIN_OVERLAP bytes)
     if data_start < data_end {
         sc.launch_scanner(None, &byte_counter, &buf[data_start..data_end]);
     }
