@@ -46,8 +46,8 @@ search for multi-byte encoded strings in binary data.
    :Version: 1.5.0
 
 :Author: Jens Getreu
-:Date: 2018-09-24
-:Version: 1.5.0
+:Date: 2018-09-30
+:Version: 1.6.0
 :Copyright: Apache License Version 2.0, or MIT license (for details see COPYING section)
 :Manual section: 1
 :Manual group: Forensic Tools
