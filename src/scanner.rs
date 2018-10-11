@@ -103,7 +103,7 @@ pub struct ScannerState {
     /// at the beginning of the next window.
     pub completes_last_str: bool,
 
-    /// This describes the mission of this scanner. It is a static unmutable reference.
+    /// This describes the mission of this scanner using a static immutable reference.
     pub mission:&'static Mission,
 }
 
