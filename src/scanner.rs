@@ -450,12 +450,13 @@ mod tests {
 
 
        // Simulate next iteration.
+       start -= WIN_STEP;
+       let completes_last_str = res.last_str_is_incomplete;
+
        let expected_fc = FindingCollection{ v: vec![
                 Finding{ filename:None, ptr:WIN_LEN, mission:&MISSIONS.v[0],
                          s:"\u{2691}TUSH".to_string() },
-                ], completes_last_str: true, last_str_is_incomplete: false};
-
-       start -= WIN_STEP;
+                ], completes_last_str: completes_last_str, last_str_is_incomplete: false};
 
        let ms = ScannerState{ offset:start, completes_last_str:true, mission:&MISSIONS.v[0] };
 
