@@ -311,7 +311,7 @@ impl <'a> ScannerPool <'a> {
 mod tests {
     use super::*;
     use crate::options::{Args, Radix, ControlChars};
-    extern crate rand;
+    use rand;
     use crate::finding::Finding;
     use crate::finding::FindingCollection;
 

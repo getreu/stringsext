@@ -18,8 +18,8 @@ pub struct AsciiGraphicEncoding;
 impl Encoding for AsciiGraphicEncoding {
     fn name(&self) -> &'static str { "ascii" }
     fn whatwg_name(&self) -> Option<&'static str> { None }
-    fn raw_encoder(&self) -> Box<RawEncoder> { AsciiGraphicEncoder::new() }
-    fn raw_decoder(&self) -> Box<RawDecoder> { AsciiGraphicDecoder::new() }
+    fn raw_encoder(&self) -> Box<dyn RawEncoder> { AsciiGraphicEncoder::new() }
+    fn raw_decoder(&self) -> Box<dyn RawDecoder> { AsciiGraphicDecoder::new() }
 }
 
 
@@ -29,15 +29,15 @@ pub struct AsciiGraphicEncoder;
 
 
 impl AsciiGraphicEncoder {
-    pub fn new() -> Box<RawEncoder> { Box::new(AsciiGraphicEncoder) }
+    pub fn new() -> Box<dyn RawEncoder> { Box::new(AsciiGraphicEncoder) }
 }
 
 
 impl RawEncoder for AsciiGraphicEncoder {
-    fn from_self(&self) -> Box<RawEncoder> { AsciiGraphicEncoder::new() }
+    fn from_self(&self) -> Box<dyn RawEncoder> { AsciiGraphicEncoder::new() }
     fn is_ascii_compatible(&self) -> bool { true }
 
-    fn raw_feed(&mut self, input: &str, output: &mut ByteWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(&mut self, input: &str, output: &mut dyn ByteWriter) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
         // all non graphic is unrepresentable
@@ -56,7 +56,7 @@ impl RawEncoder for AsciiGraphicEncoder {
         }
     }
 
-    fn raw_finish(&mut self, _output: &mut ByteWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn ByteWriter) -> Option<CodecError> {
         None
     }
 }
@@ -69,17 +69,17 @@ impl RawEncoder for AsciiGraphicEncoder {
 pub struct AsciiGraphicDecoder;
 
 impl AsciiGraphicDecoder {
-    pub fn new() -> Box<RawDecoder> { Box::new(AsciiGraphicDecoder) }
+    pub fn new() -> Box<dyn RawDecoder> { Box::new(AsciiGraphicDecoder) }
 }
 
 impl RawDecoder for AsciiGraphicDecoder {
-    fn from_self(&self) -> Box<RawDecoder> { AsciiGraphicDecoder::new() }
+    fn from_self(&self) -> Box<dyn RawDecoder> { AsciiGraphicDecoder::new() }
     fn is_ascii_compatible(&self) -> bool { true }
 
-    fn raw_feed(&mut self, input: &[u8], output: &mut StringWriter) -> (usize, Option<CodecError>) {
+    fn raw_feed(&mut self, input: &[u8], output: &mut dyn StringWriter) -> (usize, Option<CodecError>) {
         output.writer_hint(input.len());
 
-        fn write_ascii_bytes(output: &mut StringWriter, buf: &[u8]) {
+        fn write_ascii_bytes(output: &mut dyn StringWriter, buf: &[u8]) {
             output.write_str(unsafe {mem::transmute(buf)});
         }
 
@@ -98,7 +98,7 @@ impl RawDecoder for AsciiGraphicDecoder {
         }
     }
 
-    fn raw_finish(&mut self, _output: &mut StringWriter) -> Option<CodecError> {
+    fn raw_finish(&mut self, _output: &mut dyn StringWriter) -> Option<CodecError> {
         None
     }
 }

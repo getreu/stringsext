@@ -12,7 +12,7 @@ use std::str::FromStr;
 use std::num;
 use std::error;
 use crate::options::ARGS;
-extern crate encoding;
+use encoding;
 use encoding::EncodingRef;
 use crate::options::ControlChars;
 use encoding::label::encoding_from_whatwg_label;
@@ -58,7 +58,7 @@ impl UnicodeBlockFilter {
 
 
 impl fmt::Debug for UnicodeBlockFilter {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "UnicodeBlockFilter[ and_mask:{:x}, and_result:{:x}, is_some:{:?} ]",
                   self.and_mask, self.and_result, self.is_some
         )
@@ -125,7 +125,7 @@ pub struct Mission {
 }
 
 impl fmt::Debug for Mission {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "Mission[encoding:{}, filter1:{:?}, filter2:{:?}, nbytes_min:{}, \
                    enable_filter:{:?}]",
                   self.encoding.name(), self.filter1, self.filter2, self.nbytes_min,
@@ -154,7 +154,7 @@ impl From<num::ParseIntError> for CliError {
 }
 
 impl fmt::Display for CliError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match *self {
             // The underlying error already impl `Display`, so we defer to
             // its implementation.
@@ -175,7 +175,7 @@ impl error::Error for CliError {
         }
     }
 
-    fn cause(&self) -> Option<&error::Error> {
+    fn cause(&self) -> Option<&dyn error::Error> {
         match *self {
             CliError::Format(ref err) => Some(err),
             _ => None,

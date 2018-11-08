@@ -12,7 +12,7 @@ mod input;
 
 use crate::input::{process_input};
 
-extern crate docopt;
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -39,13 +39,13 @@ use std::thread::JoinHandle;
 use std::io;
 use crate::mission::MISSIONS;
 
-extern crate itertools;
+
 use std::sync::mpsc;
 
-extern crate scoped_threadpool;
+
 use std::thread;
 
-extern crate encoding;
+
 use encoding::all;
 use itertools::kmerge;
 use itertools::Itertools;
@@ -87,9 +87,9 @@ fn main2() -> Result<(), Box<std::io::Error>> {
             let mut output = match ARGS.flag_output {
                Some(ref fname) => {
                             let f = File::create(&Path::new(fname.as_str()))?;
-                            Box::new(f) as Box<Write>
+                            Box::new(f) as Box<dyn Write>
                         },
-               None  => Box::new(io::stdout()) as Box<Write>,
+               None  => Box::new(io::stdout()) as Box<dyn Write>,
             };
             output.write_all("\u{feff}".as_bytes())?;
 
