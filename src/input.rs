@@ -2,15 +2,13 @@
 use crate::scanner::ScannerPool;
 
 use std;
-use std::path::Path;
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::stdin;
-use std::fs::File;
+use std::path::Path;
 
-use memmap;
 use self::memmap::MmapOptions;
-
-
+use memmap;
 
 /// `WIN_LEN` is the length of the memory chunk in which strings are searched in
 /// parallel.
@@ -34,8 +32,6 @@ use self::memmap::MmapOptions;
 /// The remaining Bytes can reach into `WIN_OVERLAP` or even beyond `WIN_LEN`.
 /// In the latter case the string is split.
 pub const WIN_LEN: usize = WIN_STEP + WIN_OVERLAP;
-
-
 
 /// `WIN_OVERLAP` is the overlapping fragment of the window. The
 /// overlapping fragment is used to read some Bytes ahead when the string is not
@@ -132,12 +128,10 @@ pub const FINISH_STR_BUF: usize = 0x1800;
 ///
 pub const WIN_OVERLAP: usize = FINISH_STR_BUF + (UTF8_LEN_MAX as usize);
 
-
 /// As Files are accessed through 4KiB memory pages we choose `WIN_STEP` to be a multiple of
 /// 4096 Bytes.
 ///
 pub const WIN_STEP: usize = 0x2000; // = 2*4096
-
 
 /// The `from_stdin()` function implements its own reader buffer `BUF_LEN` to allow
 /// stepping with overlapping windows.
@@ -161,38 +155,39 @@ pub const WIN_STEP: usize = 0x2000; // = 2*4096
 ///
 pub const BUF_LEN: usize = 4 * WIN_STEP + WIN_OVERLAP;
 
-
 /// In Unicode the maximum number of Bytes a multi-Byte-character can occupy
 /// in memory is 6 Bytes.
 pub const UTF8_LEN_MAX: u8 = 6;
-
 
 /// Read the appropriate input chunk by chunk and launch the scanners on each
 /// Chunk.
 /// If `file_path_str` == None read from `stdin`, otherwise
 /// read from file.
-pub fn process_input(filename: Option<&'static str>, mut sc: &mut ScannerPool<'_>)
-                                            -> Result<(), Box<std::io::Error>> {
+pub fn process_input(
+    filename: Option<&'static str>,
+    mut sc: &mut ScannerPool<'_>,
+) -> Result<(), Box<std::io::Error>> {
     match filename {
         Some(filename) => from_file(&mut sc, &filename),
-        None           => from_stdin(&mut sc)
+        None => from_stdin(&mut sc),
     }
 }
-
 
 /// Streams a file by cutting the input into overlapping chunks and feeds the `ScannerPool`.
 /// After each iteration the `byte_counter` is updated.
 /// In order to avoid additional copying the trait `memmap` is used to access
 /// the file contents. See:
 /// https://en.wikipedia.org/wiki/Memory-mapped_file
-pub fn from_file(sc: &mut ScannerPool<'_>, filename: &'static str) -> Result<(), Box<std::io::Error>> {
-
+pub fn from_file(
+    sc: &mut ScannerPool<'_>,
+    filename: &'static str,
+) -> Result<(), Box<std::io::Error>> {
     let file = File::open(&Path::new(filename))?;
     let len = file.metadata()?.len() as usize;
     let mut byte_counter: usize = 0;
     let mmap = unsafe { self::MmapOptions::new().map(&file)? };
     while byte_counter + WIN_LEN <= len {
-        let chunk = &mmap[byte_counter..byte_counter+WIN_LEN];
+        let chunk = &mmap[byte_counter..byte_counter + WIN_LEN];
         sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
@@ -210,7 +205,6 @@ pub fn from_file(sc: &mut ScannerPool<'_>, filename: &'static str) -> Result<(),
     }
     Ok(())
 }
-
 
 /// Streams the input pipe by cutting it into overlapping chunks and feeds the `ScannerPool`.
 /// This functions implements is own rotating input buffer.
@@ -234,13 +228,13 @@ fn from_stdin(sc: &mut ScannerPool<'_>) -> Result<(), Box<std::io::Error>> {
         }
         // Read from stdin
         while data_end < data_start + WIN_LEN {
-
             let bytes = stdin.read(&mut buf[data_end..])?;
             if bytes == 0 {
                 done = true;
                 break;
+            } else {
+                data_end += bytes;
             }
-            else {data_end += bytes; }
         }
         // Handle data.
         while data_start + WIN_LEN <= data_end {
@@ -263,76 +257,69 @@ fn from_stdin(sc: &mut ScannerPool<'_>) -> Result<(), Box<std::io::Error>> {
     Ok(())
 }
 
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::options::{Args, Radix, ControlChars};
+    use crate::options::{Args, ControlChars, Radix};
     use tempdir;
 
+    use self::tempdir::TempDir;
+    use crate::finding::Finding;
+    use crate::finding::FindingCollection;
+    use crate::mission::Missions;
+    use crate::options::FLAG_BYTES_MAX;
+    use crate::scanner::ScannerPool;
     use std::fs::File;
     use std::io::Write;
-    use self::tempdir::TempDir;
     use std::path::PathBuf;
     use std::sync::mpsc;
-    use crate::mission::Missions;
-    use crate::finding::FindingCollection;
-    use crate::finding::Finding;
-    use crate::scanner::ScannerPool;
     use std::thread;
-    use crate::options::FLAG_BYTES_MAX;
-
 
     lazy_static! {
-        pub static ref ARGS:Args = Args {
-           arg_FILE: vec!["myfile.txt".to_string()],
-           flag_control_chars:  ControlChars::R,
-           flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
-           flag_list_encodings: false,
-           flag_version: false,
-           flag_bytes:  Some(5),
-           flag_split_bytes:  Some(2),
-           flag_radix:  Some(Radix::X),
-           flag_output: None,
-           flag_print_file_name: true,
+        pub static ref ARGS: Args = Args {
+            arg_FILE: vec!["myfile.txt".to_string()],
+            flag_control_chars: ControlChars::R,
+            flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
+            flag_list_encodings: false,
+            flag_version: false,
+            flag_bytes: Some(5),
+            flag_split_bytes: Some(2),
+            flag_radix: Some(Radix::X),
+            flag_output: None,
+            flag_print_file_name: true,
         };
     }
 
     lazy_static! {
-       pub static ref MISSIONS: Missions = Missions::new(&ARGS.flag_encoding,
-                                                         &ARGS.flag_control_chars,
-                                                         &ARGS.flag_bytes);
+        pub static ref MISSIONS: Missions = Missions::new(
+            &ARGS.flag_encoding,
+            &ARGS.flag_control_chars,
+            &ARGS.flag_bytes
+        );
     }
 
     /// Test the constraints for constants. The test checks all the necessary conditions on
     /// constants to guarantee a correct functionality of the program.
     #[test]
-    fn test_constants(){
+    fn test_constants() {
         assert!(WIN_STEP % 0x1000 == 0);
-        assert!(WIN_STEP + WIN_OVERLAP <= WIN_LEN );
-        assert!(FLAG_BYTES_MAX < FINISH_STR_BUF );
+        assert!(WIN_STEP + WIN_OVERLAP <= WIN_LEN);
+        assert!(FLAG_BYTES_MAX < FINISH_STR_BUF);
         assert!(WIN_OVERLAP <= WIN_STEP);
-        assert!(FINISH_STR_BUF  + UTF8_LEN_MAX as usize <=  WIN_OVERLAP);
+        assert!(FINISH_STR_BUF + UTF8_LEN_MAX as usize <= WIN_OVERLAP);
         assert!(WIN_LEN <= BUF_LEN);
     }
 
-
     lazy_static! {
-       pub static ref PATH: PathBuf = TempDir::new("test_from_file")
-                                      .expect("Can not create tempdir.")
-                                      .path()
-                                      .to_path_buf();
+        pub static ref PATH: PathBuf = TempDir::new("test_from_file")
+            .expect("Can not create tempdir.")
+            .path()
+            .to_path_buf();
     }
-
-
 
     /// Test the reading and processing of file data.
     #[test]
-    fn test_from_file(){
+    fn test_from_file() {
         {
             let mut f = File::create(&PATH.as_path()).unwrap();
             let inp = "hallo1234üduüso567890".as_bytes();
@@ -341,25 +328,38 @@ mod tests {
 
         {
             let (tx, rx) = mpsc::sync_channel(0);
-            let mut sc = ScannerPool::new(&MISSIONS,&tx);
-
+            let mut sc = ScannerPool::new(&MISSIONS, &tx);
 
             let _ = thread::spawn(move || {
+                let expected1 = FindingCollection {
+                    v: vec![
+                        Finding {
+                            filename: None,
+                            ptr: 0,
+                            mission: &MISSIONS.v[0],
+                            s: "hallo1234".to_string(),
+                        },
+                        Finding {
+                            filename: None,
+                            ptr: 15,
+                            mission: &MISSIONS.v[0],
+                            s: "so567890\u{2691}".to_string(),
+                        },
+                    ],
+                    completes_last_str: false,
+                    last_str_is_incomplete: true,
+                };
 
-                let expected1 = FindingCollection{ v: vec![
-                    Finding{ filename: None, ptr: 0,
-                             mission: &MISSIONS.v[0] ,
-                             s: "hallo1234".to_string() },
-                    Finding{ filename: None, ptr: 15,
-                             mission: &MISSIONS.v[0] ,
-                             s: "so567890\u{2691}".to_string() },
-                    ], completes_last_str: false, last_str_is_incomplete: true};
-
-                let expected2 = FindingCollection{ v: vec![
-                    Finding{ filename: None, ptr: 0,
-                             mission: &MISSIONS.v[1],
-                             s: "hallo1234üduüso567890\u{2691}".to_string() },
-                    ], completes_last_str: false, last_str_is_incomplete: true};
+                let expected2 = FindingCollection {
+                    v: vec![Finding {
+                        filename: None,
+                        ptr: 0,
+                        mission: &MISSIONS.v[1],
+                        s: "hallo1234üduüso567890\u{2691}".to_string(),
+                    }],
+                    completes_last_str: false,
+                    last_str_is_incomplete: true,
+                };
 
                 let res1 = rx.recv().unwrap();
                 let res2 = rx.recv().unwrap();
@@ -375,7 +375,6 @@ mod tests {
                 //println!("Merger terminated.");
             });
             from_file(&mut sc, PATH.as_path().to_str().unwrap()).unwrap();
-
         }
     }
 }

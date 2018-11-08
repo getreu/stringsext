@@ -3,7 +3,7 @@
 use docopt::Docopt;
 
 #[cfg(test)]
-pub const FLAG_BYTES_MAX : usize = 0xff; // max of Args.flag_bytes
+pub const FLAG_BYTES_MAX: usize = 0xff; // max of Args.flag_bytes
 
 /// Help message and string for `Docopt` used to populate the `Args` structure.
 const USAGE: &'static str = "
@@ -27,7 +27,6 @@ Options:
  -t RADIX, --radix=RADIX        Enable Byte counter with radix `o`, `x` or `d`.
  -V, --version                  Print version info and exit.
 ";
-
 
 /// This structure holds the command-line-options and is populated by `docopt`.
 #[allow(non_snake_case)]
@@ -58,23 +57,23 @@ pub struct Args {
 /// Mode how to print control characters
 #[derive(PartialEq, Debug, Deserialize)]
 pub enum ControlChars {
-                /// print all valid characters, without filtering
-                P,
-                /// group and replace control characters with '�' (U+FFFD)
-                R,
-                /// silently ignore all control characters
-                I,
+    /// print all valid characters, without filtering
+    P,
+    /// group and replace control characters with '�' (U+FFFD)
+    R,
+    /// silently ignore all control characters
+    I,
 }
 
 /// Radix of the `byte-counter` when printed.
 #[derive(PartialEq, Debug, Deserialize)]
 pub enum Radix {
-                /// octal
-                O,
-                /// hexadecimal
-                X,
-                /// decimal
-                D
+    /// octal
+    O,
+    /// hexadecimal
+    X,
+    /// decimal
+    D,
 }
 
 lazy_static! {
@@ -86,27 +85,47 @@ lazy_static! {
 
 }
 
-
-
 #[cfg(test)]
 mod tests {
 
     /// Are the command-line option read and processed correctly?
     #[test]
-    fn test_arg_parser(){
+    fn test_arg_parser() {
+        use super::{Args, ControlChars, Radix, USAGE};
         use docopt::Docopt;
-        use super::{Args, USAGE, Radix, ControlChars};
         // The argv. Normally you'd just use `parse` which will automatically
         // use `std::env::args()`.
-        let argv = || vec!["stringsext", "-c", "r", "-n", "10", "-s", "11", "-e", "ascii", "-e",
-                            "utf-8", "-V", "-l", "-p", "outfile", "-t", "o", "infile1",
-                            "infile2"];
+        let argv = || {
+            vec![
+                "stringsext",
+                "-c",
+                "r",
+                "-n",
+                "10",
+                "-s",
+                "11",
+                "-e",
+                "ascii",
+                "-e",
+                "utf-8",
+                "-V",
+                "-l",
+                "-p",
+                "outfile",
+                "-t",
+                "o",
+                "infile1",
+                "infile2",
+            ]
+        };
         let args: Args = Docopt::new(USAGE)
-                        .and_then(|d| d.argv(argv().into_iter()).deserialize())
-                        .unwrap_or_else(|e| e.exit());
+            .and_then(|d| d.argv(argv().into_iter()).deserialize())
+            .unwrap_or_else(|e| e.exit());
         //println!("{:?}",args);
 
-        fn s(x: &str) -> String { x.to_string() }
+        fn s(x: &str) -> String {
+            x.to_string()
+        }
         assert_eq!(args.arg_FILE[0], "infile1".to_string());
         assert_eq!(args.arg_FILE[1], "infile2".to_string());
         assert_eq!(args.flag_control_chars, ControlChars::R);
@@ -120,5 +139,3 @@ mod tests {
         assert_eq!(args.flag_print_file_name, false);
     }
 }
-
-

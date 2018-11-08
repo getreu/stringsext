@@ -53,33 +53,29 @@
 //!
 //! 15. Repeat until the last chunk is reached.
 
-
 use std;
-use std::str;
 use std::io::Write;
 use std::process;
+use std::str;
 
 use std::sync::mpsc::SyncSender;
 
 use scoped_threadpool::Pool;
 
-
-#[cfg(not(test))]
-use crate::input::WIN_STEP;
 #[cfg(test)]
 use self::tests::WIN_STEP;
-
 #[cfg(not(test))]
-use crate::input::WIN_OVERLAP;
+use crate::input::WIN_STEP;
+
 #[cfg(test)]
 use self::tests::WIN_OVERLAP;
-
-
 #[cfg(not(test))]
-use crate::input::UTF8_LEN_MAX;
+use crate::input::WIN_OVERLAP;
+
 #[cfg(test)]
 use self::tests::UTF8_LEN_MAX;
-
+#[cfg(not(test))]
+use crate::input::UTF8_LEN_MAX;
 
 use crate::mission::Mission;
 use crate::mission::Missions;
@@ -104,16 +100,16 @@ pub struct ScannerState {
     pub completes_last_str: bool,
 
     /// This describes the mission of this scanner using a static immutable reference.
-    pub mission:&'static Mission,
+    pub mission: &'static Mission,
 }
 
 pub struct ScannerStates {
     /// Vector of ScannerState
-    v: Vec<ScannerState>
+    v: Vec<ScannerState>,
 }
 
 /// Holds the runtime environment for `ScannerPool::launch_scanner()`.
-pub struct ScannerPool <'a> {
+pub struct ScannerPool<'a> {
     /// Each thread `x` gets its own ScannerState.MISSION instance that it keeps
     /// until the end of the program. Unlike `Scannerstate.MISSIONS` the
     /// `ScannerState.offset` and `ScannerState.completes_last_str` are dynamically updated
@@ -122,35 +118,30 @@ pub struct ScannerPool <'a> {
     /// previous ended.
     pub pool: Pool,
     /// The sender used by all threads to report their results.
-    pub tx:   &'a SyncSender<FindingCollection>,
-    pub scanner_states:ScannerStates,
+    pub tx: &'a SyncSender<FindingCollection>,
+    pub scanner_states: ScannerStates,
 }
 
-
-
-impl <'a> ScannerPool <'a> {
+impl<'a> ScannerPool<'a> {
     /// Constructor: Prepare the runtime environment for `ScannerPool::launch_scanner()`.
     ///
-    pub fn new(missions:&'static Missions, tx: &'a SyncSender<FindingCollection>) -> Self {
-
+    pub fn new(missions: &'static Missions, tx: &'a SyncSender<FindingCollection>) -> Self {
         let n_threads = missions.len();
         let v = Vec::new();
-        let mut ms = ScannerStates{ v: v};
+        let mut ms = ScannerStates { v: v };
         for i in 0..n_threads {
             ms.v.push(ScannerState {
-                          offset: 0,
-                          completes_last_str: false,
-                          mission:&missions.v[i],
-                       }
-            );
+                offset: 0,
+                completes_last_str: false,
+                mission: &missions.v[i],
+            });
         }
 
         ScannerPool {
-                             pool: Pool::new(n_threads as u32),
-                             tx: &tx,
-                             scanner_states : ms,
-                 }
-
+            pool: Pool::new(n_threads as u32),
+            tx: &tx,
+            scanner_states: ms,
+        }
     }
 
     /// Takes an input slice, searches for valid strings according
@@ -159,12 +150,20 @@ impl <'a> ScannerPool <'a> {
     /// As runtime environment `launch_scanner()` relies on an initialized `Missions` vector,
     /// as well as a thread pool and a `SyncSender` where it can push its results.
     ///
-    pub fn launch_scanner<'b> (&mut self, filename: Option<&'static str>, byte_counter: &usize,
-                            input_slice: &'b [u8])  {
-
-        ScannerPool::launch_scanner2 (
-                        filename, &byte_counter, &input_slice,
-                        &mut self.pool, &self.tx, &mut self.scanner_states);
+    pub fn launch_scanner<'b>(
+        &mut self,
+        filename: Option<&'static str>,
+        byte_counter: &usize,
+        input_slice: &'b [u8],
+    ) {
+        ScannerPool::launch_scanner2(
+            filename,
+            &byte_counter,
+            &input_slice,
+            &mut self.pool,
+            &self.tx,
+            &mut self.scanner_states,
+        );
     }
 
     /// This method is only called by `launch_scanner()`.
@@ -172,45 +171,50 @@ impl <'a> ScannerPool <'a> {
     /// does not allow threads to access the parent's member variables.
     /// Only the parents stack-frame can be accessed.
     ///
-    fn launch_scanner2<'b> (
-                            filename: Option<&'static str>,
-                            byte_counter: &usize,
-                            input_slice: &'b [u8],
-                            pool: &mut Pool,
-                            tx: &SyncSender<FindingCollection>,
-                            scanner_states:&mut ScannerStates)  {
-               pool.scoped(|scope| {
-                   for scanner_state in scanner_states.v.iter_mut() {
-                        let tx = tx.clone();
-                        scope.execute(move || {
-                            let (m, end_pos) = ScannerPool::scan_window (
-                                                           scanner_state,
-                                                           filename,
-                                                           byte_counter,
-                                                           input_slice );
+    fn launch_scanner2<'b>(
+        filename: Option<&'static str>,
+        byte_counter: &usize,
+        input_slice: &'b [u8],
+        pool: &mut Pool,
+        tx: &SyncSender<FindingCollection>,
+        scanner_states: &mut ScannerStates,
+    ) {
+        pool.scoped(|scope| {
+            for scanner_state in scanner_states.v.iter_mut() {
+                let tx = tx.clone();
+                scope.execute(move || {
+                    let (m, end_pos) = ScannerPool::scan_window(
+                        scanner_state,
+                        filename,
+                        byte_counter,
+                        input_slice,
+                    );
 
-                            // Update `mission.offset` to indicate the position
-                            // Where the next iteration should resume the work.
-                            scanner_state.offset = if end_pos >= WIN_STEP {
-                                end_pos - WIN_STEP
-                            } else {
-                                0
-                            };
-                            scanner_state.completes_last_str = m.last_str_is_incomplete;
-                            match tx.send(m) {
-                                Ok(_)  => {},
-                                Err(e) => {
-                                    writeln!(&mut std::io::stderr(),
-                                        "Error: `{}`. Is the output stream writeable? Is there \
-                                         enough space? ",e).unwrap();
-                                    process::exit(1);
-                                },
-                            };
-                        });
-                   }
-               });
+                    // Update `mission.offset` to indicate the position
+                    // Where the next iteration should resume the work.
+                    scanner_state.offset = if end_pos >= WIN_STEP {
+                        end_pos - WIN_STEP
+                    } else {
+                        0
+                    };
+                    scanner_state.completes_last_str = m.last_str_is_incomplete;
+                    match tx.send(m) {
+                        Ok(_) => {}
+                        Err(e) => {
+                            writeln!(
+                                &mut std::io::stderr(),
+                                "Error: `{}`. Is the output stream writeable? Is there \
+                                 enough space? ",
+                                e
+                            )
+                            .unwrap();
+                            process::exit(1);
+                        }
+                    };
+                });
+            }
+        });
     }
-
 
     /// Scans the `input`-slice beginning from position `start` for valid strings
     /// encoded as `enc`.
@@ -230,10 +234,12 @@ impl <'a> ScannerPool <'a> {
     ///
     /// Please note that this function is stateless (static)!
     ///
-    fn scan_window <'b> (scanner_state:&ScannerState,
-                         filename: Option<&'static str>,
-                         byte_counter: &usize,
-                         input: &'b [u8]) -> (FindingCollection, usize) {
+    fn scan_window<'b>(
+        scanner_state: &ScannerState,
+        filename: Option<&'static str>,
+        byte_counter: &usize,
+        input: &'b [u8],
+    ) -> (FindingCollection, usize) {
         // True if `mission.offset` is in the last UTF8_LEN_MAX Bytes of WIN_OVERLAP
         // (*mission.offset  >= WIN_OVERLAP as usize - UTF8_LEN_MAX as usize) ;
         // Above: human readable, below: equivalent and more secure
@@ -243,12 +249,13 @@ impl <'a> ScannerPool <'a> {
         let mut decoder = scanner_state.mission.encoding.raw_decoder();
 
         // This adds a first empty finding (nothing to close)
-        let mut ret = Box::new(FindingCollection::new(filename,
-                                                      byte_counter+remaining,
-                                                      scanner_state.mission));
+        let mut ret = Box::new(FindingCollection::new(
+            filename,
+            byte_counter + remaining,
+            scanner_state.mission,
+        ));
         // This should ever be true only for the first finding
         ret.completes_last_str = scanner_state.completes_last_str;
-
 
         loop {
             let (offset, err) = decoder.raw_feed(&input[remaining..], &mut *ret);
@@ -256,9 +263,8 @@ impl <'a> ScannerPool <'a> {
             //unprocessed = remaining + offset;
             if let Some(err) = err {
                 remaining = (remaining as isize + err.upto) as usize;
-                //we do not care what the error was, instead we continue
-            }
-            else {
+            //we do not care what the error was, instead we continue
+            } else {
                 remaining += offset;
                 // we have reached the end. Somewhere between
                 // WIN_LEN-UTF8_LEN_MAX and WIN_LEN
@@ -270,10 +276,10 @@ impl <'a> ScannerPool <'a> {
                 let _ = decoder.raw_finish(&mut *ret); // Is this really necessary? Why?
                 break;
             }
-            ret.close_old_init_new_finding(byte_counter+remaining);
+            ret.close_old_init_new_finding(byte_counter + remaining);
             // only the first finding should have this true
             ret.completes_last_str = false;
-        };
+        }
 
         // unprocessed points to the first erroneous byte, remaining 1 byte beyond:
         // -> remaining is a bit faster
@@ -281,8 +287,7 @@ impl <'a> ScannerPool <'a> {
         // If `end_pos` is between `WIN_OVERLAP + WIN_STEP-UTF8_LEN_MAX` and
         // `WIN_OVERLAP + WIN_STEP` then we know that the last string has been cut.
         let last_str_is_incomplete =
-                     (end_pos + (UTF8_LEN_MAX as usize) >= WIN_OVERLAP + WIN_STEP)
-                     && ret.v.len() != 0  ;
+            (end_pos + (UTF8_LEN_MAX as usize) >= WIN_OVERLAP + WIN_STEP) && ret.v.len() != 0;
 
         // Tell the filter, that the last graphic string should not be omitted, even if too short.
         ret.last_str_is_incomplete = last_str_is_incomplete;
@@ -290,81 +295,108 @@ impl <'a> ScannerPool <'a> {
         // This closes the current finding strings and adds an
         // empty one we have to remove with `close_finding_collection()` later.
         // Before processing the last finding,
-        ret.close_old_init_new_finding(byte_counter+remaining);
+        ret.close_old_init_new_finding(byte_counter + remaining);
 
         // Remove empty surplus
         ret.close_finding_collection();
         // For debugging/testing we remember that `completes_last_str` was set.
         ret.completes_last_str = scanner_state.completes_last_str;
 
-
         (*ret, end_pos)
     }
 }
 
-
-
-
-
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::options::{Args, Radix, ControlChars};
-    use rand;
     use crate::finding::Finding;
     use crate::finding::FindingCollection;
+    use crate::options::{Args, ControlChars, Radix};
+    use rand;
 
-    pub const WIN_STEP: usize  = 17;
-    pub const WIN_OVERLAP: usize  = 5 + 3; // flag_bytes + UTF8_LEN_MAX
-    pub const WIN_LEN:  usize  = WIN_STEP + WIN_OVERLAP as usize; // =25
+    pub const WIN_STEP: usize = 17;
+    pub const WIN_OVERLAP: usize = 5 + 3; // flag_bytes + UTF8_LEN_MAX
+    pub const WIN_LEN: usize = WIN_STEP + WIN_OVERLAP as usize; // =25
     pub const UTF8_LEN_MAX: u8 = 3;
     use crate::mission::Missions;
 
     lazy_static! {
-        pub static ref ARGS:Args = Args {
-           arg_FILE: vec!["myfile.txt".to_string()],
-           flag_control_chars: ControlChars::R,
-           flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
-           flag_list_encodings:false,
-           flag_version: false,
-           flag_bytes: Some(5),
-           flag_split_bytes: Some(2),
-           flag_radix:  Some(Radix::X),
-           flag_output: None,
-           flag_print_file_name: true,
+        pub static ref ARGS: Args = Args {
+            arg_FILE: vec!["myfile.txt".to_string()],
+            flag_control_chars: ControlChars::R,
+            flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
+            flag_list_encodings: false,
+            flag_version: false,
+            flag_bytes: Some(5),
+            flag_split_bytes: Some(2),
+            flag_radix: Some(Radix::X),
+            flag_output: None,
+            flag_print_file_name: true,
         };
     }
 
     lazy_static! {
-       pub static ref MISSIONS: Missions = Missions::new(&ARGS.flag_encoding,
-                                                         &ARGS.flag_control_chars,
-                                                         &ARGS.flag_bytes);
+        pub static ref MISSIONS: Missions = Missions::new(
+            &ARGS.flag_encoding,
+            &ARGS.flag_control_chars,
+            &ARGS.flag_bytes
+        );
     }
 
     lazy_static! {
-       pub static ref MISSIONS2: Missions =
-            Missions::new(&vec![
-                                    "ASCII".to_string(),
-                                    "ASCII,10,80..ff".to_string(),
-                                    "ASCII,10,400..7ff".to_string(),
-                                    "UTF-16BE".to_string(),
-                                    "UTF-16BE".to_string(),
-                                    "UTF-16LE".to_string(),
-                          ],
-                          &ARGS.flag_control_chars, &ARGS.flag_bytes);
+        pub static ref MISSIONS2: Missions = Missions::new(
+            &vec![
+                "ASCII".to_string(),
+                "ASCII,10,80..ff".to_string(),
+                "ASCII,10,400..7ff".to_string(),
+                "UTF-16BE".to_string(),
+                "UTF-16BE".to_string(),
+                "UTF-16LE".to_string(),
+            ],
+            &ARGS.flag_control_chars,
+            &ARGS.flag_bytes
+        );
     }
 
     /// Are the `Ordering` traits implemented properly?
     #[test]
-    fn test_compare_findings(){
-
-        let smallest = Finding{ filename:None, ptr:5, mission:&MISSIONS2.v[0], s:"".to_string()};
-        let smaller = Finding{ filename:None, ptr:5, mission:&MISSIONS2.v[1], s:"".to_string()};
-        let small = Finding{ filename:None, ptr:5, mission:&MISSIONS2.v[2], s:"".to_string() };
-        let big1 = Finding{ filename:None, ptr:12, mission:&MISSIONS2.v[3], s:"".to_string() };
-        let big2 = Finding{ filename:None, ptr:12, mission:&MISSIONS2.v[4], s:"".to_string() };
-        let big3 = Finding{ filename:None, ptr:12, mission:&MISSIONS2.v[5], s:"".to_string() };
+    fn test_compare_findings() {
+        let smallest = Finding {
+            filename: None,
+            ptr: 5,
+            mission: &MISSIONS2.v[0],
+            s: "".to_string(),
+        };
+        let smaller = Finding {
+            filename: None,
+            ptr: 5,
+            mission: &MISSIONS2.v[1],
+            s: "".to_string(),
+        };
+        let small = Finding {
+            filename: None,
+            ptr: 5,
+            mission: &MISSIONS2.v[2],
+            s: "".to_string(),
+        };
+        let big1 = Finding {
+            filename: None,
+            ptr: 12,
+            mission: &MISSIONS2.v[3],
+            s: "".to_string(),
+        };
+        let big2 = Finding {
+            filename: None,
+            ptr: 12,
+            mission: &MISSIONS2.v[4],
+            s: "".to_string(),
+        };
+        let big3 = Finding {
+            filename: None,
+            ptr: 12,
+            mission: &MISSIONS2.v[5],
+            s: "".to_string(),
+        };
 
         assert_eq!(big1, big2);
         assert!(big1 != big3);
@@ -376,181 +408,244 @@ mod tests {
         assert!(small < big3);
     }
 
-
     /// Does the `ScannerPool::scan_window()` respect the minimum constraint?
     #[test]
-    fn test_scan_min_bytes(){
+    fn test_scan_min_bytes() {
+        let expected_fc = FindingCollection {
+            v: vec![
+                Finding {
+                    filename: None,
+                    ptr: 0,
+                    mission: &MISSIONS.v[0],
+                    s: "Hello".to_string(),
+                },
+                Finding {
+                    filename: None,
+                    ptr: 12,
+                    mission: &MISSIONS.v[0],
+                    s: "world!".to_string(),
+                },
+            ],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[0], s:"Hello".to_string() },
-                Finding{ filename:None, ptr:12, mission:&MISSIONS.v[0], s:"world!".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: false};
+        // The word "new" in "Helloünewüworld!" is too short (<5) and will be ommited.
+        let start = 0;
+        let inp = "Helloünewüworld!".as_bytes();
 
-       // The word "new" in "Helloünewüworld!" is too short (<5) and will be ommited.
-       let start = 0;
-       let inp = "Helloünewüworld!".as_bytes();
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 18);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 18);
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 5,
+                mission: &MISSIONS.v[0],
+                s: "How are you?".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
+        // The words "Hi!" in "Hi!üHow are you?üHi!" are too short (<5) and will be ommited.
+        let start = 0;
+        let inp = "Hi!üHow are you?üHi!".as_bytes();
 
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:5, mission:&MISSIONS.v[0],
-                         s:"How are you?".to_string() },
-                ], completes_last_str: false, last_str_is_incomplete: false};
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       // The words "Hi!" in "Hi!üHow are you?üHi!" are too short (<5) and will be ommited.
-       let start = 0;
-       let inp = "Hi!üHow are you?üHi!".as_bytes();
-
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
-
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 18);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 18);
     }
 
     /// Test sample is an extract of a raw dist image
     #[test]
-    fn test_scan_raw_input(){
-       // to see output of println on console:  cargo test -- --nocapture
-            // This is the input data:
-            //  H W.1  z..
-            //. <...AWAVAU
-            //ATUSH  .H .L
+    fn test_scan_raw_input() {
+        // to see output of println on console:  cargo test -- --nocapture
+        // This is the input data:
+        //  H W.1  z..
+        //. <...AWAVAU
+        //ATUSH  .H .L
 
-       let inp = vec![
-                 0xEBu8, 0xA1, 0x48, 0x8B, 0x57, 0x08, 0x31, 0xC0, 0x83, 0x7A, 0x08, 0x03,
-                   0x0F, 0x85, 0x3C, 0x01, 0x00, 0x00, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55,
-                   0x41, 0x54, 0x55, 0x53, 0x48, 0x83, 0xEC, 0x18, 0x48, 0x8B, 0x07, 0x4C,
-                  ];
-       //println!("{:?}",inp);
+        let inp = vec![
+            0xEBu8, 0xA1, 0x48, 0x8B, 0x57, 0x08, 0x31, 0xC0, 0x83, 0x7A, 0x08, 0x03, 0x0F, 0x85,
+            0x3C, 0x01, 0x00, 0x00, 0x41, 0x57, 0x41, 0x56, 0x41, 0x55, 0x41, 0x54, 0x55, 0x53,
+            0x48, 0x83, 0xEC, 0x18, 0x48, 0x8B, 0x07, 0x4C,
+        ];
+        //println!("{:?}",inp);
 
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 14,
+                mission: &MISSIONS.v[0],
+                s: "\u{fffd}AWAVAUA\u{2691}".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:14, mission:&MISSIONS.v[0],
-                         s:"\u{fffd}AWAVAUA\u{2691}".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let start = 0;
 
-       let start = 0;
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, WIN_LEN);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, WIN_LEN);
+        // Simulate next iteration.
+        start -= WIN_STEP;
+        let completes_last_str = res.last_str_is_incomplete;
 
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: WIN_LEN,
+                mission: &MISSIONS.v[0],
+                s: "\u{2691}TUSH".to_string(),
+            }],
+            completes_last_str: completes_last_str,
+            last_str_is_incomplete: false,
+        };
 
+        let ms = ScannerState {
+            offset: start,
+            completes_last_str: true,
+            mission: &MISSIONS.v[0],
+        };
 
-       // Simulate next iteration.
-       start -= WIN_STEP;
-       let completes_last_str = res.last_str_is_incomplete;
-
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:WIN_LEN, mission:&MISSIONS.v[0],
-                         s:"\u{2691}TUSH".to_string() },
-                ], completes_last_str: completes_last_str, last_str_is_incomplete: false};
-
-       let ms = ScannerState{ offset:start, completes_last_str:true, mission:&MISSIONS.v[0] };
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 17);
+        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 17);
     }
-
 
     /// Does FindingCollection::close_old_init_new_finding() checks
     /// `ARGS.flag_control_chars`  ?
     #[test]
-    fn test_scan_control_chars(){
-       // to see output of println on console:  cargo test -- --nocapture
-       let inp = "\u{0}\u{0}34567890\u{0}\u{0}345678\u{0}0123\u{0}\u{0}".as_bytes();
+    fn test_scan_control_chars() {
+        // to see output of println on console:  cargo test -- --nocapture
+        let inp = "\u{0}\u{0}34567890\u{0}\u{0}345678\u{0}0123\u{0}\u{0}".as_bytes();
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[0],
-                         s:"\u{fffd}34567890\u{fffd}345678".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[0],
+                s: "\u{fffd}34567890\u{fffd}345678".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       let start = 0;
+        let start = 0;
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let (res,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 25);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 25);
 
+        // to see output of println on console:  cargo test -- --nocapture
+        let inp = "\u{0}\u{0}\u{0}\u{0}".as_bytes();
 
+        let expected_fc = FindingCollection {
+            v: vec![],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
-       // to see output of println on console:  cargo test -- --nocapture
-       let inp = "\u{0}\u{0}\u{0}\u{0}".as_bytes();
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let expected_fc = FindingCollection{ v: vec![], completes_last_str: false,
-                                            last_str_is_incomplete: false };
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 4);
-
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 4);
     }
-
-
-
-
 
     /// When a string has to be cut just before its end, will the remaining
     /// part be printed even if it is too short?
     #[test]
-    fn test_scan_incomplete_utf8_simulate_iterations(){
+    fn test_scan_incomplete_utf8_simulate_iterations() {
+        // to see output of println on console:  cargo test -- --nocapture
+        // 20 Bytes and then [226, 130, 172, 226, 130, 172]
+        let inp = "12345678901234567890€€".as_bytes();
 
-       // to see output of println on console:  cargo test -- --nocapture
-       // 20 Bytes and then [226, 130, 172, 226, 130, 172]
-       let inp = "12345678901234567890€€".as_bytes();
+        // pic the first €
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[1],
+                s: "12345678901234567890€\u{2691}".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       // pic the first €
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[1],
-                         s:"12345678901234567890€\u{2691}".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let start = 0;
 
-       let start = 0;
+        let mut ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[1],
+        };
 
-       let mut ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[1] };
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 23);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 23);
+        // Simulate next iteration.
+        // The following is problematic because "€" is shorter then ARGS.flag_bytes and
+        // will be normally omitted.
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 23,
+                mission: &MISSIONS.v[1],
+                s: "\u{2691}€".to_string(),
+            }],
+            completes_last_str: true,
+            last_str_is_incomplete: false,
+        };
 
-       // Simulate next iteration.
-       // The following is problematic because "€" is shorter then ARGS.flag_bytes and
-       // will be normally omitted.
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:23, mission:&MISSIONS.v[1],
-                         s:"\u{2691}€".to_string() },
-                ], completes_last_str: true, last_str_is_incomplete: false};
+        start -= WIN_STEP;
+        ms.offset = start;
+        ms.completes_last_str = res.last_str_is_incomplete;
 
+        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
 
-       start -= WIN_STEP;
-       ms.offset = start;
-       ms.completes_last_str = res.last_str_is_incomplete;
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 9);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 9);
     }
-
 
     /// Assume a valid string is cut in the middle and at the cutting edge was
     /// a little graphic string that is also cut in the middle. The little graphic
@@ -559,244 +654,334 @@ mod tests {
     /// Both small split pieces are > than `ARGS.flag_split_bytes`.
     /// Otherwise they would not have been omitted.
     #[test]
-    fn test_scan_incomplete_utf8_simulate_iterations2(){
+    fn test_scan_incomplete_utf8_simulate_iterations2() {
+        // to see output of println on console:  cargo test -- --nocapture
+        // 20 Bytes and then [226, 130, 172, 226, 130, 172]
+        let inp = "1234567890123456789\u{00}€€".as_bytes();
 
-       // to see output of println on console:  cargo test -- --nocapture
-       // 20 Bytes and then [226, 130, 172, 226, 130, 172]
-       let inp = "1234567890123456789\u{00}€€".as_bytes();
+        // pic the first €
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[1],
+                s: "1234567890123456789\u{fffd}€\u{2691}".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       // pic the first €
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[1],
-                         s:"1234567890123456789\u{fffd}€\u{2691}".to_string() },
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let start = 0;
 
-       let start = 0;
+        let mut ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[1],
+        };
 
-       let mut ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[1] };
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 23);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 23);
+        // Simulate next iteration.
+        // The following is problematic because "€" is shorter then ARGS.flag_bytes and
+        // will be normally omitted.
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 23,
+                mission: &MISSIONS.v[1],
+                s: "\u{2691}€".to_string(),
+            }],
+            completes_last_str: true,
+            last_str_is_incomplete: false,
+        };
 
-       // Simulate next iteration.
-       // The following is problematic because "€" is shorter then ARGS.flag_bytes and
-       // will be normally omitted.
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:23, mission:&MISSIONS.v[1],
-                         s:"\u{2691}€".to_string() },
-                ], completes_last_str: true, last_str_is_incomplete: false};
+        start -= WIN_STEP;
+        ms.offset = start;
+        ms.completes_last_str = res.last_str_is_incomplete;
 
+        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
 
-       start -= WIN_STEP;
-       ms.offset = start;
-       ms.completes_last_str = res.last_str_is_incomplete;
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 9);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 9);
     }
-
 
     /// Assume a valid string is cut in the middle and at the cutting edge was
     /// a little graphic string that is also cut in the middle. The little graphic
     /// strings first and second piece will be normally too short.
     /// Here we check if they are printed exceptionally how it should be.
     #[test]
-    fn test_scan_incomplete_utf8_simulate_iterations3(){
+    fn test_scan_incomplete_utf8_simulate_iterations3() {
+        // to see output of println on console:  cargo test -- --nocapture
+        // The cutting edge is between "a" anc "b".
+        // "a" will not be printed because it is smaller then `ARGS.flag_split_bytes`.
+        let inp = "12345678901234567890123\u{00}ab".as_bytes();
 
-       // to see output of println on console:  cargo test -- --nocapture
-       // The cutting edge is between "a" anc "b".
-       // "a" will not be printed because it is smaller then `ARGS.flag_split_bytes`.
-       let inp = "12345678901234567890123\u{00}ab".as_bytes();
+        // pic the first €
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[1],
+                s: "12345678901234567890123".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       // pic the first €
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[1],
-                         s:"12345678901234567890123".to_string() },
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let start = 0;
 
-       let start = 0;
+        let mut ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[1],
+        };
 
-       let mut ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[1] };
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 25);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 25);
+        // Simulate next iteration.
+        // The remaining "b" will not be printed because it is
+        // is shorter then `ARGS.flag_split_bytes` (1<2).
+        let expected_fc = FindingCollection {
+            v: vec![],
+            completes_last_str: true,
+            last_str_is_incomplete: false,
+        };
 
-       // Simulate next iteration.
-       // The remaining "b" will not be printed because it is
-       // is shorter then `ARGS.flag_split_bytes` (1<2).
-       let expected_fc = FindingCollection{ v: vec![
-                ], completes_last_str: true, last_str_is_incomplete: false};
+        start -= WIN_STEP;
+        ms.offset = start;
+        ms.completes_last_str = res.last_str_is_incomplete;
 
+        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
 
-       start -= WIN_STEP;
-       ms.offset = start;
-       ms.completes_last_str = res.last_str_is_incomplete;
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 9);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 9);
     }
-
 
     /// Is mission.offset set properly in case a byte-sequence is overlaps WIN_LEN?
     #[test]
-    fn test_scan_incomplete_utf8(){
+    fn test_scan_incomplete_utf8() {
+        // to see output of println on console:  cargo test -- --nocapture
+        // 19 Bytes and then [226, 130, 172, 226, 130, 172, 226, 130, 172]
+        let inp = "1234567890123456789€€€".as_bytes();
 
-       // to see output of println on console:  cargo test -- --nocapture
-       // 19 Bytes and then [226, 130, 172, 226, 130, 172, 226, 130, 172]
-       let inp = "1234567890123456789€€€".as_bytes();
+        // pic the first 2 €
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[1],
+                s: "1234567890123456789€€\u{2691}".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
 
-       // pic the first 2 €
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[1],
-                         s:"1234567890123456789€€\u{2691}".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: true};
+        let start = 0;
 
-       let start = 0;
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[1],
+        };
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[1] };
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 25);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 25);
     }
-
 
     /// Are valid strings correctly separated and listed?
     #[test]
-    fn test_scan_erroneous_ascii(){
+    fn test_scan_erroneous_ascii() {
+        let expected_fc = FindingCollection {
+            v: vec![
+                Finding {
+                    filename: None,
+                    ptr: 0,
+                    mission: &MISSIONS.v[0],
+                    s: "Hello".to_string(),
+                },
+                Finding {
+                    filename: None,
+                    ptr: 11,
+                    mission: &MISSIONS.v[0],
+                    s: "world!".to_string(),
+                },
+            ],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0,  mission:&MISSIONS.v[0], s:"Hello".to_string() },
-                Finding{ filename:None, ptr:11,  mission:&MISSIONS.v[0], s:"world!".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: false};
+        // Erroneous  Bytes are in the middle only
+        let start = 0;
+        let inp = "Helloüüüworld!".as_bytes();
 
-       // Erroneous  Bytes are in the middle only
-       let start = 0;
-       let inp = "Helloüüüworld!".as_bytes();
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 17);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 17);
+        // Erroneous  Bytes are in the middle and at the end
+        let start = 0;
+        let inp = "Helloüüüworld!üü".as_bytes();
 
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       // Erroneous  Bytes are in the middle and at the end
-       let start = 0;
-       let inp = "Helloüüüworld!üü".as_bytes();
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
-
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 18);
-
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 18);
     }
 
     /// Does the loop in `ScannerPool::scan_window()` relaunching `Decoder::raw_feed()`
     /// terminate properly when `mission.offset` has reached WIN_OVERLAP?
     #[test]
-    fn test_scan_no_new_search_in_overlapping_space(){
+    fn test_scan_no_new_search_in_overlapping_space() {
+        let expected_fc = FindingCollection {
+            v: vec![
+                Finding {
+                    filename: None,
+                    ptr: 0,
+                    mission: &MISSIONS.v[0],
+                    s: "Hello".to_string(),
+                },
+                Finding {
+                    filename: None,
+                    ptr: 11,
+                    mission: &MISSIONS.v[0],
+                    s: "world!".to_string(),
+                },
+            ],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[0], s:"Hello".to_string() },
-                Finding{ filename:None, ptr:11, mission:&MISSIONS.v[0], s:"world!".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: false};
+        // "How are you?" started in overlapping space and should not be found.
+        let start = 0;
+        let inp = "Helloüüüworld!üüHow are you?".as_bytes();
 
-       // "How are you?" started in overlapping space and should not be found.
-       let start = 0;
-       let inp = "Helloüüüworld!üüHow are you?".as_bytes();
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 18);
 
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let expected_fc = FindingCollection {
+            v: vec![
+                Finding {
+                    filename: None,
+                    ptr: 0,
+                    mission: &MISSIONS.v[0],
+                    s: "Hello".to_string(),
+                },
+                Finding {
+                    filename: None,
+                    ptr: 11,
+                    mission: &MISSIONS.v[0],
+                    s: "world!".to_string(),
+                },
+            ],
+            completes_last_str: false,
+            last_str_is_incomplete: false,
+        };
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 18);
+        // "How are you?" starts in overlapping space. So is should be found.
+        let start = 0;
+        let inp = "Helloüüüworld!üHow are you?".as_bytes();
 
+        let ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
+        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[0], s:"Hello".to_string() },
-                Finding{ filename:None, ptr:11, mission:&MISSIONS.v[0], s:"world!".to_string() }
-                ], completes_last_str: false, last_str_is_incomplete: false};
-
-
-       // "How are you?" starts in overlapping space. So is should be found.
-       let start = 0;
-       let inp = "Helloüüüworld!üHow are you?".as_bytes();
-
-       let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
-
-       let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 18);
-
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 18);
     }
 
     /// Is `Mission::offset()` is interpreted correctly to
     /// instruct the next iteration to print the remaining part of a cut string
     /// even if it is too short?
     #[test]
-    fn test_scan_do_not_forget_first_short_string_in_next_chunk(){
+    fn test_scan_do_not_forget_first_short_string_in_next_chunk() {
+        // The next should be found and fill the whole WIN_LEN and 2 Bytes more
+        let expected_fc = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 0,
+                mission: &MISSIONS.v[0],
+                s: "Hello world! How do you d\u{2691}".to_string(),
+            }],
+            completes_last_str: false,
+            last_str_is_incomplete: true,
+        };
+        let start = 0;
+        let inp = "Hello world! How do you do?".as_bytes();
 
-       // The next should be found and fill the whole WIN_LEN and 2 Bytes more
-       let expected_fc = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:0, mission:&MISSIONS.v[0],
-                         s:"Hello world! How do you d\u{2691}".to_string() },
-                ], completes_last_str: false, last_str_is_incomplete: true};
-       let start = 0;
-       let inp = "Hello world! How do you do?".as_bytes();
+        let mut ms = ScannerState {
+            offset: 0,
+            completes_last_str: false,
+            mission: &MISSIONS.v[0],
+        };
 
-       let mut ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS.v[0] };
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
 
-       let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        assert_eq!(res, expected_fc);
+        assert_eq!(start, 25);
 
-       assert_eq!(res, expected_fc);
-       assert_eq!(start, 25);
+        // The following is problematic because "o?" is shorter then ARGS.flag_bytes and
+        // will be normally omitted.
+        let expected2 = FindingCollection {
+            v: vec![Finding {
+                filename: None,
+                ptr: 25,
+                mission: &MISSIONS.v[0],
+                s: "\u{2691}o?".to_string(),
+            }],
+            completes_last_str: true,
+            last_str_is_incomplete: false,
+        };
 
+        // Prepare next iteration
+        start -= WIN_STEP;
+        ms.offset = start;
+        ms.completes_last_str = res.last_str_is_incomplete;
 
-       // The following is problematic because "o?" is shorter then ARGS.flag_bytes and
-       // will be normally omitted.
-       let expected2 = FindingCollection{ v: vec![
-                Finding{ filename:None, ptr:25, mission:&MISSIONS.v[0],
-                         s:"\u{2691}o?".to_string() },
-                ], completes_last_str: true, last_str_is_incomplete: false};
+        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
 
-       // Prepare next iteration
-       start -= WIN_STEP;
-       ms.offset = start;
-       ms.completes_last_str = res.last_str_is_incomplete;
-
-       let (res,start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
-
-       assert_eq!(res, expected2);
-       assert_eq!(start, 10);
-
+        assert_eq!(res, expected2);
+        assert_eq!(start, 10);
     }
-
-
-
 
     /// Test the overall behavior of threads used by `ScannerPool::launch_scanner()`.
     #[test]
-    fn test_scan_scanner_threads(){
+    fn test_scan_scanner_threads() {
         use std::sync::mpsc;
-        use std::thread::JoinHandle;
         use std::thread;
+        use std::thread::JoinHandle;
 
         let merger: JoinHandle<()>;
 
@@ -805,23 +990,34 @@ mod tests {
             let mut sc = ScannerPool::new(&MISSIONS, &tx);
 
             merger = thread::spawn(move || {
-
-                let expected1 = FindingCollection{
+                let expected1 = FindingCollection {
                     v: vec![
-                        Finding{ filename:None, ptr:1000, mission:&MISSIONS.v[0],
-                                 s:"hallo1234".to_string() },
-                        Finding{ filename:None, ptr:1015, mission:&MISSIONS.v[0],
-                                 s:"so567890\u{2691}".to_string() },
+                        Finding {
+                            filename: None,
+                            ptr: 1000,
+                            mission: &MISSIONS.v[0],
+                            s: "hallo1234".to_string(),
+                        },
+                        Finding {
+                            filename: None,
+                            ptr: 1015,
+                            mission: &MISSIONS.v[0],
+                            s: "so567890\u{2691}".to_string(),
+                        },
                     ],
-                    completes_last_str: false, last_str_is_incomplete: true
+                    completes_last_str: false,
+                    last_str_is_incomplete: true,
                 };
 
-                let expected2 = FindingCollection{
-                    v: vec![
-                        Finding{ filename:None, ptr:1000, mission:&MISSIONS.v[1],
-                                 s:"hallo1234üduüso567890\u{2691}".to_string() },
-                    ],
-                    completes_last_str: false, last_str_is_incomplete: true
+                let expected2 = FindingCollection {
+                    v: vec![Finding {
+                        filename: None,
+                        ptr: 1000,
+                        mission: &MISSIONS.v[1],
+                        s: "hallo1234üduüso567890\u{2691}".to_string(),
+                    }],
+                    completes_last_str: false,
+                    last_str_is_incomplete: true,
                 };
 
                 let res1 = rx.recv().unwrap();
@@ -838,64 +1034,74 @@ mod tests {
                 //println!("Merger terminated.");
             });
 
-            sc.launch_scanner(None, &1000usize, &"hallo1234üduüso567890".as_bytes() );
+            sc.launch_scanner(None, &1000usize, &"hallo1234üduüso567890".as_bytes());
             assert_eq!(sc.scanner_states.v[0].offset, 6);
             //assert_eq!(sc.scanner_states.v[1].offset, 6);
-
         } // tx drops here
 
         merger.join().unwrap();
     }
 
-
     lazy_static! {
-       pub static ref MISSIONS3: Missions =
-            Missions::new(&vec![
-                                "ASCII".to_string(),
-                                "utf-16be".to_string(),
-                                "euc-jp".to_string(),
-                                "koi8-u".to_string(),
-                          ],
-                          &ARGS.flag_control_chars, &ARGS.flag_bytes);
+        pub static ref MISSIONS3: Missions = Missions::new(
+            &vec![
+                "ASCII".to_string(),
+                "utf-16be".to_string(),
+                "euc-jp".to_string(),
+                "koi8-u".to_string(),
+            ],
+            &ARGS.flag_control_chars,
+            &ARGS.flag_bytes
+        );
     }
 
     /// Feed `ScannerPool::scan_window()` with random data to test its robustness.
     #[test]
     #[allow(unused_variables)]
-    fn test_scan_random_input(){
+    fn test_scan_random_input() {
         use self::rand::Rng;
 
         let mut rng = rand::thread_rng();
         for _ in 0..0x1000 {
             let inp = (0..WIN_LEN).map(|_| rng.gen::<u8>()).collect::<Vec<u8>>();
 
-            let start=0;
-            let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS3.v[0] };
-            let (res0,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let start = 0;
+            let ms = ScannerState {
+                offset: 0,
+                completes_last_str: false,
+                mission: &MISSIONS3.v[0],
+            };
+            let (res0, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
+            let start = 0;
+            let ms = ScannerState {
+                offset: 0,
+                completes_last_str: false,
+                mission: &MISSIONS3.v[1],
+            };
+            let (res1, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-            let start=0;
-            let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS3.v[1] };
-            let (res1,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let start = 0;
+            let ms = ScannerState {
+                offset: 0,
+                completes_last_str: false,
+                mission: &MISSIONS3.v[2],
+            };
+            let (res2, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
-
-            let start=0;
-            let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS3.v[2] };
-            let (res2,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-
-            let start=0;
-            let ms = ScannerState{ offset:0, completes_last_str:false, mission:&MISSIONS3.v[3] };
-            let (res3,start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
-
-
+            let start = 0;
+            let ms = ScannerState {
+                offset: 0,
+                completes_last_str: false,
+                mission: &MISSIONS3.v[3],
+            };
+            let (res3, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
 
             // To see println! output:  cargo test   -- --nocapture
             /*
             println!("Scan of random Bytes:{:?} {:?} {:?} {:?}",
                    res0.v, res1.v, res2.v, res3.v);
-            */
-        };
+            */        }
     }
 
 }
