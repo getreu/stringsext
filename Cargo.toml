@@ -2,6 +2,7 @@
 name = "stringsext"
 version = "1.6.0"
 authors = ["Jens Getreu <getreu@web.de>"]
+edition = "2018"
 
 [dependencies]
 #encoding = { git = "https://github.com/lifthrasiir/rust-encoding" }
