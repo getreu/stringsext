@@ -10,17 +10,17 @@ mod mission;
 
 mod input;
 
-use input::{process_input};
+use crate::input::{process_input};
 
 extern crate docopt;
 #[macro_use]
 extern crate lazy_static;
 
 mod options;
-use options::ARGS;
+use crate::options::ARGS;
 
 mod scanner;
-use scanner::ScannerPool;
+use crate::scanner::ScannerPool;
 
 mod finding;
 
@@ -37,7 +37,7 @@ use std::str;
 use std::process;
 use std::thread::JoinHandle;
 use std::io;
-use mission::MISSIONS;
+use crate::mission::MISSIONS;
 
 extern crate itertools;
 use std::sync::mpsc;

@@ -7,18 +7,18 @@ use std::fmt;
 use std::cmp::{Ord,Eq};
 use std::cmp;
 
-use helper::IdentifyFirstLast;
+use crate::helper::IdentifyFirstLast;
 
 #[cfg(not(test))]
-use options::ARGS;
+use crate::options::ARGS;
 #[cfg(test)]
 use self::tests::ARGS;
 
-use options::Radix;
-use options::ControlChars;
+use crate::options::Radix;
+use crate::options::ControlChars;
 
 #[cfg(not(test))]
-use input::WIN_STEP;
+use crate::input::WIN_STEP;
 #[cfg(test)]
 use self::tests::WIN_STEP;
 
@@ -35,7 +35,7 @@ lazy_static! {
 
 pub const CUT_LABEL: char = '\u{2691}';
 
-use mission::Mission;
+use crate::mission::Mission;
 
 /// Initial capacity of the findings vector is
 /// set to WIN_STEP / 32.
@@ -431,10 +431,10 @@ impl StringWriter for FindingCollection {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use options::{Args, Radix, ControlChars};
-    use mission::UnicodeBlockFilter;
-    use mission::Mission;
-    use helper::IdentifyFirstLast;
+    use crate::options::{Args, Radix, ControlChars};
+    use crate::mission::UnicodeBlockFilter;
+    use crate::mission::Mission;
+    use crate::helper::IdentifyFirstLast;
 
     extern crate encoding;
     use std::str;
@@ -679,7 +679,7 @@ mod tests {
     /// Test the Unicode filter in macro
     #[test]
     fn test_scan_unicode_filter(){
-       use mission::Mission;
+       use crate::mission::Mission;
        // This filter is not restrictive, everything should pass
        static M9:Mission = Mission {encoding: encoding::all::ASCII,
                         filter1: UnicodeBlockFilter { and_mask:0xffe00000, and_result: 0,

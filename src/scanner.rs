@@ -65,26 +65,26 @@ use scoped_threadpool::Pool;
 
 
 #[cfg(not(test))]
-use input::WIN_STEP;
+use crate::input::WIN_STEP;
 #[cfg(test)]
 use self::tests::WIN_STEP;
 
 #[cfg(not(test))]
-use input::WIN_OVERLAP;
+use crate::input::WIN_OVERLAP;
 #[cfg(test)]
 use self::tests::WIN_OVERLAP;
 
 
 #[cfg(not(test))]
-use input::UTF8_LEN_MAX;
+use crate::input::UTF8_LEN_MAX;
 #[cfg(test)]
 use self::tests::UTF8_LEN_MAX;
 
 
-use mission::Mission;
-use mission::Missions;
+use crate::mission::Mission;
+use crate::mission::Missions;
 
-use finding::FindingCollection;
+use crate::finding::FindingCollection;
 
 /// As the `ScannerPool.scan_window()` function itself is stateless, the following variables
 /// store some data that will be transfered from iteration to iteration.
@@ -310,16 +310,16 @@ impl <'a> ScannerPool <'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use options::{Args, Radix, ControlChars};
+    use crate::options::{Args, Radix, ControlChars};
     extern crate rand;
-    use finding::Finding;
-    use finding::FindingCollection;
+    use crate::finding::Finding;
+    use crate::finding::FindingCollection;
 
     pub const WIN_STEP: usize  = 17;
     pub const WIN_OVERLAP: usize  = 5 + 3; // flag_bytes + UTF8_LEN_MAX
     pub const WIN_LEN:  usize  = WIN_STEP + WIN_OVERLAP as usize; // =25
     pub const UTF8_LEN_MAX: u8 = 3;
-    use mission::Missions;
+    use crate::mission::Missions;
 
     lazy_static! {
         pub static ref ARGS:Args = Args {

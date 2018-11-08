@@ -11,12 +11,12 @@ use std::cmp;
 use std::str::FromStr;
 use std::num;
 use std::error;
-use options::ARGS;
+use crate::options::ARGS;
 extern crate encoding;
 use encoding::EncodingRef;
-use options::ControlChars;
+use crate::options::ControlChars;
 use encoding::label::encoding_from_whatwg_label;
-use codec::ascii::ASCII_GRAPHIC;
+use crate::codec::ascii::ASCII_GRAPHIC;
 
 lazy_static! {
     pub static ref MISSIONS: Missions = Missions::new(&ARGS.flag_encoding,
@@ -350,8 +350,8 @@ impl Missions {
 #[cfg(test)]
 mod tests {
     use std::str::FromStr;
-    use mission::UnicodeBlockFilter;
-    use mission::CliError;
+    use crate::mission::UnicodeBlockFilter;
+    use crate::mission::CliError;
 
     #[test]
     fn test_enc_opt_parser () {

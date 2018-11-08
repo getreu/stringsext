@@ -1,5 +1,5 @@
 //! This module abstracts the data-input channels i.e. file and stdin.
-use scanner::ScannerPool;
+use crate::scanner::ScannerPool;
 
 use std;
 use std::path::Path;
@@ -271,7 +271,7 @@ fn from_stdin(sc: &mut ScannerPool) -> Result<(), Box<std::io::Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use options::{Args, Radix, ControlChars};
+    use crate::options::{Args, Radix, ControlChars};
     extern crate tempdir;
 
     use std::fs::File;
@@ -279,12 +279,12 @@ mod tests {
     use self::tempdir::TempDir;
     use std::path::PathBuf;
     use std::sync::mpsc;
-    use mission::Missions;
-    use finding::FindingCollection;
-    use finding::Finding;
-    use scanner::ScannerPool;
+    use crate::mission::Missions;
+    use crate::finding::FindingCollection;
+    use crate::finding::Finding;
+    use crate::scanner::ScannerPool;
     use std::thread;
-    use options::FLAG_BYTES_MAX;
+    use crate::options::FLAG_BYTES_MAX;
 
 
     lazy_static! {
