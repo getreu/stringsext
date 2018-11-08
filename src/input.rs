@@ -269,6 +269,7 @@ mod tests {
     use crate::mission::Missions;
     use crate::options::FLAG_BYTES_MAX;
     use crate::scanner::ScannerPool;
+    use lazy_static::lazy_static;
     use std::fs::File;
     use std::io::Write;
     use std::path::PathBuf;

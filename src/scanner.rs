@@ -312,6 +312,7 @@ mod tests {
     use crate::finding::Finding;
     use crate::finding::FindingCollection;
     use crate::options::{Args, ControlChars, Radix};
+    use lazy_static::lazy_static;
     use rand;
 
     pub const WIN_STEP: usize = 17;

@@ -1,6 +1,8 @@
 //! This module deals with commandline arguments and related data
 //! structures.
 use docopt::Docopt;
+use lazy_static::lazy_static;
+use serde_derive::Deserialize;
 
 #[cfg(test)]
 pub const FLAG_BYTES_MAX: usize = 0xff; // max of Args.flag_bytes

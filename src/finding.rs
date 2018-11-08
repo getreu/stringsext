@@ -1,5 +1,6 @@
 //! This module defines data structures to store and process found strings (findings) in memory.
 use encoding::StringWriter;
+use lazy_static::lazy_static;
 use std;
 use std::cmp;
 use std::cmp::{Eq, Ord};

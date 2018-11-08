@@ -7,6 +7,7 @@ use crate::options::ARGS;
 use encoding;
 use encoding::label::encoding_from_whatwg_label;
 use encoding::EncodingRef;
+use lazy_static::lazy_static;
 use std;
 use std::cmp;
 use std::cmp::{Eq, Ord};
