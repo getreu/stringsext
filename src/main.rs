@@ -4,8 +4,6 @@
 //! The processing of the input-data is initiated by the `input`-module that itself uses
 //! the `scanner` module in which the worker-threads are spawned.
 
-use serde_derive::Deserialize;
-
 mod mission;
 
 mod input;
