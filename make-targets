@@ -1,6 +1,5 @@
 # !/bin/sh
-#rustup default stable
-rustup default beta # switch temporally to beta until Rust2018 is out
+rustup default stable
 rustup target add x86_64-unknown-linux-musl
 rustup target add i686-unknown-linux-musl
 #apt-get install libc6-dev-i386
