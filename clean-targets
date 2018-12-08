@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 
 find target -mindepth 2 -not -path "*/release/stringsext" \
                         -not -path "*/release/stringsext.exe" \
