@@ -153,12 +153,12 @@ impl<'a> ScannerPool<'a> {
     pub fn launch_scanner<'b>(
         &mut self,
         filename: Option<&'static str>,
-        byte_counter: &usize,
+        byte_counter: usize,
         input_slice: &'b [u8],
     ) {
         ScannerPool::launch_scanner2(
             filename,
-            &byte_counter,
+            byte_counter,
             &input_slice,
             &mut self.pool,
             &self.tx,
@@ -173,7 +173,7 @@ impl<'a> ScannerPool<'a> {
     ///
     fn launch_scanner2<'b>(
         filename: Option<&'static str>,
-        byte_counter: &usize,
+        byte_counter: usize,
         input_slice: &'b [u8],
         pool: &mut Pool,
         tx: &SyncSender<FindingCollection>,
@@ -237,7 +237,7 @@ impl<'a> ScannerPool<'a> {
     fn scan_window<'b>(
         scanner_state: &ScannerState,
         filename: Option<&'static str>,
-        byte_counter: &usize,
+        byte_counter: usize,
         input: &'b [u8],
     ) -> (FindingCollection, usize) {
         // True if `mission.offset` is in the last UTF8_LEN_MAX Bytes of WIN_OVERLAP
@@ -441,7 +441,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 18);
@@ -467,7 +467,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 18);
@@ -508,7 +508,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, WIN_LEN);
@@ -534,7 +534,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, WIN_STEP, &inp[WIN_STEP..]);
         assert_eq!(res, expected_fc);
         assert_eq!(start, 17);
     }
@@ -565,7 +565,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 25);
@@ -585,7 +585,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 4);
@@ -619,7 +619,7 @@ mod tests {
             mission: &MISSIONS.v[1],
         };
 
-        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 23);
@@ -642,7 +642,7 @@ mod tests {
         ms.offset = start;
         ms.completes_last_str = res.last_str_is_incomplete;
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, WIN_STEP, &inp[WIN_STEP..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 9);
@@ -680,7 +680,7 @@ mod tests {
             mission: &MISSIONS.v[1],
         };
 
-        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 23);
@@ -703,7 +703,7 @@ mod tests {
         ms.offset = start;
         ms.completes_last_str = res.last_str_is_incomplete;
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, WIN_STEP, &inp[WIN_STEP..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 9);
@@ -740,7 +740,7 @@ mod tests {
             mission: &MISSIONS.v[1],
         };
 
-        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 25);
@@ -758,7 +758,7 @@ mod tests {
         ms.offset = start;
         ms.completes_last_str = res.last_str_is_incomplete;
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, WIN_STEP, &inp[WIN_STEP..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 9);
@@ -791,7 +791,7 @@ mod tests {
             mission: &MISSIONS.v[1],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 25);
@@ -829,7 +829,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 17);
@@ -844,7 +844,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 18);
@@ -883,7 +883,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 18);
@@ -917,7 +917,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 18);
@@ -948,7 +948,7 @@ mod tests {
             mission: &MISSIONS.v[0],
         };
 
-        let (res, mut start) = ScannerPool::scan_window(&ms, None, &start, &inp[..WIN_LEN]);
+        let (res, mut start) = ScannerPool::scan_window(&ms, None, start, &inp[..WIN_LEN]);
 
         assert_eq!(res, expected_fc);
         assert_eq!(start, 25);
@@ -971,7 +971,7 @@ mod tests {
         ms.offset = start;
         ms.completes_last_str = res.last_str_is_incomplete;
 
-        let (res, start) = ScannerPool::scan_window(&ms, None, &WIN_STEP, &inp[WIN_STEP..]);
+        let (res, start) = ScannerPool::scan_window(&ms, None, WIN_STEP, &inp[WIN_STEP..]);
 
         assert_eq!(res, expected2);
         assert_eq!(start, 10);
@@ -1035,7 +1035,7 @@ mod tests {
                 //println!("Merger terminated.");
             });
 
-            sc.launch_scanner(None, &1000usize, &"hallo1234üduüso567890".as_bytes());
+            sc.launch_scanner(None, 1000usize, &"hallo1234üduüso567890".as_bytes());
             assert_eq!(sc.scanner_states.v[0].offset, 6);
             //assert_eq!(sc.scanner_states.v[1].offset, 6);
         } // tx drops here
@@ -1072,7 +1072,7 @@ mod tests {
                 completes_last_str: false,
                 mission: &MISSIONS3.v[0],
             };
-            let (res0, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let (res0, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
             let start = 0;
             let ms = ScannerState {
@@ -1080,7 +1080,7 @@ mod tests {
                 completes_last_str: false,
                 mission: &MISSIONS3.v[1],
             };
-            let (res1, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let (res1, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
             let start = 0;
             let ms = ScannerState {
@@ -1088,7 +1088,7 @@ mod tests {
                 completes_last_str: false,
                 mission: &MISSIONS3.v[2],
             };
-            let (res2, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let (res2, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
             let start = 0;
             let ms = ScannerState {
@@ -1096,7 +1096,7 @@ mod tests {
                 completes_last_str: false,
                 mission: &MISSIONS3.v[3],
             };
-            let (res3, start) = ScannerPool::scan_window(&ms, None, &start, &inp[..]);
+            let (res3, start) = ScannerPool::scan_window(&ms, None, start, &inp[..]);
 
             // To see println! output:  cargo test   -- --nocapture
             /*

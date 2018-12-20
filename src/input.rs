@@ -188,20 +188,20 @@ pub fn from_file(
     let mmap = unsafe { self::MmapOptions::new().map(&file)? };
     while byte_counter + WIN_LEN <= len {
         let chunk = &mmap[byte_counter..byte_counter + WIN_LEN];
-        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
+        sc.launch_scanner(Some(&filename), byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
     // The last is shorter than WIN_LEN bytes, but can be longer than WIN_STEP
     if byte_counter < len {
         let chunk = &mmap[byte_counter..len];
-        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
+        sc.launch_scanner(Some(&filename), byte_counter, &chunk);
         byte_counter += WIN_STEP;
     }
 
     // Now there can be still some bytes left (maximum WIN_OVERLAP bytes)
     if byte_counter < len {
         let chunk = &mmap[byte_counter..len];
-        sc.launch_scanner(Some(&filename), &byte_counter, &chunk);
+        sc.launch_scanner(Some(&filename), byte_counter, &chunk);
     }
     Ok(())
 }
@@ -238,21 +238,21 @@ fn from_stdin(sc: &mut ScannerPool<'_>) -> Result<(), Box<std::io::Error>> {
         }
         // Handle data.
         while data_start + WIN_LEN <= data_end {
-            sc.launch_scanner(None, &byte_counter, &buf[data_start..data_start + WIN_LEN]);
+            sc.launch_scanner(None, byte_counter, &buf[data_start..data_start + WIN_LEN]);
             data_start += WIN_STEP;
             byte_counter += WIN_STEP;
         }
     }
     // The last is shorter than WIN_LEN bytes, but can be longer than WIN_STEP
     if data_start < data_end {
-        sc.launch_scanner(None, &byte_counter, &buf[data_start..data_end]);
+        sc.launch_scanner(None, byte_counter, &buf[data_start..data_end]);
         data_start += WIN_STEP;
         byte_counter += WIN_STEP;
     }
 
     // Now there can be still some bytes left (maximum WIN_OVERLAP bytes)
     if data_start < data_end {
-        sc.launch_scanner(None, &byte_counter, &buf[data_start..data_end]);
+        sc.launch_scanner(None, byte_counter, &buf[data_start..data_end]);
     }
     Ok(())
 }
