@@ -287,7 +287,7 @@ impl<'a> ScannerPool<'a> {
         // If `end_pos` is between `WIN_OVERLAP + WIN_STEP-UTF8_LEN_MAX` and
         // `WIN_OVERLAP + WIN_STEP` then we know that the last string has been cut.
         let last_str_is_incomplete =
-            (end_pos + (UTF8_LEN_MAX as usize) >= WIN_OVERLAP + WIN_STEP) && ret.v.len() != 0;
+            (end_pos + (UTF8_LEN_MAX as usize) >= WIN_OVERLAP + WIN_STEP) && !ret.v.is_empty();
 
         // Tell the filter, that the last graphic string should not be omitted, even if too short.
         ret.last_str_is_incomplete = last_str_is_incomplete;
