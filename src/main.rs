@@ -104,7 +104,7 @@ fn main2() -> Result<(), Box<std::io::Error>> {
         });
 
         // Default for <file> is stdin.
-        if (ARGS.arg_FILE.len() == 0) || ((ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
+        if (ARGS.arg_FILE.is_empty()) || ((ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
             process_input(None, &mut sc)?;
         } else {
             for filename in ARGS.arg_FILE.iter() {
