@@ -8,7 +8,7 @@ use serde_derive::Deserialize;
 pub const FLAG_BYTES_MAX: usize = 0xff; // max of Args.flag_bytes
 
 /// Help message and string for `Docopt` used to populate the `Args` structure.
-const USAGE: &'static str = "
+const USAGE: &str = "
 Usage: stringsext [options] [-e ENC...] [--] [FILE...]
        stringsext [options] [-e ENC...] [--] [-]
 

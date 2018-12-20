@@ -5,7 +5,7 @@ use std::convert::Into;
 
 /// A static castable reference to `AsciiGraphicEncoding`.
 /// Usage: `let enc = ASCII_GRAPHIC as encoding::EncodingRef`.
-pub const ASCII_GRAPHIC: &'static self::AsciiGraphicEncoding = &self::AsciiGraphicEncoding;
+pub const ASCII_GRAPHIC: &self::AsciiGraphicEncoding = &self::AsciiGraphicEncoding;
 
 /// This custom encoding is derived from encoding::ASCIIEncoding.
 /// The only difference is that it represents only graphic characters. All control characters

@@ -42,7 +42,7 @@ use itertools::Itertools;
 
 // Version is defined in ../Cargo.toml
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
-const AUTHOR: &'static str = "(c) Jens Getreu, 2016-2018";
+const AUTHOR: &str = "(c) Jens Getreu, 2016-2018";
 
 /// This function spawns and defines the behaviour of the _merger-thread_ who
 /// collects and prints the results produced by the worker threads.
