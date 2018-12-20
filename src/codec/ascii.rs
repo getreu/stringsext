@@ -2,7 +2,6 @@
 
 use encoding::types::{ByteWriter, CodecError, Encoding, RawDecoder, RawEncoder, StringWriter};
 use std::convert::Into;
-use std::mem;
 
 /// A static castable reference to `AsciiGraphicEncoding`.
 /// Usage: `let enc = ASCII_GRAPHIC as encoding::EncodingRef`.
