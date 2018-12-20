@@ -375,7 +375,7 @@ impl FindingCollection {
 
     pub fn close_old_init_new_finding(&mut self, text_ptr: usize) {
         let mission = self.v.last().unwrap().mission;
-        if self.v.last().unwrap().s.len() != 0 {
+        if !self.v.last().unwrap().s.is_empty() {
             // last is not empty
 
             filter!(self, mission);
@@ -383,7 +383,7 @@ impl FindingCollection {
 
         // We have check again because len() may have changed in the line above
         let filename = self.v.last().unwrap().filename;
-        if self.v.last().unwrap().s.len() != 0 {
+        if !self.v.last().unwrap().s.is_empty() {
             self.v.push(Finding {
                 filename: filename,
                 ptr: text_ptr,
