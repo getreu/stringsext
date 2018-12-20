@@ -360,7 +360,7 @@ impl Missions {
         let range2: &str = i.next().unwrap_or("");
         let filter2 = mask(parse_range(range2)?);
 
-        if let Some(_) = i.next() {
+        if i.next().is_some() {
             return Err(CliError::TooManyTokensError);
         }
 
