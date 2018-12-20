@@ -33,6 +33,7 @@ impl Encoding for AsciiGraphicEncoding {
 pub struct AsciiGraphicEncoder;
 
 impl AsciiGraphicEncoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawEncoder> {
         Box::new(AsciiGraphicEncoder)
     }
@@ -87,6 +88,7 @@ impl RawEncoder for AsciiGraphicEncoder {
 pub struct AsciiGraphicDecoder;
 
 impl AsciiGraphicDecoder {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> Box<dyn RawDecoder> {
         Box::new(AsciiGraphicDecoder)
     }
