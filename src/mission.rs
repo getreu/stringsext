@@ -206,7 +206,7 @@ pub struct Missions {
 impl Missions {
     /// Constructor. We assume that at least one encoding exist.
     pub fn new(
-        encodings: &Vec<String>,
+        encodings: &[String],
         control_chars: &ControlChars,
         flag_bytes: Option<u8>,
     ) -> Self {
