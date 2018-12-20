@@ -109,7 +109,7 @@ impl RawDecoder for AsciiGraphicDecoder {
         output.writer_hint(input.len());
 
         fn write_ascii_bytes(output: &mut dyn StringWriter, buf: &[u8]) {
-            output.write_str(unsafe { mem::transmute(buf) });
+            output.write_str(std::str::from_utf8(buf).unwrap());
         }
 
         // all non graphic is error
