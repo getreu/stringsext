@@ -107,7 +107,7 @@ fn main2() -> Result<(), Box<std::io::Error>> {
         if (ARGS.arg_FILE.len() == 0) || ((ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
             process_input(None, &mut sc)?;
         } else {
-            for ref filename in ARGS.arg_FILE.iter() {
+            for filename in ARGS.arg_FILE.iter() {
                 if let Err(e) = process_input(Some(&filename), &mut sc) {
                     writeln!(
                         &mut std::io::stderr(),
