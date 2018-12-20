@@ -345,9 +345,9 @@ impl FindingCollection {
             last_str_is_incomplete: false,
         };
         fc.v.push(Finding {
-            filename: filename,
+            filename,
             ptr: text_ptr,
-            mission: mission,
+            mission,
             s: String::with_capacity(FINDING_STR_CAPACITY),
         });
 
@@ -385,9 +385,9 @@ impl FindingCollection {
         let filename = self.v.last().unwrap().filename;
         if !self.v.last().unwrap().s.is_empty() {
             self.v.push(Finding {
-                filename: filename,
+                filename,
                 ptr: text_ptr,
-                mission: mission,
+                mission,
                 s: String::with_capacity(FINDING_STR_CAPACITY),
             });
         } else {

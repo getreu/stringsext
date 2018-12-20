@@ -59,9 +59,9 @@ impl UnicodeBlockFilter {
 
     pub fn new2(and_mask: u32, and_result: u32, is_some: bool) -> Self {
         UnicodeBlockFilter {
-            and_mask: and_mask,
-            and_result: and_result,
-            is_some: is_some,
+            and_mask,
+            and_result,
+            is_some,
         }
     }
 }
@@ -243,17 +243,17 @@ impl Missions {
                     v.push(Mission {
                         // For ASCII with `-c i` we use our own decoder
                         encoding: ASCII_GRAPHIC as encoding::EncodingRef,
-                        nbytes_min: nbytes_min,
-                        filter1: filter1,
-                        filter2: filter2,
+                        nbytes_min,
+                        filter1,
+                        filter2,
                         enable_filter: unicode_filtering,
                     })
                 } else {
                     v.push(Mission {
                         encoding: encoding::all::ASCII as encoding::EncodingRef,
-                        nbytes_min: nbytes_min,
-                        filter1: filter1,
-                        filter2: filter2,
+                        nbytes_min,
+                        filter1,
+                        filter2,
                         enable_filter: control_char_filtering || unicode_filtering,
                     })
                 }
@@ -263,9 +263,9 @@ impl Missions {
             v.push(match encoding_from_whatwg_label(enc_name) {
                 Some(enc) => Mission {
                     encoding: enc,
-                    filter1: filter1,
-                    filter2: filter2,
-                    nbytes_min: nbytes_min,
+                    filter1,
+                    filter2,
+                    nbytes_min,
                     enable_filter: control_char_filtering || unicode_filtering,
                 },
                 None => {
@@ -280,7 +280,7 @@ impl Missions {
             });
         }
 
-        Missions { v: v }
+        Missions { v }
     }
 
     /// Return the number of `Mission`s stored.

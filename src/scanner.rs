@@ -128,7 +128,7 @@ impl<'a> ScannerPool<'a> {
     pub fn new(missions: &'static Missions, tx: &'a SyncSender<FindingCollection>) -> Self {
         let n_threads = missions.len();
         let v = Vec::new();
-        let mut ms = ScannerStates { v: v };
+        let mut ms = ScannerStates { v };
         for i in 0..n_threads {
             ms.v.push(ScannerState {
                 offset: 0,
@@ -524,7 +524,7 @@ mod tests {
                 mission: &MISSIONS.v[0],
                 s: "\u{2691}TUSH".to_string(),
             }],
-            completes_last_str: completes_last_str,
+            completes_last_str,
             last_str_is_incomplete: false,
         };
 
