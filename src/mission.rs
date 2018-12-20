@@ -289,10 +289,10 @@ impl Missions {
     }
 
     /// Helper function to parse enc_opt.
-    fn parse_enc_opt<'a>(
-        enc_opt: &'a str,
+    fn parse_enc_opt(
+        enc_opt: &str,
         nbytes_min_default: u8,
-    ) -> Result<(&'a str, u8, UnicodeBlockFilter, UnicodeBlockFilter), CliError> {
+    ) -> Result<(&str, u8, UnicodeBlockFilter, UnicodeBlockFilter), CliError> {
         let mask = |(u_lower, u_upper): (u32, u32)| -> UnicodeBlockFilter {
             // CALCULATE FILTER PARAMETERS
 
