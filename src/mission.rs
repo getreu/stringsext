@@ -23,7 +23,7 @@ lazy_static! {
     pub static ref MISSIONS: Missions = Missions::new(
         &ARGS.flag_encoding,
         &ARGS.flag_control_chars,
-        &ARGS.flag_bytes
+        ARGS.flag_bytes
     );
 }
 
@@ -208,7 +208,7 @@ impl Missions {
     pub fn new(
         encodings: &Vec<String>,
         control_chars: &ControlChars,
-        flag_bytes: &Option<u8>,
+        flag_bytes: Option<u8>,
     ) -> Self {
         let mut v = Vec::new();
 

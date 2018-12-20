@@ -340,7 +340,7 @@ mod tests {
         pub static ref MISSIONS: Missions = Missions::new(
             &ARGS.flag_encoding,
             &ARGS.flag_control_chars,
-            &ARGS.flag_bytes
+            ARGS.flag_bytes
         );
     }
 
@@ -355,7 +355,7 @@ mod tests {
                 "UTF-16LE".to_string(),
             ],
             &ARGS.flag_control_chars,
-            &ARGS.flag_bytes
+            ARGS.flag_bytes
         );
     }
 
@@ -1052,7 +1052,7 @@ mod tests {
                 "koi8-u".to_string(),
             ],
             &ARGS.flag_control_chars,
-            &ARGS.flag_bytes
+            ARGS.flag_bytes
         );
     }
 

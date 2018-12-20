@@ -295,7 +295,7 @@ mod tests {
         pub static ref MISSIONS: Missions = Missions::new(
             &ARGS.flag_encoding,
             &ARGS.flag_control_chars,
-            &ARGS.flag_bytes
+            ARGS.flag_bytes
         );
     }
 
