@@ -89,7 +89,7 @@ macro_rules! enc_str {
 impl Finding {
     /// Format and dump a Finding to the output channel,
     /// usually stdout.
-    pub fn print(&self, out: &mut Box<dyn Write>) -> Result<(), Box<std::io::Error>> {
+    pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
         let filename_str = if ARGS.flag_print_file_name {
             if let Some(f) = self.filename {
                 format!("{}: ", f)
@@ -357,7 +357,7 @@ impl FindingCollection {
     /// This method formats and dumps a `FindingCollection` to the output channel,
     /// usually `stdout`.
     #[allow(dead_code)]
-    pub fn print(&self, out: &mut Box<dyn Write>) -> Result<(), Box<std::io::Error>> {
+    pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
         for finding in &self.v {
             finding.print(out)?;
         }
