@@ -5,14 +5,14 @@ mkdir --parents ./doc/build/html/_downloads
 mkdir --parents ./doc/build/man/man1
 
 # Man page
-rst2man ./doc/source/stringsext--man.rst > ./doc/build/man/man1/stringsext.1
-rst2html --stylesheet=./doc/source/docutils_basic.css ./doc/source/stringsext--man.rst ./doc/build/html/stringsext--man.html
-# You can also use pandoc
-#pandoc -s doc/source/stringsext--man.rst -t man -o man/man1/stringsext.1
+pandoc -f markdown -t html  --include-in-header=./doc/source/docutils_basic.css\
+       ./doc/source/stringsext--man.md -o ./doc/build/html/stringsext--man.html
+pandoc -s ./doc/source/stringsext--man.md -t man \
+       -o ./doc/build/man/man1/stringsext.1
 gzip -f ./doc/build/man/man1/stringsext.1
 
 # Readme page
-pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.css \
+pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.cs\
         ./doc/source/README.md -o ./doc/build/html/index.html
 
 cd  ./doc/build/html/_downloads
