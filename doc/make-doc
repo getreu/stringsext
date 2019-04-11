@@ -1,7 +1,7 @@
 #!/bin/sh
 cd ..
 mkdir --parents ./doc/build/html
-mkdir  ./doc/build/html/_downloads
+mkdir --parents ./doc/build/html/_downloads
 mkdir --parents ./doc/build/man/man1
 
 # Man page
@@ -12,9 +12,9 @@ rst2html --stylesheet=./doc/source/docutils_basic.css ./doc/source/stringsext--m
 gzip -f ./doc/build/man/man1/stringsext.1
 
 # Readme page
-rst2html --stylesheet=./doc/source/docutils_basic.css ./doc/source/index.rst ./doc/build/html/index.html
+pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.css \
+        ./doc/source/README.md -o ./doc/build/html/index.html
 
-ln -sf ./doc/source/index.rst ./README.rst
 cd  ./doc/build/html/_downloads
 ln -sf ../../../../target/* .
 ln -sf ../../../../doc/build/man/man1/stringsext.1.gz .
