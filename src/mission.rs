@@ -337,7 +337,7 @@ impl Missions {
             // Separate and parse the range string
             let mut j = r
                 .split_terminator("..")
-                .map(|s| s.trim_left_matches("U+"))
+                .map(|s| s.trim_start_matches("U+"))
                 .map(|s| u32::from_str_radix(s, 16));
 
             let u_lower: u32 = j.next().unwrap_or(Ok(0))?;
