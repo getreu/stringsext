@@ -310,7 +310,7 @@ criteria such as *MIN* or *UNICODEBLOCK*.
     split into two pieces which are printed on separate lines.
     **stringsext** labels such a cutting edge with two flag symbols ⚑
     (U+2691). Furthermore, one or both of those pieces may then become
-    to short to meet the **\--bytes** condition. In order not to loose
+    too short to meet the **\--bytes** condition. In order not to loose
     any bytes of a piece the **\--bytes** option is not observed for
     split strings. The downside of this is the appearance of some
     undesirable false positives. Therefore the **\--split-bytes** option
