@@ -12,7 +12,7 @@ pandoc -s ./doc/source/stringsext--man.md -t man \
 gzip -f ./doc/build/man/man1/stringsext.1
 
 # Readme page
-pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.cs\
+pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.css\
         ./doc/source/README.md -o ./doc/build/html/index.html
 
 cd  ./doc/build/html/_downloads
