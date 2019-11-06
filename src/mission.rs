@@ -215,13 +215,10 @@ impl Missions {
 
         for enc_opt in encodings.iter() {
             let (enc_name, nbytes_min, filter1, filter2) =
-                match Self::parse_enc_opt(&enc_opt, flag_bytes.unwrap()) {
-                    Ok(r) => r,
-                    Err(e) => {
-                        eprintln!("Error: {} while parsing `{}`.", e, &enc_opt);
-                        process::exit(1);
-                    }
-                };
+                Self::parse_enc_opt(&enc_opt, flag_bytes.unwrap()).unwrap_or_else(|error| {
+                    eprintln!("Error: {} while parsing `{}`.", error, &enc_opt);
+                    process::exit(1);
+                });
 
             let unicode_filtering = filter1.is_some || filter2.is_some;
 
