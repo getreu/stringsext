@@ -9,3 +9,6 @@ find target -mindepth 2 -not -path "*/release/stringsext" \
                         -exec rm -r {} \;
 
 rm -r target/debug
+rm -r target/release
+rm -r target/rls
+rm target/.rustc_info.json
