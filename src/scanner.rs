@@ -1102,7 +1102,7 @@ mod tests {
             /*
             println!("Scan of random Bytes:{:?} {:?} {:?} {:?}",
                    res0.v, res1.v, res2.v, res3.v);
-            */        }
+            */
+        }
     }
-
 }

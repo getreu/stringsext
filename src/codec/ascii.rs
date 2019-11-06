@@ -156,5 +156,4 @@ mod tests {
         assert_eq!(offset, 3);
         assert_eq!(err.unwrap().upto, 4);
     }
-
 }

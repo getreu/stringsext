@@ -204,11 +204,7 @@ pub struct Missions {
 
 impl Missions {
     /// Constructor. We assume that at least one encoding exist.
-    pub fn new(
-        encodings: &[String],
-        control_chars: &ControlChars,
-        flag_bytes: Option<u8>,
-    ) -> Self {
+    pub fn new(encodings: &[String], control_chars: &ControlChars, flag_bytes: Option<u8>) -> Self {
         let mut v = Vec::new();
 
         let control_char_filtering = match *control_chars {
@@ -302,9 +298,7 @@ impl Missions {
             {
                 eprintln!(
                     "Warning: range in `{}` extended to range `U+{:x}..U+{:x}`.",
-                    enc_opt,
-                    u_lower_ext,
-                    u_upper_ext
+                    enc_opt, u_lower_ext, u_upper_ext
                 );
             }
 
@@ -366,7 +360,7 @@ mod tests {
     #[test]
     fn test_enc_opt_parser() {
         // The following work-around will become obsolete with the upcoming
-        // [Make `ParseIntError` and `IntErrorKind` fully public · 
+        // [Make `ParseIntError` and `IntErrorKind` fully public ·
         //  Pull Request #55705](https://github.com/rust-lang/rust/pull/55705/files)
         // let pie = ParseIntError {kind: std::num::InvalidDigit} //is private
         let pie_invalid_digit = CliError::Format(u32::from_str("x").unwrap_err());
