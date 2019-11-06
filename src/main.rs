@@ -46,7 +46,7 @@ const AUTHOR: &str = "(c) Jens Getreu, 2016-2018";
 
 /// This function spawns and defines the behaviour of the _merger-thread_ who
 /// collects and prints the results produced by the worker threads.
-fn main2() -> Result<(), Box<std::io::Error>> {
+fn run() -> Result<(), Box<std::io::Error>> {
     if ARGS.flag_list_encodings {
         let list = all::encodings()
             .iter()
@@ -109,13 +109,7 @@ fn main2() -> Result<(), Box<std::io::Error>> {
         } else {
             for filename in ARGS.arg_FILE.iter() {
                 if let Err(e) = process_input(Some(&filename), &mut sc) {
-                    writeln!(
-                        &mut std::io::stderr(),
-                        "Warning: `{}` while scanning file `{}`.",
-                        e,
-                        filename
-                    )
-                    .unwrap();
+                    eprintln!("Warning: `{}` while scanning file `{}`.", e, filename);
                 };
             }
         };
@@ -126,8 +120,8 @@ fn main2() -> Result<(), Box<std::io::Error>> {
 }
 
 fn main() {
-    if let Err(e) = main2() {
-        writeln!(&mut std::io::stderr(), "Error: `{}`.", e).unwrap();
+    if let Err(e) = run() {
+        eprintln!("Error: `{}`.", e);
         process::exit(1);
     }
 }

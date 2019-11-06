@@ -13,7 +13,6 @@ use std::cmp;
 use std::cmp::{Eq, Ord};
 use std::error;
 use std::fmt;
-use std::io::prelude::*;
 use std::num;
 use std::process;
 use std::str;
@@ -223,13 +222,7 @@ impl Missions {
                 match Self::parse_enc_opt(&enc_opt, flag_bytes.unwrap()) {
                     Ok(r) => r,
                     Err(e) => {
-                        writeln!(
-                            &mut std::io::stderr(),
-                            "Error: {} while parsing `{}`.",
-                            e,
-                            &enc_opt
-                        )
-                        .unwrap();
+                        eprintln!("Error: {} while parsing `{}`.", e, &enc_opt);
                         process::exit(1);
                     }
                 };
@@ -269,12 +262,10 @@ impl Missions {
                     enable_filter: control_char_filtering || unicode_filtering,
                 },
                 None => {
-                    writeln!(
-                        &mut std::io::stderr(),
+                    eprintln!(
                         "Error: Invalid input encoding name '{}', try option -l.",
                         enc_name
-                    )
-                    .unwrap();
+                    );
                     process::exit(1);
                 }
             });
@@ -309,14 +300,12 @@ impl Missions {
             if !((u_lower == 0) && (u_upper == std::char::MAX as u32))
                 && ((u_lower != u_lower_ext) || (u_upper != u_upper_ext))
             {
-                writeln!(
-                    &mut std::io::stderr(),
+                eprintln!(
                     "Warning: range in `{}` extended to range `U+{:x}..U+{:x}`.",
                     enc_opt,
                     u_lower_ext,
                     u_upper_ext
-                )
-                .unwrap();
+                );
             }
 
             let u_and_result = u_lower_ext;
