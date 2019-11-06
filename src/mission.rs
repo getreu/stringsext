@@ -365,9 +365,12 @@ mod tests {
 
     #[test]
     fn test_enc_opt_parser() {
-        //let pie = ParseIntError {kind: std::num::InvalidDigit} //is private
+        // The following work-around will become obsolete with the upcoming
+        // [Make `ParseIntError` and `IntErrorKind` fully public · 
+        //  Pull Request #55705](https://github.com/rust-lang/rust/pull/55705/files)
+        // let pie = ParseIntError {kind: std::num::InvalidDigit} //is private
         let pie_invalid_digit = CliError::Format(u32::from_str("x").unwrap_err());
-        //let pie = ParseIntError {kind: std::num::Overflow} //is private
+        // let pie = ParseIntError {kind: std::num::Overflow} //is private
         let pie_overflow = CliError::Format(u8::from_str("257").unwrap_err());
 
         assert_eq!(
