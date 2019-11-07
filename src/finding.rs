@@ -448,7 +448,7 @@ mod tests {
     use std::str;
 
     pub const WIN_STEP: usize = 17;
-    pub const CONTROL_REPLACEMENT_STR: &'static &'static str = &"\u{fffd}";
+    pub const CONTROL_REPLACEMENT_STR: &'static str = &"\u{fffd}";
 
     lazy_static! {
         pub static ref ARGS: Args = Args {
