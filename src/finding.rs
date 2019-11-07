@@ -473,12 +473,12 @@ mod tests {
         static M1: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -515,12 +515,12 @@ mod tests {
         static M2: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -558,12 +558,12 @@ mod tests {
         static M3: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -600,12 +600,12 @@ mod tests {
         static M4: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -642,12 +642,12 @@ mod tests {
         static M5: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -685,12 +685,12 @@ mod tests {
         static M6: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -728,12 +728,12 @@ mod tests {
         static M7: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -770,12 +770,12 @@ mod tests {
         static M8: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
@@ -818,12 +818,12 @@ mod tests {
         static M9: Mission = Mission {
             encoding: encoding::all::ASCII,
             filter1: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },
             filter2: UnicodeBlockFilter {
-                and_mask: 0xffe00000,
+                and_mask: 0xffe0_0000,
                 and_result: 0,
                 is_some: false,
             },

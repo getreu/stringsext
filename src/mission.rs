@@ -38,7 +38,7 @@ pub struct UnicodeBlockFilter {
 
     /// Is this `and_mask`, `and_result` filtering anything?
     /// This information is redundant because:
-    /// `is_some = (and_mask == 0xffe00000) && (and_result == 0x0)`
+    /// `is_some = (and_mask == 0xffe0_0000) && (and_result == 0x0)`
     /// It is precalculated to speed up later operations.
     pub is_some: bool,
 }
@@ -47,7 +47,7 @@ pub struct UnicodeBlockFilter {
 impl UnicodeBlockFilter {
     /// This constructs a non-restricting filter letting pass all characters.
     pub fn new() -> Self {
-        // This calculates: 0xffe00000
+        // This calculates: 0xffe0_0000
         let and_mask_all = !((std::char::MAX as u32).next_power_of_two() - 1);
         UnicodeBlockFilter {
             and_mask: and_mask_all,
@@ -302,7 +302,7 @@ impl Missions {
             let u_and_result = u_lower_ext;
 
             // Check if the filter is restrictive
-            // filtering = (and_mask == 0xffe00000) && (and_result == 0x0)
+            // filtering = (and_mask == 0xffe0_0000) && (and_result == 0x0)
             let filtering = !(u_and_mask == !((std::char::MAX as u32).next_power_of_two() - 1)
                 && u_and_result == 0);
 
