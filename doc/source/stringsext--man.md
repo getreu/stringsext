@@ -40,6 +40,9 @@ Version: 1.5.0
 
 Date: 2018-09-30
 Version: 1.6.0
+
+Date: 2020-01-03
+Version: 1.7.1
 -->
 
 # NAME
