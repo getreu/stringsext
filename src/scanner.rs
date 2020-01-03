@@ -252,13 +252,18 @@ pub fn scan<'a>(
                 && decoder_result != DecoderResult::OutputFull)
                 || (is_last_window && is_last_input_buffer);
 
+            // Use it only once.
+            let last_run_str_was_printed_and_is_maybe_cut_str =
+                ss.last_run_str_was_printed_and_is_maybe_cut_str;
+            ss.last_run_str_was_printed_and_is_maybe_cut_str = false;
+
             // Now we split `split_str_buffer` into substrings and store them in
             // vector `fc.v`.
 
             'chunk_loop: for chunk in SplitStr::new(
                 split_str_buffer,
                 ss.mission.chars_min_nb,
-                ss.last_run_str_was_printed_and_is_maybe_cut_str,
+                last_run_str_was_printed_and_is_maybe_cut_str,
                 invalid_bytes_after_split_str_buffer,
                 ss.mission.filter,
                 ss.mission.output_line_len,
