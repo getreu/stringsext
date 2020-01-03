@@ -1,21 +1,17 @@
 [package]
 name = "stringsext"
-version = "1.7.1"
+version = "1.99.0"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
 [dependencies]
-#encoding = { git = "https://github.com/lifthrasiir/rust-encoding" }
-# use nighly itertools with bugfix: Merge pull request #135 (2. Aug. 2016)
-# minimum version is: 0.4.17!
-#itertools = { git = "https://github.com/bluss/rust-itertools" }
-docopt = "*"
-encoding = "*"
-itertools = "*"
+encoding_rs= "*"
 lazy_static = "*"
-memmap = "*"
-rand = "*"
+docopt = "*"
 serde = "*"
 serde_derive = "*"
+itertools = "*"
 scoped_threadpool = "*"
-tempdir = "*"
+anyhow = "*"

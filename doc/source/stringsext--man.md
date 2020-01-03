@@ -1,4 +1,4 @@
-% STRINGSEXT(1) Version 1.7.0 | Stringsext Documentation
+% STRINGSEXT(1) Version 1.99.1 | Stringsext Documentation
 
 <!--
 previous versions
@@ -41,8 +41,11 @@ Version: 1.5.0
 Date: 2018-09-30
 Version: 1.6.0
 
-Date: 2020-01-03
+Date: 2010-01-03
 Version: 1.7.1
+
+Date: 2010-01-03
+Version: 1.99.1
 -->
 
 # NAME
@@ -62,114 +65,104 @@ characters and other scripts in all supported multi-byte-encodings,
 while *GNU strings* fails in finding any of these scripts in UTF-16 and
 many other encodings.
 
-**stringsext** is mainly useful for determining the Unicode content of
-non-text files: It prints all graphic character sequences in *FILE* or
+**stringsext** is mainly useful for determining the Unicode content in
+binary data: It prints all graphic character sequences in *FILE* or
 *stdin* that are at least *MIN* bytes long.
 
 Unlike *GNU strings* **stringsext** can be configured to search for
 valid characters not only in ASCII but also in many other input
-encodings, e.g.: utf-8, utf-16be, utf-16le, big5-2003, euc-jp, koi8-r
+encodings, e.g.: utf-8, utf-16be, utf-16le, big5, euc-jp, koi8-r
 and many others. **\--list-encodings** shows a list of valid encoding
 names based on the WHATWG Encoding Standard. When more than one encoding
 is specified, the scan is performed in different threads simultaneously.
 
 When searching for UTF-16 encoded strings, 96% of all possible two byte
-sequences, interpreted as UTF-16 code unit, relate directly to a Unicode
-code point. As a result, the probability of encountering valid Unicode
+sequences, interpreted as UTF-16 code unit, relate directly to Unicode
+code points. As a result, the probability of encountering valid Unicode
 characters in a random byte stream, interpreted as UTF-16, is also 96%.
 In order to reduce this big number of false positives, **stringsext**
-provides a parameterizable Unicode-block-filter. See **\--encodings**
+provides a parametrizable Unicode-block-filter. See **\--encodings**
 option for more details.
 
-**stringsext** reads its input data from **FILE**. With no **FILE**, or
-when **FILE** is `-`, it reads standard input *stdin*.
+**stringsext** reads its input data from (multiple) **FILE**s. With no 
+**FILE** is given, or when **FILE** is `-`, it reads standard input *stdin*.
 
-When invoked with `stringsext -e ascii -c i` **stringsext** can be used
+When invoked with `stringsext -e ascii`, **stringsext** can be used
 as *GNU strings* replacement.
 
-Under Windows a Unicode editor is required. For first tests `wordpad`
-should do. Choose the `Courier new` font or `Segoe UI symbol` font to
-see the flag symbols ⚑ (U+2691).
 
 # OPTIONS
 
-**-c** *MODE*, **\--control-chars**=*MODE*
+**-a** *AF*, **\--ascii-filter**=*AF*
 
-:   Determine if and how control characters are printed.
+:   Apply ASCII-Filter.
+    After the string-findings had beed decoded into UTF-8, the ASCII-filter
+    is one of the 4 filters all output lines have to pass before being
+    printed. The ASCII-filter is applied solely to Unicode characters in
+    `U+0000..U+007F`. The filter parameter AF decides which of these codes
+    will pass the filter. AF is a 128 bit integer, where each bit is mapped to
+    one of the above character-range, e.g. the character `U+0020` will pass the
+    filter only, if bit no. 32 (=0x20) is set. An unset bit no. 32 will
+    instruct the filter to reject all character `U+0020`.
 
-    The search algorithm first scans for valid character sequences which
-    are then re-encoded into UTF-8 strings containing graphic
-    (printable) and control (non-printable) characters.
+    The integer AF is notated in hexadecimal with prefix `0x...`.
+    For the most common use-cases, predefined filters can be set:
+    e.g. alias names like `all-ctrl` or `all-ctrl+wsp` are shorthand 
+    terms for ASCII-filters "all codes, but no control-codes" or
+    "all codes, including white-space, but no control-codes.
+    See the output of `--list-encodings` for more details 
+    about filter-names.
 
-    When *MODE* is set to **p** all valid (control and graphic)
-    characters are printed. Warning: Control characters may contain a
-    harmful payload. An attacker may exploit a vulnerability of your
-    terminal or post processing software. Use with caution.
+**-c**, **\--no-metadata**
 
-    *MODE* **r** will never print any control character but instead
-    indicate their position: Control characters in valid strings are
-    first grouped and then replaced with the Unicode replacement
-    character \'�\' (U+FFFD). This mode is most useful together with
-    **\--radix** because it keeps the whole valid character sequence in
-    one line allowing post-processing the output with line oriented
-    tools like `grep`. To ease post-processing, the output in MODE **r**
-    is formatted slightly different from other modes: instead of
-    indenting the byte-counter, the encoding name and the found string
-    with *spaces* as separator, only one *tab* is inserted.
+:   Suppress all metadata in output.
+    `stringsext` presents its string-findings in one or more
+    output-lines. Each line shows some meta information before
+    printing the finding itself. See the section `Output Format`
+    for more information about metadata.
 
-    When *MODE* is **i** all control characters are silently ignored.
-    They are first grouped and then replaced with a newline character.
+**-d**, **\--debug-options**
 
-    See the output of **\--help** for the default value of *MODE*.
+:   Show how command-line-options are interpreted. When set, `stringsext`
+    prints an exhaustive filter parameter synoptic. Can be used for debugging
+    to check how the present command-line-arguments are interpreted or for
+    documentation purpose. Does not run the scanner.
 
 **-e** *ENC*, **\--encoding**=*ENC*
 
 :   Set (multiple) input search encodings.
 
-    *ENC*==*ENCNAME*\[,*MIN*\[,*UNICODEBLOCK*\[,*UNICODEBLOCK*\]\]\]
+    *ENC*==*[ENCNAME],*\[*MIN*\],\[*AF*\],\[*UBF*\],
+    \[*GREP*\]
 
     *ENCNAME*
 
-    :   Search for strings in encoded in ENCNAME. Encoding names
+    :   Search for strings encoded as ENCNAME. Encoding names
         *ENCNAME* are denoted following the WATHWG standard.
-        **\--list-encodings** prints a list of available encodings.
+        `--list-encodings` prints a list of available encodings.
 
-    *MIN*
+    *MIN*, *AF*, *UBF*, *GREP*
 
-    :   Print only strings at least min bytes long. The length is
-        measured in UTF-8 encoded bytes. *MIN* overwrites the general
-        **\--bytes MIN** option for this *ENC* only.
+    :   Once the input is decoded to UTF-8, all characters have to pass 4
+        additional filters before being printed: MIN (see `--chars-min`), 
+        AF (see `--ascii-filter`), 
+        UBF (see `--unicode-block-filter`) and GREP (see `--grep-char`).
 
-    *UNICODEBLOCK*
+        The values given here override - for this ENC only - the default values 
+        given by `--chars-min`, `--ascii-filter`, `--unicode-block-filter`
+        and `--grep-char`. 
+        
+        `--list-encodings` prints a
+        list of predefined filter-names.
 
-    :   Restrict the search to characters within *UNICODEBLOCK*. This
-        can be used to search for a certain script or to reduce false
-        positives, especially when searching for UTF-16 encoded strings.
-        See `https://en.wikipedia.org/wiki/Unicode_block` for a list of
-        scripts and their corresponding Unicode-block-ranges.
-        *UNICODEBLOCK* has the following syntax:
+**-g** *ASCII*, **\--grep-char**=*ASCII*
 
-        *UNICODEBLOCK*==U+*XXXXXX*..U+*YYYYYY*
-
-        *XXXXXX* and *YYYYYY* are the lower and upper bounds of the
-        Unicode block in hexadecimal. The prefix `U+` can be omitted.
-        The default value for this optional range is `U+0..U+10FFFF`
-        which means \"no filter\" or \"print all characters whatever
-        their Unicode code-point is\". For performance reasons the
-        filter is implemented with a logical bit-mask. If necessary, the
-        given *UNICODEBLOCK* is enlarged to be representable as a
-        bit-mask. In this case a warning specifying the enlarged
-        *UNICODEBLOCK* is emitted.
-
-        When a second optional *UNICODEBLOCK* is given, the total
-        Unicode-point search range is the union of the first and the
-        second.
-
-    See the output of **\--help** for the default value of *ENC*.
-
-**-f, \--print-file-name**
-
-:   Print the name of the file before each string.
+:   Print only findings having at least one character with ASCII code.
+    `--grep-char` is one of the 4 filters decoded output lines must pass
+    before being printed. `--grep-char` greps for ASCII codes in output
+    lines. The ASCII-code can be given as decimal or hexadecimal number. The
+    latter starts with `0x...`. Useful values are `47` (`/`) or `92` (`\`) 
+    for path search.
 
 **-h, \--help**
 
@@ -177,52 +170,78 @@ see the flag symbols ⚑ (U+2691).
 
 **-l, \--list-encodings**
 
-:   List available encodings as WHATWG Encoding Standard names and exit.
+:   List available encodings as WHATWG-Encoding-Standard-names,
+    predefined ASCII-filter and Unicode-Block-Filter alias names.
 
-**-n** *MIN*, **\--bytes**=*MIN*
+**-n** *MIN*, **\--chars-min**=*MIN*
 
-:   Print only strings at least *MIN* bytes long. The length is measured
-    in UTF-8 encoded bytes. **\--help** shows the default value.
+:   Print only strings at least *MIN* characters long. The string length is
+    measured in Unicode-characters (codepoints). **\--help** shows 
+    the default value.
 
 **-p** *FILE*, **\--output**=*FILE*
 
 :   Print to *FILE* instead of *stdout*.
 
-**-s** *SPLIT-MIN*, **\--split\_bytes**=*SPLIT-MIN*
+**-q** *NUM*, *\--output-line-len*=*NUM*  
 
-:   Print only split pieces at least *SPLIT-MIN* bytes long. The length
-    is measured in UTF-8 encoded bytes and applies to all scanners.
-    *SPLIT-MIN=1* (default) ensures that no byte can get lost (never any
-    true negatives, but false positives possible). With a value
-    *SPLIT-MIN\>1* the first or the second piece can get lost, but the
-    probability of false positives is reduced.
+:   Set output-line-length in UTF-8 bytes. Length of the printed output line
+    in UTF-8 bytes (string-findings only, no metadata). The line-length is
+    limited by buffer size (see `OUTPUT_BUF_LEN` in source code). There is no
+    risk to set this to very big values: A value `NUM` bigger than
+    `OUTPUT_BUF_LEN` is set to `OUT_PUT_LEN`. The longer the this line-length
+    is, the fewer strings will be wrapped to the next line. The downside with
+    long output lines is, that the scanner loses precision in locating the
+    findings.
 
-    You only need this option when your output contains too many flag
-    symbols ⚑ next to very short strings.
+**-s** *NUM*, **\--counter-offset**=*NUM*
 
-    Explanation: In some rare circumstances a graphic string is split
-    into two smaller pieces (see LIMITATIONS). Their cutting edges are
-    labelled with a flag symbol ⚑ (U+2691). This option controls the
-    minimum length of a split piece to be printed.
+ :  Start offset NUM for the input-stream-byte-counter as decimal or
+    hexadecimal integer. This is useful when large input data is stored
+    split in separate files and when these files are so big that they should
+    be analyzed in separate **stringsext** runs.
+
+    Note: in general it is better to treat all input files in one run by
+    listing them as command-line-parameter. Thus, **stringsext** concatenates
+    the split input-files to one input-stream before analyzing it. This way
+    it is able to even recognize split strings at the cutting edge between
+    two input files.
 
 **-t** *RADIX*, **\--radix**=*RADIX*
 
-:   Print the offset within the file before each valid string. The
-    single character argument specifies the radix of the offset: **o**
-    for octal, **x** for hexadecimal, or **d** for decimal. When a valid
-    string is split into several graphic character sequences, the
-    cut-off point is labelled according to the **\--control-chars**
-    option and no additional offset is printed at the cut-off point.
+:   Print the position of the decoded string. The position indicated as
+    input-stream bytes-offset. The single character argument specifies the
+    RADIX of the offset: **o** for octal, **x** for hexadecimal, or **d** for
+    decimal.
 
-    The exception to the above is **\--encoding=ascii
-    \--control-chars=i** for which the offset is always printed before
-    each graphic character sequence.
+**-u** *UBF*, **\--unicode-block-filter**=*UBF*
 
-    When the output of **stringsext** is piped to another filter you may
-    consider **\--control-chars=r** to keep multi-line strings in one
-    line.
+:   Unicode-block-filter UBF applied after decoding to UTF-8.
 
-**-v, \--version**
+    The decoder first searches for validly encoded character sequences in the
+    input stream. Then the sequence of valid characters is decoded into a
+    chunk of UTF-8 characters. Additionally, every chunk
+    has to pass 4 filters before finally being printed: `--chars-min`,
+    `--ascii-filter`, `--unicode-bloc-filter` and `--grep-char`.
+
+    The Unicode-block-filter applies to all decoded UTF-8 characters `>
+    U+007f` and can be parametrized with the`--unicode-block-filter` option
+    which is a 64-bit integer given in hexadecimal, prepended with `0x...`.
+
+    Every bit `0..=63` maps to one leading-byte's code position in `0xC0..0xFF`,
+    e.g. if bit 0 is set -> all characters with leading byte `0xC0` pass the
+    filter; if bit 1 is set -> all characters with leading byte `0xC1`,
+    pass the filter. Otherwise, the character is rejected. For example,
+    to print only Syriac, set UFB to `0x1000_0000` (bit number 29 set) and
+    AF to '0x0'. Table 3 on page <https://en.wikipedia.org/wiki/UTF-8> 
+    shows all UTF-8-leading-bytes and their codes.
+
+    Alternatively, predefined alias names for the most common Unicode-blocks
+    can be used: e.g.`latin`, `cyrillic`, `greek` and others. See the output of
+    `--list-encodings` for more predefined filter names.
+
+
+**-V, \--version**
 
 :   Print version info and exit.
 
@@ -236,127 +255,116 @@ see the flag symbols ⚑ (U+2691).
 
 :   Failure.
 
+
+# OUTPUT FORMAT
+
+The way **stringsext** prints its output can be configured with the following
+options: `--no-metadata`, `--radix` and `--output-line-len`. The first
+`--no-metadata` controls if metadata is presented printed, `--radix`
+determins if and how the byte-counter is shown and the latter
+`--output-line-len` at what byte position string-findings are wrapped to the
+next line.
+
+**stringsext**'s output syntax is best illustrated by example. Consider
+the following screen-shot:
+
+```
+stringsext -t x -q 30 -e utf8,10 -e ascii,50 test.txt test-small.txt (1)
+                                                                     (2)
+A  0 	(a UTF-8)	Who Moved My Cheese?                             (3)
+A <1e 	(a UTF-8)	An A-Mazing Way To Deal With C                   (4)
+A >1e+	(a UTF-8)	hange In                                         (5)
+A <1e 	(b ascii)	An A-Mazing Way To Deal With C                   (6)
+A >1e+	(b ascii)	hange In                                         (7)
+A  3c+	(a UTF-8)	 Your Work                                       (8)
+A >3c 	(a UTF-8)	And In Your Life                                 (9)
+A  3c+	(b ascii)	 Your Work                                       (10)
+```
+
+This `A` in the first column indicates, that the input comes from the first
+input file `test.txt`. `B` denotes the second input file, etc.
+
+(3): `0` indicates, that the string-finding `Who Moved My Cheese?` was found
+at position `0x0`.
+
+(4): `<1e` means, that the string-finding `An A-Mazing Way To Deal With C`
+was found somewhere in `0x1..=0x1e`. The implemented algorithm guarantees
+that the string-finding is never more than 30 bytes (`-q 30`) away from
+the shown position, here: `0x1e`.
+
+(5): The string-finding `hange In` continues the previous string, hence `+`,
+and is situated `>1e`, meaning somewhere in the range `0x1f..=3b`.
+Here again, it is guaranteed, that the string-finding is always fewer 
+than 30 bytes (`-q 30`) away from `1e`.
+
+(3): `a` in `(a UTF-8)` indicates, that the string-finding `Who Moved My
+Cheese?` was found by the first scanner `-e utf8,10`.
+
+(6): `b` refers to the second scanner, here `-e ascii,50`.
+
+
+
 # EXAMPLES
 
-List available encodings:
+List available encodings and predefined filter names:
 
     stringsext -l
 
-Search for UTF-8 strings and strings in UTF-16 Big-Endian encoding:
+Search for UTF-8 and UTF-16 Big-Endian encoded strings:
 
-    stringsext -e utf-8  -e utf-16be  someimage.raw
+    stringsext -t x -e utf-8 -e utf-16be  someimage.raw
 
-Same, but read from stream:
+The same, but read from `stdin`:
 
-    cat someimage.raw | stringsext -e utf-8  -e utf-16be  -
+    cat someimage.raw | stringsext -t x -e utf-8 -e utf-16be  -
 
-The above is also useful when reading a non-file device:
+Scan a non-file device:
 
-    cat /dev/sda1  | stringsext -e utf-8  -e utf-16be  -
+    stringsext -t x -e utf-8 -e utf-16be  /dev/sda1
 
-When used with pipes `-c r` is required:
+Reduce the number of false positives, when scanning for
+UTF-16LE or UTF-16BE encoded strings. In the following example
+we search for Cyrillic only:
 
-    stringsext -e iso-8859-7  -c r  -t x  someimage.raw | grep "Ιστορία"
+    stringsext -t x -e UTF-16le,,none,cyrillic someimage.raw
 
-Reduce the number of false positives, when scanning an image file for
-UTF-16. In the following example we search for Cyrillic, Arabic and
-Siriac strings, which may contain these additional these symbols:
-`\t !"#$%&'()*+,-./0123456789:;<=>?`
+Search for UTF-16LE encoded Arabic and the digits 0 to 9:
 
-    stringsext -e UTF-16le,30,U+20..U+3f,U+400..U+07ff someimage.raw
+    stringsext -t x -e UTF-16le,,0x3f000000000000,arabic someimage.raw
 
-The same but shorter:
+Search for UTF-8 encoded Syriac and all ASCII, control-codes excluded:
 
-    stringsext -e UTF-16le,30,20..3f,400..07ff someimage.raw
+    stringsext -t x -e UTF-8,,all-ctrl,0x10000000 someimage.raw
 
 Combine Little-Endian and Big-Endian scanning:
 
-    stringsext -e UTF-16be,20,U+0..U+3FF -e UTF-16le,20,U+0..U+3FF someimage.raw
+    stringsext -t x -e UTF-16be -e UTF-16le someimage.raw
 
-The following settings are designed to produce bit-identical output with
-*GNU strings*:
+Show the filter default values used in the above example:
 
-    stringsext -e ascii -c i         # equals `strings`
-    stringsext -e ascii -c i -t d    # equals `strings -t d`
-    stringsext -e ascii -c i -t x    # equals `strings -t x`
-    stringsext -e ascii -c i -t o    # equals `strings -t o`
+    stringsext -d -t x -e UTF-16be -e UTF-16le someimage.raw
 
-The following examples perform the same search, but the output format is
-slightly different:
-
-    stringsext -e UTF-16LE,10,0..7f  # equals `strings -n 10 -e l`
-    stringsext -e UTF-16BE,10,0..7f  # equals `strings -n 10 -e b`
 
 # OPERATING PRINCIPLE
 
-A *valid* string is a sequence a valid characters according to the
-encoding chosen with **\--encoding**. A valid string may contain
+A *valid* string is a sequence of valid characters according to the encoding
+chosen with **\--encoding**. A valid string may contain
 *control* characters and *graphic* (visible and human readable)
-characters. **stringsext** is a tool to extract sequences of graphic
-characters out of a binary data stream.
+characters. **stringsext** is a tool to extract graphic characters out of
+binary data streams.
 
-A *scanner* is defined with the **\--encoding ENC** option. Multiple
-scanners operate in parallel. The search field is divided into input
-chunks of WIN\_LEN bytes (see source code for exact size) in size. A
-scanner is a module that extracts valid character sequences, valid
-strings, of an input chunk.
+Scanners are parametrized with the **\--encoding ENC** option. Multiple scanners
+may operate in parallel. Their search field is divided into input chunks of
+`--output-line-len` bytes (see source code documentation for details) and
+send simultaneously to all scanners.
 
-A valid string is then fed into a **filter** that extracts multiple
-graphic strings out of a valid string. A filter may apply additional
-criteria such as *MIN* or *UNICODEBLOCK*.
+Before being printed, valid strings have to pass four different **filter** whose
+filter criteria are defined with the parameters: *MIN*, *AF*, *UBF* or *GREP*.
 
 # LIMITATIONS
 
-1.  Valid strings smaller than FINISH\_STR\_BUF are never cut. When a
-    valid string exceeds WIN\_LEN bytes it is always cut. It may happen
-    that at the cutting edge locates a short graphic string that is then
-    split into two pieces which are printed on separate lines.
-    **stringsext** labels such a cutting edge with two flag symbols ⚑
-    (U+2691). Furthermore, one or both of those pieces may then become
-    too short to meet the **\--bytes** condition. In order not to loose
-    any bytes of a piece the **\--bytes** option is not observed for
-    split strings. The downside of this is the appearance of some
-    undesirable false positives. Therefore the **\--split-bytes** option
-    allows to set an additional condition to control the appearance of
-    these false positives: The *SPLIT-MIN* value determines the minimum
-    number of bytes a split piece must have to be printed. Note that
-    with a value *SPLIT-MIN \> 1* some bytes of the split graphic string
-    may not appear in the output. Therefore the default is *SPLIT-MIN =
-    1*.
-
-    In practice, the above limitation occurs only when the search field
-    contains large vectors of Null (0x00) terminated strings. For most
-    multi-byte encodings, as well as for the Unicode-scanner, the Null
-    (0x00) character is regarded as a valid control character. Thus the
-    Unicode scanner will detect such a string vector as one big string
-    which might exceed the WIN\_LEN buffer size.
-
-    For searching in large Null (0x00) terminated string vectors, the
-    ASCII scanner is recommended. The ASCII scanner regards Null (0x00)
-    as an invalid character, so the string vector will be detected as a
-    sequence of short distinguishable valid strings. These short strings
-    will most likely never exceed the WIN\_LEN buffer and therefore will
-    never be split. In such a scenario it is a good practise to run
-    Unicode and ASCII scanners in parallel.
-
-    Summary: It is guaranteed that valid strings not longer than
-    FINISH\_STR\_BUF are never split. However, when the size of a valid
-    string exceeds FINISH\_STR\_BUF bytes it may be split into two or
-    more valid strings and then filtered separately. Note that this
-    limitation refers to the *valid* string length. A valid string may
-    consist of several *graphic* strings. If a valid string is longer
-    than WIN\_LEN bytes, it is always split. To know the values of the
-    constants please refer to the definition in the source code of your
-    **stringsext** build. Original values are: FINISH\_STR\_BUF = 6144
-    bytes, WIN\_LEN = 14342 bytes.
-
-2.  It is guaranteed that all string sequences are detected and printed
-    according to the search criteria. However due to potential false
-    positives when interpreting binary data as multi-byte-strings, it
-    may happen that the first characters of a valid string may not be
-    recognised immediately. In practice, this effect occurs very rarely
-    and the scanner synchronises with the correct character boundaries
-    quickly.
+The ASCII-character GREP, searched with the `--grep_char` option, must appear
+in the first `--output-line-len` bytes to be reliably found in long strings.
 
 # RESOURCES
 
@@ -364,14 +372,14 @@ criteria such as *MIN* or *UNICODEBLOCK*.
 
 # COPYING
 
-Copyright (C) 2016-2019 Jens Getreu
+Copyright (C) 2016-2020 Jens Getreu
 
 Licensed under either of
 
--   Apache License, Version 2.0 (\[LICENSE-APACHE\](LICENSE-APACHE) or
-    <http://www.apache.org/licenses/LICENSE-2.0>)
--   MIT license (\[LICENSE-MIT\](LICENSE-MIT) or
-    <http://opensource.org/licenses/MIT>)
+- Apache Licence, Version 2.0 (\[LICENSE-APACHE\](LICENSE-APACHE) or
+  <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT licence (\[LICENSE-MIT\](LICENSE-MIT) or
+  <http://opensource.org/licenses/MIT>)
 
 at your option.
 
@@ -379,10 +387,10 @@ at your option.
 
 Unless you explicitly state otherwise, any contribution intentionally
 submitted for inclusion in the work by you, as defined in the Apache-2.0
-license, shall be dual licensed as above, without any additional terms
-or conditions. Licenced under the Apache Licence, Version 2.0 (the
+licence, shall be dual licensed as above, without any additional terms
+or conditions. Licensed under the Apache Licence, Version 2.0 (the
 \"Licence\"); you may not use this file except in compliance with the
-Licence. You may obtain a copy of the Licence at
+Licence.
 
 
 # AUTHORS

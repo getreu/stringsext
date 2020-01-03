@@ -1,23 +1,22 @@
 #!/bin/sh
-cd ..
-mkdir --parents ./doc/build/html
-mkdir --parents ./doc/build/html/_downloads
-mkdir --parents ./doc/build/man/man1
+
+mkdir --parents ./build/html
+mkdir --parents ./build/html/_downloads
+mkdir --parents ./build/man/man1
 
 # Man page
-pandoc -f markdown -t html  --include-in-header=./doc/source/docutils_basic.css\
-       ./doc/source/stringsext--man.md -o ./doc/build/html/stringsext--man.html
-pandoc -s ./doc/source/stringsext--man.md -t man \
-       -o ./doc/build/man/man1/stringsext.1
-gzip -f ./doc/build/man/man1/stringsext.1
+pandoc -f markdown -t html  --include-in-header=./source/docutils_basic.css\
+       ./source/stringsext--man.md -o ./build/html/stringsext--man.html
+pandoc -s ./source/stringsext--man.md -t man \
+       -o ./build/man/man1/stringsext.1
+gzip -f ./build/man/man1/stringsext.1
 
 # Readme page
-pandoc -f markdown -t html --include-in-header=./doc/source/docutils_basic.css\
-        ./doc/source/README.md -o ./doc/build/html/index.html
+pandoc -f markdown -t html --include-in-header=./source/docutils_basic.css\
+        ./source/README.md -o ./build/html/index.html
 
-cd  ./doc/build/html/_downloads
+cd  ./build/html/_downloads
 ln -sf ../../../../target/* .
-ln -sf ../../../../doc/build/man/man1/stringsext.1.gz .
+ln -sf ../../../build/man/man1/stringsext.1.gz .
 
 
-cargo rustdoc  -p stringsext -- --document-private-items 

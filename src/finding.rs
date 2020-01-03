@@ -1,950 +1,265 @@
-//! This module defines data structures to store and process found strings (findings) in memory.
-use encoding::StringWriter;
-use lazy_static::lazy_static;
-use std;
-use std::cmp;
-use std::cmp::{Eq, Ord};
-use std::fmt;
-use std::io::prelude::*;
+//! Store string-findings and prepare them for output.
+
+extern crate encoding_rs;
+
+use crate::ascii_enc_label;
+use crate::input::ByteCounter;
+use crate::input::INPUT_BUF_LEN;
+use crate::mission::Mission;
+use crate::options::Radix;
+use crate::options::ARGS;
+use std::io::Write;
+use std::ops::Deref;
 use std::str;
 
-use crate::helper::IdentifyFirstLast;
-
-#[cfg(test)]
-use self::tests::ARGS;
+/// `OUTPUT_BUF_LEN` needs to be long enough to hold all findings that are
+/// decoded to UTF-8 in `scan::scan()`. To estimate the space needed to receive
+/// all decodings in UTF-8, the worst case - Asian like `EUC_JP` - has to be
+/// taken into consideration: Therefor, in order to avoid output buffer overflow,
+/// `OUTPUT_BUF_LEN` should be at least twice as big as `INPUT_BUF_LEN`. You can
+/// also check the minimum length with
+/// `Decoder::max_utf8_buffer_length_without_replacement`. Unfortunately this can
+/// not be done programmatically, because `output_buffer` is a statically
+/// allocated array.
 #[cfg(not(test))]
-use crate::options::ARGS;
-
-use crate::options::ControlChars;
-use crate::options::Radix;
-
+pub const OUTPUT_BUF_LEN: usize = 0x9192;
 #[cfg(test)]
-use self::tests::WIN_STEP;
-#[cfg(not(test))]
-use crate::input::WIN_STEP;
+pub const OUTPUT_BUF_LEN: usize = 0x40;
 
-#[cfg(test)]
-use self::tests::CONTROL_REPLACEMENT_STR;
-#[cfg(not(test))]
-lazy_static! {
-    /// Before printing a valid string, all its control characters are eliminated.
-    /// This variable contains an optional marker indicating the location where data was
-    /// deleted.
-    pub static ref CONTROL_REPLACEMENT_STR : &'static str =
-            if  ARGS.flag_control_chars == ControlChars::R { "\u{fffd}" } else { "\n" };
+/// Extra space in bytes for `ByteCounter` and encoding-name when `Finding::print()`
+/// prints  a `Finding`.
+pub const OUTPUT_LINE_METADATA_LEN: usize = 40;
+
+/// `FindingCollection` is a set of ordered `Finding` s.
+#[derive(Debug)]
+pub struct FindingCollection<'a> {
+    /// `Finding` s in this vector are in chronological order.
+    pub v: Vec<Finding<'a>>,
+    /// All concurrent `ScannerState::scan()` start at the same byte. All
+    /// `Finding.position` refer to `first_byte_position` as zero.
+    pub first_byte_position: ByteCounter,
+    /// A buffer containing the UTF-8 representation of all findings during one
+    /// `ScannerState::scan()` run. First, the `Decoder` fills in some UTF-8
+    /// string. This string is then filtered. The result of this filtering is
+    /// some `Finding`-objects stored in a `FindingCollection`. The
+    /// `Finding`-objects have a `&str`-member called `Finding::s` that is
+    /// a substring of `output_buffer_bytes`.
+    pub output_buffer_bytes: Box<[u8]>,
+    /// If `output_buffer` is too small to receive all findings, this is set
+    /// `true` indicating that only the last `Finding` s could be stored. At
+    /// least one `Finding` got lost. This incident is reported to the user. If
+    /// ever this happens, the `OUTPUT_BUF_LEN` was not chosen big enough.
+    pub str_buf_overflow: bool,
 }
-
-pub const CUT_LABEL: char = '\u{2691}';
-
-use crate::mission::Mission;
-
-/// Initial capacity of the findings vector is
-/// set to WIN_STEP / 32.
-pub const FINDING_COLLECTION_CAPACITY: usize = WIN_STEP >> 5;
-/// Initial capacity of finding string in bytes
-pub const FINDING_STR_CAPACITY: usize = 100;
-
-/// `Finding` represents a valid result string with it's found location and
-/// original encoding.
-pub struct Finding {
-    /// Pointer to the filename of the file from which the input stream comes.
-    pub filename: Option<&'static str>,
-    /// A copy of the `byte_counter` pointing at the found location of the result string.
-    pub ptr: usize,
-    /// Mission associated with this finding
-    pub mission: &'static Mission,
-    /// Whatever the original encoding was the result string `s` is always stored as UTF-8.
-    pub s: String,
-}
-
-/// Prints the meta information of a finding: e.g. "(ascii/U+40..U+7f)" or "(utf-8)"
-macro_rules! enc_str {
-    ($finding:ident) => {{
-        // Check if the filter is restrictive
-        format!(
-            "({}{}{})",
-            $finding.mission.encoding.name(),
-            if $finding.mission.filter1.is_some {
-                format!(
-                    "/{:x}..{:x}",
-                    $finding.mission.filter1.and_result,
-                    $finding.mission.filter1.and_result | !($finding.mission.filter1.and_mask)
-                )
-            } else {
-                "".to_string()
-            },
-            if $finding.mission.filter2.is_some {
-                format!(
-                    "/{:x}..{:x}",
-                    $finding.mission.filter2.and_result,
-                    $finding.mission.filter2.and_result | !($finding.mission.filter2.and_mask)
-                )
-            } else {
-                "".to_string()
-            }
-        )
-    }};
-}
-
-impl Finding {
-    /// Format and dump a Finding to the output channel,
-    /// usually stdout.
-    pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
-        let filename_str = if ARGS.flag_print_file_name {
-            if let Some(f) = self.filename {
-                format!("{}: ", f)
-            } else {
-                "".to_string()
-            }
-        } else {
-            "".to_string()
-        };
-
-        if ARGS.flag_control_chars == ControlChars::R {
-            let ptr_str = match ARGS.flag_radix {
-                Some(Radix::X) => format!("{:0x}\t", self.ptr),
-                Some(Radix::D) => format!("{:0}\t", self.ptr),
-                Some(Radix::O) => format!("{:0o}\t", self.ptr),
-                None => "".to_string(),
-            };
-
-            let enc_str = if ARGS.flag_encoding.len() > 1 {
-                enc_str!(self) + "\t"
-            } else {
-                "".to_string()
-            };
-
-            for l in self.s.lines() {
-                out.write_all(format!("{}{}{}\n", ptr_str, enc_str, l).as_bytes())?;
-            }
-        } else {
-            let mut ptr_str = match ARGS.flag_radix {
-                Some(Radix::X) => format!("{:7x} ", self.ptr),
-                Some(Radix::D) => format!("{:7} ", self.ptr),
-                Some(Radix::O) => format!("{:7o} ", self.ptr),
-                None => "".to_string(),
-            };
-            let ptr_str_ff = match ARGS.flag_radix {
-                Some(_) => "        ",
-                None => "",
-            };
-
-            let enc_str = if ARGS.flag_encoding.len() > 1 {
-                format!("{:14}\t", enc_str!(self))
-            } else {
-                "".to_string()
-            };
-
-            for l in self.s.lines() {
-                out.write_all(format!("{}{}{}{}\n", filename_str, ptr_str, enc_str, l).as_bytes())?;
-                ptr_str = ptr_str_ff.to_string();
-            }
-        };
-        Ok(())
-    }
-}
-
-impl Eq for Finding {}
-
-// Useful to compare findings for debugging or testing.
-impl PartialEq for Finding {
-    fn eq(&self, other: &Self) -> bool {
-        (self.ptr == other.ptr)
-            && (self.mission.encoding.name() == other.mission.encoding.name())
-            && (self.mission.filter1 == other.mission.filter1)
-            && (self.mission.filter2 == other.mission.filter2)
-            && (self.s == other.s)
-    }
-}
-
-/// We first compare `ptr` then `enc`. `s` is disregarded because  (`ptr`, `enc`,
-/// `u_and_result` and `u_and_result`) are unique in a finding collection.
-// We need this to merge later
-impl Ord for Finding {
-    fn cmp(&self, other: &Self) -> cmp::Ordering {
-        if self.ptr != other.ptr {
-            self.ptr.cmp(&other.ptr)
-        } else if self.mission.encoding.name() != other.mission.encoding.name() {
-            self.mission
-                .encoding
-                .name()
-                .cmp(&other.mission.encoding.name())
-        } else if self.mission.filter1 != other.mission.filter1 {
-            self.mission.filter1.cmp(&other.mission.filter1)
-        } else {
-            self.mission.filter2.cmp(&other.mission.filter2)
+impl FindingCollection<'_> {
+    pub fn new(byte_offset: ByteCounter) -> Self {
+        // This buffer lives on the heap. let mut output_buffer_bytes =
+        // Box::new([0u8; OUTPUT_BUF_LEN]);
+        let output_buffer_bytes = Box::new([0u8; OUTPUT_BUF_LEN]);
+        Self {
+            v: Vec::new(),
+            first_byte_position: byte_offset,
+            output_buffer_bytes,
+            str_buf_overflow: false,
         }
     }
-}
 
-/// We first compare `ptr` then `enc`. `s` is disregarded because  (`ptr`, `enc`,
-/// `u_and_result` and `u_and_result`) are unique in a finding collection.
-// We need this to merge later
-impl PartialOrd for Finding {
-    fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        if self.ptr != other.ptr {
-            self.ptr.partial_cmp(&other.ptr)
-        } else if self.mission.encoding.name() != other.mission.encoding.name() {
-            self.mission
-                .encoding
-                .name()
-                .partial_cmp(&other.mission.encoding.name())
-        } else if self.mission.filter1 != other.mission.filter1 {
-            self.mission.filter1.partial_cmp(&other.mission.filter1)
-        } else {
-            self.mission.filter2.partial_cmp(&other.mission.filter2)
-        }
-    }
-}
-
-impl fmt::Debug for Finding {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "\n{}\t({})\t{}",
-            self.ptr,
-            self.mission.encoding.name(),
-            self.s.replace("\n", " \\n ").replace("\r\n", " \\r\\n ")
-        )
-    }
-}
-
-/// If `control_chars==true` transform a valid (current) string into a string
-/// containing only graphical character sequences with a minimum length by deleting all
-/// control characters.
-/// Note that the current string is always the one
-/// at the end of a `FindingCollection`.
-///
-/// We check if the current string satisfies the following:
-/// 1. We list all strings between control chars.
-/// 2. Are some of the strings between control chars shorter
-///    then the required minimum length? If yes we delete them.
-/// 3. All control chars are replaced with Unicode Character
-///    'REPLACEMENT CHARACTER' (U+FFFD) and then grouped.
-///
-/// The case `enable_filter==false` is treated as special case:
-/// No control character are filtered and the string is kept as a whole
-/// (the list has only one chunk).
-/// Notwithstanding, too short strings are dismissed.
-///
-/// This macro should be called when the string is complete, meaning before
-/// starting a new finding. This macro panics when there is no string
-/// in the `FindingCollection`.
-///
-/// The macro is used in FindingCollection::close_old_init_new_finding()
-///
-macro_rules! filter {
-    ($fc:ident,
-     $mission:ident) => {{
-        let minsize = $mission.nbytes_min as usize;
-
-        let inplen = $fc.v.last().unwrap().s.len();
-
-        if (inplen < minsize) && !$fc.completes_last_str {
-                $fc.v.last_mut().unwrap().s.clear();
-
-        } else if $mission.enable_filter {
-            let mut out = String::with_capacity(inplen + 0x10); // a bit bigger, just in case
-            // filter control chars, group and delete short ones in between.
-            {
-                let inp = &$fc.v.last().unwrap().s;
-                let mut _no_chunks = inp
-                    .split_terminator(|c: char|
-                       c !=' '  &&  c !='\t'
-                       &&( c.is_control()
-                           ||
-                           !(
-                                (   // no filter
-                                    !($mission.filter1.is_some || $mission.filter2.is_some)
-                                )
-                                ||
-                                (
-                                    $mission.filter1.is_some &&
-                                    (((c as u32)& $mission.filter1.and_mask)
-                                                 == $mission.filter1.and_result)
-                                )
-                                ||  // Union
-                                (
-                                    $mission.filter2.is_some &&
-                                    (((c as u32)& $mission.filter2.and_mask)
-                                                 == $mission.filter2.and_result)
-                                )
-                           )
-                       )
-                    )
-                    .identify_first_last()
-                    .filter(|&(_,_,s)|s.len() > 0)
-                    .inspect(|&(is_first, is_last, s)| {// generate output
-                        if is_first && inp.starts_with(&s) {
-                                if $fc.completes_last_str
-                                   && s.len() >= ARGS.flag_split_bytes.unwrap() as usize {
-                                      out.push(CUT_LABEL);
-                                      if s.len() < minsize { // avoid printing s it twice
-                                         out.push_str(s);
-                                      }
-                                }
-                        } else if s.len() >= minsize {
-                                    out.push_str(&CONTROL_REPLACEMENT_STR);
-                        }
-                        if is_last && $fc.last_str_is_incomplete
-                                   && s.len() >= ARGS.flag_split_bytes.unwrap() as usize
-                                   && inp.ends_with(&s) {
-                                  if s.len() < minsize { // avoid printing twice
-                                      out.push_str(&CONTROL_REPLACEMENT_STR);
-                                  }
-                                  out.push_str(s);
-                                  out.push(CUT_LABEL);
-                        } else  if s.len() >= minsize {
-                                  out.push_str(s);
-                        }
-
-                    })
-                    .count();  // consume the iterator
-            };
-
-            // Replace current string with filtered one
-            let outp = &mut $fc.v.last_mut().unwrap().s;
-            outp.clear();
-            outp.push_str(&*out);
-        }
-    }};
-}
-
-/// Represents a list of findings, i.e. UTF-8 strings. The last position
-/// in the list is referred as `current string` or `current finding string`.
-/// The current string is edited in stages by `Scanner::StringWriter` functions.
-/// The re-invocation of `close_old_init_new_finding()`
-/// will freeze and close the current string.
-///
-#[derive(Debug, PartialEq)]
-pub struct FindingCollection {
-    /// List of `Finding`s. The last is referred as _current string_ or _current finding
-    /// string_.
-    pub v: Vec<Finding>,
-    /// `Scanner::scan_window()` sets this flag to true when it recognizes that this scan
-    /// continues an incomplete string from the previous scan.
-    /// (It is possible to deduce this information from the start pointer).
-    /// `close_old_init_new_finding()` will then retain the first finding even if
-    /// it is normally too short according to `ARG.flag_bytes` instructions.
-    pub completes_last_str: bool,
-    /// The last `Finding` of this `FindingCollection` contains a string that was cut
-    /// and may be incomplete.
-    pub last_str_is_incomplete: bool,
-}
-
-impl FindingCollection {
-    /// Constructor which also adds a new `Finding`.
-    pub fn new(
-        filename: Option<&'static str>,
-        text_ptr: usize,
-        mission: &'static Mission,
-    ) -> FindingCollection {
-        let mut fc = FindingCollection {
-            v: Vec::with_capacity(FINDING_COLLECTION_CAPACITY),
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-        fc.v.push(Finding {
-            filename,
-            ptr: text_ptr,
-            mission,
-            s: String::with_capacity(FINDING_STR_CAPACITY),
-        });
-
-        fc
+    /// Clears the buffer to make more space after buffer overflow. Tag the
+    /// collection as overflowed.
+    pub fn clear_and_mark_incomplete(&mut self) {
+        self.v.clear();
+        self.str_buf_overflow = true;
     }
 
-    /// This method formats and dumps a `FindingCollection` to the output channel,
-    /// usually `stdout`.
+    /// This method formats and dumps a `FindingCollection` to the output
+    /// channel, usually `stdout`.
     #[allow(dead_code)]
     pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
+        if self.str_buf_overflow {
+            eprint!("Warning: output buffer overflow! Some findings might got lost.");
+            eprintln!(
+                "in input chunk 0x{:x}-0x{:x}.",
+                self.first_byte_position,
+                self.first_byte_position + INPUT_BUF_LEN as ByteCounter
+            );
+        }
         for finding in &self.v {
             finding.print(out)?;
         }
         Ok(())
     }
+}
+/// This allows us to create an iterator from a `FindingCollection`.
 
-    /// `close_old_init_new_finding` works closely together with `StringWriter` functions
-    /// (see below) who append Bytes in stages at the end of the current finding string in a
-    /// `FindingCollection`.  The next re-invocation of `close_old_init_new_finding()` freezes
-    /// the current finding string and appends a new empty `Finding` to the
-    /// `FindingCollection` that will contain the new current finding string. At the same
-    /// time the `text_ptr` and `enc` are recorded. Note there is no actual content string yet
-    /// in the new `Finding`. The actual content will be added with the next call of a
-    /// `StringWriter` function (see below).
+impl<'a> IntoIterator for &'a FindingCollection<'a> {
+    type Item = &'a Finding<'a>;
+    type IntoIter = FindingCollectionIterator<'a>;
 
-    pub fn close_old_init_new_finding(&mut self, text_ptr: usize) {
-        let mission = self.v.last().unwrap().mission;
-        if !self.v.last().unwrap().s.is_empty() {
-            // last is not empty
+    fn into_iter(self) -> Self::IntoIter {
+        FindingCollectionIterator { fc: self, index: 0 }
+    }
+}
 
-            filter!(self, mission);
-        };
+/// This allows iterating over `Finding`-objects in a `FindingCollection::v`.
+/// The state of this iterator must hold the whole `FindingCollection` and not
+/// only `FindingCollection::v`! This is required because `next()` produces a
+/// link to `Finding`, whose member `Finding::s` is a `&str`. The content of this
+/// `&str` is part of `FindingCollection::output_buffer_bytes`, thus the need for
+/// the whole object `FindingCollection`.
 
-        // We have check again because len() may have changed in the line above
-        let filename = self.v.last().unwrap().filename;
-        if !self.v.last().unwrap().s.is_empty() {
-            self.v.push(Finding {
-                filename,
-                ptr: text_ptr,
-                mission,
-                s: String::with_capacity(FINDING_STR_CAPACITY),
-            });
+pub struct FindingCollectionIterator<'a> {
+    fc: &'a FindingCollection<'a>,
+    index: usize,
+}
+
+/// This allows us to iterate over `FindingCollection`. It is needed
+/// by `kmerge()`.
+impl<'a> Iterator for FindingCollectionIterator<'a> {
+    type Item = &'a Finding<'a>;
+    fn next(&mut self) -> Option<&'a Finding<'a>> {
+        let result = if self.index < self.fc.v.len() {
+            Some(&self.fc.v[self.index])
         } else {
-            // The current finding is empty, we do not
-            // push a new finding, instead we
-            // only update the pointer of the current
-            // one. Content will come later anyway.
-            self.v.last_mut().unwrap().ptr = text_ptr;
-            // we don't need `self.v.last_mut().unwrap().mission = mission`
-            // because it is always the same mission
+            None
         };
-    }
-
-    /// This method removes the last `Finding`. This method should called directly after
-    /// the last `close_old_init_new_finding()` call.
-    ///
-    pub fn close_finding_collection(&mut self) {
-        let l = self.v.len();
-        self.v.remove(l - 1);
+        self.index += 1;
+        result
     }
 }
 
-/// The `Encoding::StringWriter` trait is the way the `Encoding::raw_decoder()`
-/// incrementally sends its output. Note that here all member functions operate
-/// exclusively on the last string in a `FindingCollection` referred as "current string".
-/// A current string can be closed calling `FindingCollection::close_old_init_new_finding()`.
-/// This will append an empty string at then end of the `FindingCollection`
-/// and `StringWriter` will use the new one from now on.
-impl StringWriter for FindingCollection {
-    fn writer_hint(&mut self, expectedlen: usize) {
-        let newlen = self.v.last().unwrap().s.len() + expectedlen;
-        self.v.last_mut().unwrap().s.reserve(newlen);
-    }
-    /// Appends a `char` to the current finding string.
-    /// The "current finding string" is the string of the last `Finding` in this
-    /// `FindingCollection` vector.
-    fn write_char(&mut self, c: char) {
-        self.v.last_mut().unwrap().s.push(c);
-    }
+/// We consider the "content" of a `FindingCollection`
+/// to be `FindingCollection::v` which is a `Vec<Finding>`.
+impl<'a> Deref for FindingCollection<'a> {
+    type Target = Vec<Finding<'a>>;
 
-    /// Appends a `&str` to the current finding string.
-    /// The "current finding string" is the string of the last `Finding` in this
-    /// `FindingCollection` vector.
-    fn write_str(&mut self, s: &str) {
-        self.v.last_mut().unwrap().s.push_str(s);
+    fn deref(&self) -> &Self::Target {
+        &self.v
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::helper::IdentifyFirstLast;
-    use crate::mission::Mission;
-    use crate::mission::UnicodeBlockFilter;
-    use crate::options::{Args, ControlChars, Radix};
+#[derive(Debug, Eq, PartialEq)]
+/// Used to express the precision of `Finding::position` when the algorithm can
+/// not determine its exact position.
+pub enum Precision {
+    /// The finding is located somewhere before `Finding::position`. It is
+    /// guarantied, that the finding is not farer than `--output-line-len -1`
+    /// bytes (or the previous finding from the same scanner) away.
+    Before,
+    /// The algorithm could determine the exact position of the `Finding` at
+    /// `Finding::position`.
+    Exact,
+    /// The finding is located some `[1..output_line_len]` bytes after
+    /// `Finding::position` or - in any case - always before the next
+    /// `Finding::position`.
+    After,
+}
 
-    use encoding;
-    use std::str;
+/// `Finding` represents a valid result string decoded to UTF-8 with it's
+/// original location and its original encoding in the input stream.
+#[derive(Debug)]
+pub struct Finding<'a> {
+    /// A label identifying the origin of the input data: If the origin of the data
+    /// is `stdin`: `None`, otherwise: `Some(1)` for input coming from the first
+    /// file, `Some(2)` for input from the second file, `Some(3)` for ...
+    pub input_file_id: Option<u8>,
+    /// `Mission` associated with this finding. We need a reference to the
+    /// corresponding `Mission` object here, in order to get additional information,
+    /// e.g. the label of the encoding, when we print this `Finding`.
+    pub mission: &'static Mission,
+    /// The byte number position of this `Finding` in the input stream.
+    pub position: ByteCounter,
+    /// In some cases the `position` can not be determined exactly. Therefor,
+    /// `position_precision` indicates how well the finding is localized. In case
+    /// that the position is not exactly known, we indicate if the finding is
+    /// somewhere before or after `position`.
+    pub position_precision: Precision,
+    /// Whatever the original encoding was, the result string `s` is always stored as
+    /// UTF-8. `s` is a `&str` pointing into `FindingCollection::output_buffer`.
+    pub s: &'a str,
+    /// This flag indicates that `s` holds only the second part of a cut finding
+    /// from the previous `scanner::scan()` run. This can happen when a finding from
+    /// the previous run has hit the`input_buffer`-boundary.
+    pub s_completes_previous_s: bool,
+}
 
-    pub const WIN_STEP: usize = 17;
-    pub const CONTROL_REPLACEMENT_STR: &'static str = &"\u{fffd}";
+impl Eq for Finding<'_> {}
 
-    lazy_static! {
-        pub static ref ARGS: Args = Args {
-            arg_FILE: vec!["myfile.txt".to_string()],
-            flag_control_chars: ControlChars::R,
-            flag_encoding: vec!["ascii".to_string(), "utf8".to_string()],
-            flag_list_encodings: false,
-            flag_version: false,
-            flag_bytes: Some(5),
-            flag_split_bytes: Some(2),
-            flag_radix: Some(Radix::X),
-            flag_output: None,
-            flag_print_file_name: false,
-        };
+/// Useful to compare findings for debugging or testing.
+impl PartialEq for Finding<'_> {
+    fn eq(&self, other: &Self) -> bool {
+        (self.position == other.position)
+            && (self.position_precision == other.position_precision)
+            && (self.mission.encoding.name() == other.mission.encoding.name())
+            && (self.mission.filter == other.mission.filter)
+            && (self.s == other.s)
     }
+}
 
-    /// Test the filter macro
-    #[test]
-    fn test_scan_filter() {
-        // Replace mode: the last 1234 is too short
-
-        static M1: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M1,
-                s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M1,
-                s: "\u{fffd}34567890\u{fffd}2345678".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M1); // Mode -c r (replace)
-        assert_eq!(input, expected);
-
-        // With completes_last_str set "ab" is printed (exception) but "1234" not
-        static M2: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M2,
-                s: "ab\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: true,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M2,
-                s: "\u{2691}ab".to_string(),
-            }],
-            completes_last_str: true,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M2); // Mode -c r (replace)
-
-        assert_eq!(input, expected);
-
-        // With completes_last_str unset "ab" is not printed
-        static M3: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M3,
-                s: "\u{0}ab\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M3,
-                s: "".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M3); // Mode -c r (replace)
-        assert_eq!(input, expected);
-
-        // Replace mode: the last 1234 is too short
-        static M4: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M4,
-                s: "\u{0}\u{0}\u{0}\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M4,
-                s: "".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-        filter!(input, M4); // Mode -c r (replace)
-
-        assert_eq!(input, expected);
-
-        // Replace mode: 12 is too short
-        static M5: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M5,
-                s: "12\u{0}\u{0}34567\u{0}89012\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M5,
-                s: "\u{fffd}34567\u{fffd}89012".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M5); // Mode -c r (replace)
-
-        assert_eq!(input, expected);
-
-        // Print all mode (-c p): all should pass
-        static M6: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: false,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M6,
-                s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M6,
-                s: "\u{0}\u{0}34567890\u{0}\u{0}2345678\u{0}1234\u{0}\u{0}".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M6);
-        assert_eq!(input, expected);
-
-        // Print all mode (-c p): even though the input string is too short, print
-        // because completes_last_str is set.
-        static M7: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: false,
-        };
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M7,
-                s: "\u{0}\u{0}34".to_string(),
-            }],
-            completes_last_str: true,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M7,
-                s: "\u{0}\u{0}34".to_string(),
-            }],
-            completes_last_str: true,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M7); // Mode -c p (print all)
-
-        assert_eq!(input, expected);
-
-        // Print all mode (-c p): the this input string is too short
-        static M8: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: false,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M8,
-                s: "\u{0}\u{0}34".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M8,
-                s: "".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M8); // Mode -c p (print all)
-
-        assert_eq!(input, expected);
+/// When `itertools::kmerge()` merges `FindingCollections` into an iterator over
+/// `Finding` s, it needs to compare `Finding` s. Therefor, we must implement
+/// `PartialOrd`.
+impl PartialOrd for Finding<'_> {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        if self.position != other.position {
+            self.position.partial_cmp(&other.position)
+        } else if self.mission.mission_id != other.mission.mission_id {
+            self.mission
+                .mission_id
+                .partial_cmp(&other.mission.mission_id)
+        } else if self.mission.filter.ubf != other.mission.filter.ubf {
+            self.mission
+                .filter
+                .ubf
+                .partial_cmp(&other.mission.filter.ubf)
+        } else {
+            self.mission.filter.af.partial_cmp(&other.mission.filter.af)
+        }
     }
+}
 
-    /// Test the Unicode filter in macro
-    #[test]
-    fn test_scan_unicode_filter() {
-        use crate::mission::Mission;
-        // This filter is not restrictive, everything should pass
-        static M9: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: 0xffe0_0000,
-                and_result: 0,
-                is_some: false,
-            },
-            nbytes_min: 5,
-            enable_filter: true,
+impl<'a> Finding<'a> {
+    pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
+        out.write_all("\n".as_bytes())?;
+        if !ARGS.flag_no_metadata {
+            if ARGS.arg_FILE.len() > 1 {
+                if let Some(i) = self.input_file_id {
+                    // map 1 -> 'A', 2 -> 'B', 3 -> 'C'
+                    out.write_all(&[i + 64 as u8, b' '])?;
+                }
+            };
+
+            if ARGS.flag_radix.is_some() {
+                match &self.position_precision {
+                    Precision::After => out.write_all(b">")?,
+                    Precision::Exact => out.write_all(b" ")?,
+                    Precision::Before => out.write_all(b"<")?,
+                };
+                match ARGS.flag_radix {
+                    Some(Radix::X) => out.write_fmt(format_args!("{:0x}", self.position,))?,
+                    Some(Radix::D) => out.write_fmt(format_args!("{:0}", self.position,))?,
+                    Some(Radix::O) => out.write_fmt(format_args!("{:0o}", self.position,))?,
+                    None => {}
+                };
+                if self.s_completes_previous_s {
+                    out.write_all("+\t".as_bytes())?
+                } else {
+                    out.write_all(" \t".as_bytes())?
+                };
+            }
+
+            if ARGS.flag_encoding.len() > 1 {
+                // map 0 -> 'a', 1 -> 'b', 2 -> 'c' ...
+                out.write_all(&[b'(', self.mission.mission_id + 97 as u8, b' '])?;
+                out.write_all(if self.mission.print_encoding_as_ascii {
+                    ascii_enc_label!().as_bytes()
+                } else {
+                    self.mission.encoding.name().as_bytes()
+                })?;
+                // After ")" send two tabs.
+                out.write_all(b")\t")?;
+            };
         };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M9,
-                s: "Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M9,
-                s: "Hi, \u{0263a}how are{}++1234you++\u{0263a}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M9); // Mode -c r (replace)
-        assert_eq!(input, expected);
-
-        // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
-        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
-        // (space and tab pass always)
-        static M10: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffffffe0,
-                and_result: 0x60,
-                is_some: true,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: !0x0001f,
-                and_result: 0x00020,
-                is_some: true,
-            },
-            nbytes_min: 3,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M10,
-                s: "Hi \u{0263a}How are{}\tÜyou\u{0263a}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M10,
-                s: "\u{fffd}ow are{}\t\u{fffd}you\u{fffd}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M10); // Mode -c r (replace)
-
-        assert_eq!(input, expected);
-
-        // This filter _is_ restrictive, only chars in range `U+60..U+7f` will pass:
-        // "_`abcdefghijklmnopqrstuvwxyz{|}~DEL"
-        // (space and tab pass always)
-        // Second filter prints also 0x20-0x3f.
-        static M11: Mission = Mission {
-            encoding: encoding::all::ASCII,
-            filter1: UnicodeBlockFilter {
-                and_mask: 0xffffffe0,
-                and_result: 0x60,
-                is_some: true,
-            },
-            filter2: UnicodeBlockFilter {
-                and_mask: !0x0001f,
-                and_result: 0x00020,
-                is_some: true,
-            },
-            nbytes_min: 2,
-            enable_filter: true,
-        };
-
-        let mut input = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M11,
-                s: "Hi! \u{0263a}How are{}\t++1234you?++\u{0263a}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        let expected = FindingCollection {
-            v: vec![Finding {
-                filename: None,
-                ptr: 0,
-                mission: &M11,
-                s: "\u{fffd}i! \u{fffd}ow are{}\t++1234you?++\u{fffd}doing?".to_string(),
-            }],
-            completes_last_str: false,
-            last_str_is_incomplete: false,
-        };
-
-        filter!(input, M11); // Mode -c r (replace)
-
-        assert_eq!(input, expected);
+        out.write_all(self.s.as_bytes())?;
+        Ok(())
     }
 }
