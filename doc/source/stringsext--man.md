@@ -46,6 +46,9 @@ Version: 1.7.1
 
 Date: 2010-01-03
 Version: 1.99.1
+
+Date: 2010-01-04
+Version: 1.99.2
 -->
 
 # NAME
