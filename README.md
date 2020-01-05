@@ -39,7 +39,8 @@ as *GNU strings* replacement.
 
 User documentation
 
-*   [manual page](https://blog.getreu.net/projects/stringsext/stringsext--man.html)
+*   [Manual page](https://blog.getreu.net/projects/stringsext/stringsext--man.html)
+*   [Blogposts about Stringsext](https://blog.getreu.net/tags/stringsext/)
 
 Developer documentation
 
@@ -50,7 +51,7 @@ Developer documentation
 
 Repository
 
-*   [stringsext on Github](https://github.com/getreu/stringsext)
+*   [Stringsext on Github](https://github.com/getreu/stringsext)
 
 ### Distribution
 
@@ -58,7 +59,7 @@ Binaries
 
 *   [Download](https://blog.getreu.net/projects/stringsext/_downloads/)
 
-Manual page
+Manual page download
 
 *   [stringsext.1.gz](https://blog.getreu.net/projects/stringsext/_downloads/stringsext.1.gz),
 
