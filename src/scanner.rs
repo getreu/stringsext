@@ -132,6 +132,7 @@ pub fn scan<'a>(
     let mut decoder_input_end;
     let mut decoder_output_start = 0usize;
 
+    // Copy `ScannerState` in `last_window...`
     // Copy last run leftover bytes at the beginning of `output_buffer`.
     let mut last_window_leftover_len = 0usize;
     if !ss.last_scan_run_leftover.is_empty() {
@@ -148,6 +149,8 @@ pub fn scan<'a>(
         // Make the decoder write behind the insertion.
         decoder_output_start += last_window_leftover_len;
     }
+    let mut last_window_str_was_printed_and_is_maybe_cut_str =
+        ss.last_run_str_was_printed_and_is_maybe_cut_str;
 
     let decoder_input_window = ss.mission.output_line_len;
     let mut is_last_window = false;
@@ -253,9 +256,8 @@ pub fn scan<'a>(
                 || (is_last_window && is_last_input_buffer);
 
             // Use it only once.
-            let last_run_str_was_printed_and_is_maybe_cut_str =
-                ss.last_run_str_was_printed_and_is_maybe_cut_str;
-            ss.last_run_str_was_printed_and_is_maybe_cut_str = false;
+            let continue_str_if_possible = last_window_str_was_printed_and_is_maybe_cut_str;
+            last_window_str_was_printed_and_is_maybe_cut_str = false;
 
             // Now we split `split_str_buffer` into substrings and store them in
             // vector `fc.v`.
@@ -263,7 +265,7 @@ pub fn scan<'a>(
             'chunk_loop: for chunk in SplitStr::new(
                 split_str_buffer,
                 ss.mission.chars_min_nb,
-                last_run_str_was_printed_and_is_maybe_cut_str,
+                continue_str_if_possible,
                 invalid_bytes_after_split_str_buffer,
                 ss.mission.filter,
                 ss.mission.output_line_len,
@@ -281,7 +283,7 @@ pub fn scan<'a>(
 
                     last_window_leftover_len = 0;
 
-                    ss.last_run_str_was_printed_and_is_maybe_cut_str = chunk.s_is_maybe_cut;
+                    last_window_str_was_printed_and_is_maybe_cut_str = chunk.s_is_maybe_cut;
                 } else {
                     // `chunk.s_is_to_be_filtered_again`
 
@@ -297,7 +299,7 @@ pub fn scan<'a>(
                     last_window_leftover_len = chunk.s.len();
                     // As the chunk is not printed now, so we set this
                     // to `false`:
-                    ss.last_run_str_was_printed_and_is_maybe_cut_str = false;
+                    last_window_str_was_printed_and_is_maybe_cut_str = false;
                 }
 
                 // For all other following `SplitStr` we set this,
@@ -347,7 +349,10 @@ pub fn scan<'a>(
         fc.output_buffer_bytes
             [decoder_output_start - last_window_leftover_len..decoder_output_start]
     );
+    // Update inner state for next `scan()` run.
     ss.last_scan_run_leftover = String::from(last_window_leftover);
+    ss.last_run_str_was_printed_and_is_maybe_cut_str =
+        last_window_str_was_printed_and_is_maybe_cut_str;
     ss.consumed_bytes += decoder_input_start as ByteCounter;
     fc
 }
