@@ -1,6 +1,6 @@
 [package]
 name = "stringsext"
-version = "1.99.2"
+version = "1.99.3"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
 
