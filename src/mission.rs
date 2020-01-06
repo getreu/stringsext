@@ -163,51 +163,50 @@ pub const UBF_UNCOMMON: u64 = 0x000f_0000_0000_0000;
 /// For value see chapter *Codepage layout* in
 /// [UTF-8 - Wikipedia](https://en.wikipedia.org/wiki/UTF-8)
 pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 18] = [
+    (*b"african     ", UBF_AFRICAN, *b"all in U+540..U+800      "),
     (
-        *b"default     ",
-        UBF_ALL & !UBF_INVALID,
-        *b"all valid multibyte UTF-8",
+        *b"all-asian   ",
+        UBF_ALL & !UBF_INVALID & !UBF_ASIAN,
+        *b"all, except Asian        ",
     ),
     (
         *b"all         ",
         UBF_ALL & !UBF_INVALID,
         *b"all valid multibyte UTF-8",
     ),
-    (*b"none        ", !UBF_ALL, *b"block all multibyte UTF-8"),
     (
-        *b"latin       ",
-        UBF_LATIN | UBF_ACCENTS,
-        *b"Latin + accents          ",
-    ),
-    (*b"greek       ", UBF_GREEK, *b"Greek                    "),
-    (
-        *b"cyrillic    ",
-        UBF_CYRILLIC,
-        *b"Cyrillic                 ",
+        *b"arabic      ",
+        UBF_ARABIC | UBF_SYRIAC,
+        *b"Arabic+Syriac            ",
     ),
     (
         *b"armenian    ",
         UBF_ARMENIAN,
         *b"Armenian                 ",
     ),
-    (*b"hebrew      ", UBF_HEBREW, *b"Hebrew                   "),
-    (
-        *b"arabic      ",
-        UBF_ARABIC | UBF_SYRIAC,
-        *b"Arabic+Syriac            ",
-    ),
-    (*b"common      ", UBF_COMMON, *b"all 2-byte-UFT-8         "),
-    (*b"african     ", UBF_AFRICAN, *b"all in U+540..U+800      "),
-    (*b"kana        ", UBF_KANA, *b"Kana: U+3000..U+4000     "),
-    (*b"cjk         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
-    (*b"hangul      ", UBF_HANGUL, *b"Hangul: U+B000..U+E000   "),
     (*b"asian       ", UBF_ASIAN, *b"all in U+3000..U+E000    "),
-    // All but Asian (U+3000..U+E000), useful for UTF-16 scans.
+    (*b"cjk         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
+    (*b"common      ", UBF_COMMON, *b"all 2-byte-UFT-8         "),
     (
-        *b"all-asian   ",
-        UBF_ALL & !UBF_INVALID & !UBF_ASIAN,
-        *b"all, except Asian        ",
+        *b"cyrillic    ",
+        UBF_CYRILLIC,
+        *b"Cyrillic                 ",
     ),
+    (
+        *b"default     ",
+        UBF_ALL & !UBF_INVALID,
+        *b"all valid multibyte UTF-8",
+    ),
+    (*b"greek       ", UBF_GREEK, *b"Greek                    "),
+    (*b"hangul      ", UBF_HANGUL, *b"Hangul: U+B000..U+E000   "),
+    (*b"hebrew      ", UBF_HEBREW, *b"Hebrew                   "),
+    (*b"kana        ", UBF_KANA, *b"Kana: U+3000..U+4000     "),
+    (
+        *b"latin       ",
+        UBF_LATIN | UBF_ACCENTS,
+        *b"Latin + accents          ",
+    ),
+    (*b"none        ", !UBF_ALL, *b"block all multibyte UTF-8"),
     (*b"private     ", UBF_PUA, *b"private use areas        "),
     (
         *b"uncommon    ",
@@ -243,14 +242,7 @@ pub const AF_WHITESPACE: u128 = 0x0000_0000_0000_0000_0000_0001_0000_0200;
 pub const AF_DEFAULT: u128 = AF_ALL & !AF_CTRL | AF_WHITESPACE;
 
 pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
-    (*b"default     ", AF_DEFAULT, *b"all-control+whitespace   "),
     (*b"all         ", AF_ALL, *b"all ASCII = pass all     "),
-    (*b"none        ", AF_NONE, *b"no ASCII = block all     "),
-    (
-        *b"wsp         ",
-        AF_WHITESPACE,
-        *b"only white-space         ",
-    ),
     (
         *b"all-ctrl    ",
         AF_ALL & !AF_CTRL,
@@ -260,6 +252,13 @@ pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
         *b"all-ctrl+wsp",
         AF_ALL & !AF_CTRL | AF_WHITESPACE,
         *b"all-control+whitespace   ",
+    ),
+    (*b"default     ", AF_DEFAULT, *b"all-control+whitespace   "),
+    (*b"none        ", AF_NONE, *b"no ASCII = block all     "),
+    (
+        *b"wsp         ",
+        AF_WHITESPACE,
+        *b"only white-space         ",
     ),
 ];
 
