@@ -185,7 +185,7 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 18] = [
         *b"Armenian                 ",
     ),
     (*b"Asian       ", UBF_ASIAN, *b"all in U+3000..U+E000    "),
-    (*b"CJK         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
+    (*b"Cjk         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
     (*b"Common      ", UBF_COMMON, *b"all 2-byte-UFT-8         "),
     (
         *b"Cyrillic    ",
