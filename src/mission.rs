@@ -101,9 +101,17 @@ pub const UBF_GREEK: u64 = 0x0000_0000_0000_C000;
 #[allow(dead_code)]
 pub const UBF_IPA: u64 = 0x0000_0000_0000_0700;
 /// Unicode-block-filter:
-/// Cyrillic: (U+400..U+500)
+/// Cyrillic: (U+400..U+540)
 #[allow(dead_code)]
 pub const UBF_CYRILLIC: u64 = 0x0000_0000_001f_0000;
+/// Unicode-block-filter:
+/// Armenian: (U+540..U+580)
+#[allow(dead_code)]
+pub const UBF_ARMENIAN: u64 = 0x0000_0000_0020_0000;
+/// Unicode-block-filter:
+/// Hebrew: (U+580..U+600)
+#[allow(dead_code)]
+pub const UBF_HEBREW: u64 = 0x0000_0000_00c0_0000;
 /// Unicode-block-filter:
 /// Arabic: (U+600..U+700, U+740..U+780)
 #[allow(dead_code)]
@@ -142,7 +150,7 @@ pub const UBF_UNCOMMON: u64 = 0x000f_0000_0000_0000;
 /// The array is defined as `(key, value)` tuples.
 /// For value see chapter *Codepage layout* in
 /// [UTF-8 - Wikipedia](https://en.wikipedia.org/wiki/UTF-8)
-pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 12] = [
+pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 14] = [
     (
         *b"default     ",
         UBF_ALL & !UBF_INVALID,
@@ -164,6 +172,16 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 12] = [
         *b"cyrillic    ",
         UBF_CYRILLIC,
         *b"Cyrillic                 ",
+    ),
+    (
+        *b"armenian    ",
+        UBF_ARMENIAN,
+        *b"Armenian                 ",
+    ),
+    (
+        *b"hebrew      ",
+        UBF_HEBREW,
+        *b"Hebrew                   ",
     ),
     (
         *b"arabic      ",
