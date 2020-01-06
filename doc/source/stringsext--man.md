@@ -110,7 +110,7 @@ as *GNU strings* replacement.
 
     The integer AF is notated in hexadecimal with prefix `0x...`.
     For the most common use-cases, predefined filters can be set:
-    e.g. alias names like `all-ctrl` or `all-ctrl+wsp` are shorthand 
+    e.g. alias names like `All-Ctrl` or `All-Ctrl+Wsp` are shorthand 
     terms for ASCII-filters "all codes, but no control-codes" or
     "all codes, including white-space, but no control-codes.
     See the output of `--list-encodings` for more details 
@@ -240,7 +240,7 @@ as *GNU strings* replacement.
     shows all UTF-8-leading-bytes and their codes.
 
     Alternatively, predefined alias names for the most common Unicode-blocks
-    can be used: e.g.`latin`, `cyrillic`, `greek` and others. See the output of
+    can be used: e.g.`Latin`, `Cyrillic`, `Greek` and others. See the output of
     `--list-encodings` for more predefined filter names.
 
 
@@ -329,15 +329,15 @@ Reduce the number of false positives, when scanning for
 UTF-16LE or UTF-16BE encoded strings. In the following example
 we search for Cyrillic only:
 
-    stringsext -t x -e UTF-16le,,none,cyrillic someimage.raw
+    stringsext -t x -e UTF-16le,,None,Cyrillic someimage.raw
 
 Search for UTF-16LE encoded Arabic and the digits 0 to 9:
 
-    stringsext -t x -e UTF-16le,,0x3f000000000000,arabic someimage.raw
+    stringsext -t x -e UTF-16le,,0x3f000000000000,Arabic someimage.raw
 
 Search for UTF-8 encoded Syriac and all ASCII, control-codes excluded:
 
-    stringsext -t x -e UTF-8,,all-ctrl,0x10000000 someimage.raw
+    stringsext -t x -e UTF-8,,All-Ctrl,0x10000000 someimage.raw
 
 Combine Little-Endian and Big-Endian scanning:
 
