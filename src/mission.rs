@@ -130,6 +130,18 @@ pub const UBF_AFRICAN: u64 = 0x0000_0000_ffe0_0000;
 /// #[allow(dead_code)]
 pub const UBF_COMMON: u64 = 0x0000_0000_ffff_fffc;
 /// Unicode-block-filter:
+/// Kana: (U+3000..U+4000).
+#[allow(dead_code)]
+pub const UBF_KANA: u64 = 0x0000_0008_0000_0000;
+/// Unicode-block-filter:
+/// CJK: (U+3000..A000).
+#[allow(dead_code)]
+pub const UBF_CJK: u64 = 0x0000_03f0_0000_0000;
+/// Unicode-block-filter:
+/// Hangul: (U+B000..E000).
+#[allow(dead_code)]
+pub const UBF_HANGUL: u64 = 0x0000_3800_0000_0000;
+/// Unicode-block-filter:
 /// Kana: (U+3000..), CJK: (U+4000..), Asian: (U+A000..), Hangul: (U+B000..U+E000).
 #[allow(dead_code)]
 pub const UBF_ASIAN: u64 = 0x0000_3ffc_0000_0000;
@@ -150,7 +162,7 @@ pub const UBF_UNCOMMON: u64 = 0x000f_0000_0000_0000;
 /// The array is defined as `(key, value)` tuples.
 /// For value see chapter *Codepage layout* in
 /// [UTF-8 - Wikipedia](https://en.wikipedia.org/wiki/UTF-8)
-pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 14] = [
+pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 18] = [
     (
         *b"default     ",
         UBF_ALL & !UBF_INVALID,
@@ -178,11 +190,7 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 14] = [
         UBF_ARMENIAN,
         *b"Armenian                 ",
     ),
-    (
-        *b"hebrew      ",
-        UBF_HEBREW,
-        *b"Hebrew                   ",
-    ),
+    (*b"hebrew      ", UBF_HEBREW, *b"Hebrew                   "),
     (
         *b"arabic      ",
         UBF_ARABIC | UBF_SYRIAC,
@@ -190,6 +198,10 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 14] = [
     ),
     (*b"common      ", UBF_COMMON, *b"all 2-byte-UFT-8         "),
     (*b"african     ", UBF_AFRICAN, *b"all in U+540..U+800      "),
+    (*b"kana        ", UBF_KANA, *b"Kana: U+3000..U+4000     "),
+    (*b"cjk         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
+    (*b"hangul      ", UBF_HANGUL, *b"Hangul: U+B000..U+E000   "),
+    (*b"asian       ", UBF_ASIAN, *b"all in U+3000..U+E000    "),
     // All but Asian (U+3000..U+E000), useful for UTF-16 scans.
     (
         *b"all-asian   ",
