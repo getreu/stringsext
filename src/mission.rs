@@ -130,9 +130,9 @@ pub const UBF_AFRICAN: u64 = 0x0000_0000_ffe0_0000;
 /// #[allow(dead_code)]
 pub const UBF_COMMON: u64 = 0x0000_0000_ffff_fffc;
 /// Unicode-block-filter:
-/// CJK: (U+4000..), Asian: (U+A000..), Hangul: (U+B000..U+E000).
+/// Kana: (U+3000..), CJK: (U+4000..), Asian: (U+A000..), Hangul: (U+B000..U+E000).
 #[allow(dead_code)]
-pub const UBF_ASIAN: u64 = 0x0000_3ff8_0000_0000;
+pub const UBF_ASIAN: u64 = 0x0000_3ffc_0000_0000;
 /// Unicode-block-filter:
 /// Private use area (U+E00..F00), (U+10_0000..U+14_0000).
 #[allow(dead_code)]
@@ -159,7 +159,7 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 14] = [
     (
         *b"all         ",
         UBF_ALL & !UBF_INVALID,
-        *b"all valid mulitbyte UTF-8",
+        *b"all valid multibyte UTF-8",
     ),
     (*b"none        ", !UBF_ALL, *b"block all multibyte UTF-8"),
     (
