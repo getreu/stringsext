@@ -826,12 +826,12 @@ mod tests {
         assert!(super::Missions::parse_enc_opt("ascii,10,,123").is_err());
 
         assert_eq!(
-            super::Missions::parse_enc_opt("ascii,10,default").unwrap(),
+            super::Missions::parse_enc_opt("ascii,10,Default").unwrap(),
             (Some("ascii"), Some(10), Some(AF_DEFAULT), None, None)
         );
 
         assert_eq!(
-            super::Missions::parse_enc_opt("ascii,10,,latin").unwrap(),
+            super::Missions::parse_enc_opt("ascii,10,,Latin").unwrap(),
             (
                 Some("ascii"),
                 Some(10),
