@@ -185,7 +185,7 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 18] = [
         *b"Armenian                 ",
     ),
     (*b"Asian       ", UBF_ASIAN, *b"all in U+3000..U+E000    "),
-    (*b"Cjk         ", UBF_CJK, *b"CJK : U+4000..U+A000     "),
+    (*b"Cjk         ", UBF_CJK, *b"CJK: U+4000..U+A000      "),
     (*b"Common      ", UBF_COMMON, *b"all 2-byte-UFT-8         "),
     (
         *b"Cyrillic    ",
@@ -254,7 +254,7 @@ pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
         *b"all-control+whitespace   ",
     ),
     (*b"Default     ", AF_DEFAULT, *b"all-control+whitespace   "),
-    (*b"None        ", AF_NONE, *b"no ASCII = block all     "),
+    (*b"None        ", AF_NONE, *b"block all 1-byte UTF-8   "),
     (
         *b"Wsp         ",
         AF_WHITESPACE,
