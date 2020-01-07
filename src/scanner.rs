@@ -152,7 +152,9 @@ pub fn scan<'a>(
     let mut last_window_str_was_printed_and_is_maybe_cut_str =
         ss.last_run_str_was_printed_and_is_maybe_cut_str;
 
-    let decoder_input_window = ss.mission.output_line_len;
+    // In many encodings (e.g. UTF16), to fill one `output_line` we need more bytes of input.
+    // When the string gets longer than `output_line_len`, `SplitStr` will wrap the line.
+    let decoder_input_window = 2 * ss.mission.output_line_len;
     let mut is_last_window = false;
 
     // iterate over `input_buffer with ``decoder_input_window`-sized slices.
@@ -463,8 +465,8 @@ mod tests {
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
         assert_eq!(fc.v[0].s, "a234567890");
 
-        assert_eq!(fc.v[1].position, 10010);
-        assert_eq!(fc.v[1].position_precision, Precision::Exact);
+        assert_eq!(fc.v[1].position, 10000);
+        assert_eq!(fc.v[1].position_precision, Precision::After);
         assert_eq!(fc.v[1].s, "b234567890");
 
         assert_eq!(fc.v[2].position, 10020);
@@ -500,8 +502,8 @@ mod tests {
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
         assert_eq!(fc.v[0].s, "a234567890");
 
-        assert_eq!(fc.v[1].position, 10010);
-        assert_eq!(fc.v[1].position_precision, Precision::Exact);
+        assert_eq!(fc.v[1].position, 10000);
+        assert_eq!(fc.v[1].position_precision, Precision::After);
         assert_eq!(fc.v[1].s, "b234567890");
 
         assert_eq!(fc.v[2].position, 10020);
@@ -596,8 +598,8 @@ mod tests {
         // Note the "co"!
         assert_eq!(fc.v[0].s, "come*");
 
-        assert_eq!(fc.v[1].position, 10018);
-        assert_eq!(fc.v[1].position_precision, Precision::Before);
+        assert_eq!(fc.v[1].position, 10014);
+        assert_eq!(fc.v[1].position_precision, Precision::Exact);
         assert_eq!(fc.v[1].s, "ho*me.");
 
         assert_eq!(ss.last_scan_run_leftover, "");
@@ -653,7 +655,7 @@ mod tests {
 
         //println!("{:#?}", fc);
 
-        assert_eq!(fc.len(), 3);
+        assert_eq!(fc.len(), 2);
 
         assert_eq!(fc.v[0].position, 10015);
         assert_eq!(fc.v[0].position_precision, Precision::Before);
@@ -662,11 +664,7 @@ mod tests {
 
         assert_eq!(fc.v[1].position, 10015);
         assert_eq!(fc.v[1].position_precision, Precision::After);
-        assert_eq!(fc.v[1].s, "ream ");
-
-        assert_eq!(fc.v[2].position, 10025);
-        assert_eq!(fc.v[2].position_precision, Precision::Exact);
-        assert_eq!(fc.v[2].s, "end.");
+        assert_eq!(fc.v[1].s, "ream end.");
 
         assert_eq!(fc.first_byte_position, 10015);
         assert_eq!(fc.str_buf_overflow, false);
@@ -752,9 +750,9 @@ mod tests {
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].s, "ääà");
-        assert_eq!(fc.v[0].position, 10010);
+        assert_eq!(fc.v[0].position, 10000);
         // This was cat at the edge of `input_window`.
-        assert_eq!(fc.v[0].position_precision, Precision::Before);
+        assert_eq!(fc.v[0].position_precision, Precision::Exact);
 
         // Note that "de" is missing, too short.
         assert_eq!(fc.v[1].s, "fgh");
@@ -813,11 +811,11 @@ mod tests {
         assert_eq!(fc.v[0].s, "abcdefgXY\u{f780}");
         // Next output line.
 
-        assert_eq!(fc.v[1].position, 10_010);
-        assert_eq!(fc.v[1].position_precision, Precision::Exact);
+        assert_eq!(fc.v[1].position, 10_000);
+        assert_eq!(fc.v[1].position_precision, Precision::After);
         assert_eq!(fc.v[1].s, "\u{f782}h\u{f783}ijk");
 
-        assert_eq!(fc.v[2].position, 10_010);
+        assert_eq!(fc.v[2].position, 10_000);
         assert_eq!(fc.v[2].position_precision, Precision::After);
         assert_eq!(fc.v[2].s, "\u{f789}\u{f790}");
 
@@ -854,8 +852,8 @@ mod tests {
         assert_eq!(fc.v[0].s, "abcdefgXY");
         // Next output line.
 
-        assert_eq!(fc.v[1].position, 10_010);
-        assert_eq!(fc.v[1].position_precision, Precision::Exact);
+        assert_eq!(fc.v[1].position, 10_000);
+        assert_eq!(fc.v[1].position_precision, Precision::After);
         // Note that `h` is gone.
         assert_eq!(fc.v[1].s, "ijk");
 

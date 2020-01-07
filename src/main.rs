@@ -269,21 +269,21 @@ mod tests {
         assert_eq!(f.mission.mission_id, 0);
 
         let f = iter.next().unwrap();
+        assert_eq!(f.s, "qrstuvw");
+        assert_eq!(f.position, 5000);
+        assert_eq!(f.position_precision, Precision::After);
+        assert_eq!(f.mission.mission_id, 0);
+
+        let f = iter.next().unwrap();
         assert_eq!(f.s, "abcdefgÜhijklmn");
         assert_eq!(f.position, 5000);
         assert_eq!(f.position_precision, Precision::Exact);
         assert_eq!(f.mission.mission_id, 1);
 
         let f = iter.next().unwrap();
-        assert_eq!(f.s, "qrstuvw");
-        assert_eq!(f.position, 5030);
-        assert_eq!(f.position_precision, Precision::Before);
-        assert_eq!(f.mission.mission_id, 0);
-
-        let f = iter.next().unwrap();
         assert_eq!(f.s, "opÜqrstuvwÜxyz");
-        assert_eq!(f.position, 5030);
-        assert_eq!(f.position_precision, Precision::Before);
+        assert_eq!(f.position, 5000);
+        assert_eq!(f.position_precision, Precision::After);
         assert_eq!(f.mission.mission_id, 1);
 
         let f = iter.next();
