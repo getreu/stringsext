@@ -93,10 +93,10 @@ In order to reduce this big number of false positives, **stringsext**
 provides a parametrizable Unicode-block-filter. See **\--encodings**
 option for more details.
 
-**stringsext** reads its input data from (multiple) **FILE**s. With no 
-**FILE** is given, or when **FILE** is `-`, it reads standard input *stdin*.
+**stringsext** reads its input data from (multiple) **FILE**s. With no
+**FILE** is given, or when **FILE** is "`-`", it reads standard input *stdin*.
 
-When invoked with `stringsext -e ascii`, **stringsext** can be used
+When invoked with "`stringsext -e ascii`", **stringsext** can be used
 as *GNU strings* replacement.
 
 
@@ -104,35 +104,35 @@ as *GNU strings* replacement.
 
 **-a** *AF*, **\--ascii-filter**=*AF*
 
-:   Apply ASCII-Filter.
-    After the string-findings had beed decoded into UTF-8, the ASCII-filter
-    is one of the 4 filters all output lines have to pass before being
-    printed. The ASCII-filter is applied solely to Unicode characters in
-    `U+0000..U+007F`. The filter parameter AF decides which of these codes
-    will pass the filter. AF is a 128 bit integer, where each bit is mapped to
-    one of the above character-range, e.g. the character `U+0020` will pass the
-    filter only, if bit no. 32 (=0x20) is set. An unset bit no. 32 will
-    instruct the filter to reject all character `U+0020`.
+:   Apply ASCII-Filter. After the string-findings had been decoded into
+    UTF-8, the ASCII-filter is one of the 4 filters all string-findings have
+    to pass before being printed. The ASCII-filter is applied to Unicode
+    characters in "`U+0000..U+007F`" only. The filter parameter AF decides
+    which of these codes will pass the filter. AF is some 128 bit integer,
+    where each bit is mapped to one character in the above character-range,
+    e.g. the character "`U+0020`" will pass the filter only, if bit no. 32
+    (=0x20) is set. If the filter is configured with bit no. 32 cleared, all
+    characters "`U+0020`" will be rejected.
 
-    The integer AF is notated in hexadecimal with prefix `0x...`.
+    The integer AF is notated in hexadecimal with prefix "`0x...`".
     For the most common use-cases, predefined filters can be set:
-    e.g. alias names like `All-Ctrl` or `All-Ctrl+Wsp` are shorthand 
+    e.g. alias names like "`All-Ctrl`" or "`All-Ctrl+Wsp`" are shorthand 
     terms for ASCII-filters "all codes, but no control-codes" or
     "all codes, including white-space, but no control-codes.
-    See the output of `--list-encodings` for more details 
+    See the output of "`--list-encodings`" for more details 
     about filter-names.
 
 **-c**, **\--no-metadata**
 
 :   Suppress all metadata in output.
-    `stringsext` presents its string-findings in one or more
+    "`stringsext`" presents its string-findings in one or more
     output-lines. Each line shows some meta information before
-    printing the finding itself. See the section `Output Format`
+    printing the finding itself. See the section "`Output Format`"
     for more information about metadata.
 
 **-d**, **\--debug-options**
 
-:   Show how command-line-options are interpreted. When set, `stringsext`
+:   Show how command-line-options are interpreted. When set, "`stringsext`"
     prints an exhaustive filter parameter synoptic. Can be used for debugging
     to check how the present command-line-arguments are interpreted or for
     documentation purpose. Does not run the scanner.
@@ -148,30 +148,30 @@ as *GNU strings* replacement.
 
     :   Search for strings encoded as ENCNAME. Encoding names
         *ENCNAME* are denoted following the WATHWG standard.
-        `--list-encodings` prints a list of available encodings.
+        "`--list-encodings`" prints a list of available encodings.
 
     *MIN*, *AF*, *UBF*, *GREP*
 
     :   Once the input is decoded to UTF-8, all characters have to pass 4
-        additional filters before being printed: MIN (see `--chars-min`), 
-        AF (see `--ascii-filter`), 
-        UBF (see `--unicode-block-filter`) and GREP (see `--grep-char`).
+        additional filters before being printed: MIN (see "`--chars-min`"),
+        AF (see "`--ascii-filter`"), UBF (see "`--unicode-block-filter`") and
+        GREP (see "`--grep-char`").
 
-        The values given here override - for this ENC only - the default values 
-        given by `--chars-min`, `--ascii-filter`, `--unicode-block-filter`
-        and `--grep-char`. 
+        The values given here override - for this ENC only - the default
+        values given by "`--chars-min`", "`--ascii-filter`",
+        "`--unicode-block-filter`" and "`--grep-char`".
         
-        `--list-encodings` prints a
-        list of predefined filter-names.
+        "`--list-encodings`" prints a list of predefined filter-names.
 
-**-g** *ASCII*, **\--grep-char**=*ASCII*
+**-g** *ASCII_CODE*, **\--grep-char**=*ASCII_CODE*
 
-:   Print only findings having at least one character with ASCII code.
-    `--grep-char` is one of the 4 filters decoded output lines must pass
-    before being printed. `--grep-char` greps for ASCII codes in output
-    lines. The ASCII-code can be given as decimal or hexadecimal number. The
-    latter starts with `0x...`. Useful values are `47` (`/`) or `92` (`\`) 
-    for path search.
+:       Print only findings having at least one character with ASCII_CODE.
+        "`--grep-char`" is one of the 4 filters decoded output lines must pass
+        before being printed. "`--grep-char`" checks for the presence of
+        ASCII_CODE in the first output-line of a string-finding. The
+        ASCII-code can be given as decimal or hexadecimal number. The latter
+        starts with "`0x...`". Useful values are "`47`" (`/`) or "`92`" (`\`) for
+        path search.
 
 **-h, \--help**
 
@@ -185,7 +185,7 @@ as *GNU strings* replacement.
 **-n** *MIN*, **\--chars-min**=*MIN*
 
 :   Print only strings at least *MIN* characters long. The string length is
-    measured in Unicode-characters (codepoints). **\--help** shows 
+    measured in Unicode-characters (codepoints). **\--help** shows
     the default value.
 
 **-p** *FILE*, **\--output**=*FILE*
@@ -195,22 +195,21 @@ as *GNU strings* replacement.
 **-q** *NUM*, *\--output-line-len*=*NUM*  
 
 :   Set output-line-length in UTF-8 bytes. Length of the printed output line
-    in UTF-8 bytes (string-findings only, no metadata). The line-length is
-    limited by buffer size (see `OUTPUT_BUF_LEN` in source code). There is no
-    risk to set this to very big values: A value `NUM` bigger than
-    `OUTPUT_BUF_LEN` is set to `OUT_PUT_LEN`. The longer the this line-length
-    is, the fewer strings will be wrapped to the next line. The downside with
-    long output lines is, that the scanner loses precision in locating the
-    findings.
+    in UTF-8 bytes (string-findings only, metadata excluded). The line-length
+    is limited by some internal buffer size value (see "`OUTPUT_BUF_LEN`" in
+    source code). A value "`NUM`" bigger than "`OUTPUT_BUF_LEN`" is set to
+    "`OUT_PUT_LEN`". The longer the line-length is, the fewer strings will be
+    wrapped to the next line. The downside with long output lines is, that
+    the scanner loses precision in locating the findings.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
 
- :  Start offset NUM for the input-stream-byte-counter as decimal or
+ :  Start offset NUM for the input-stream-byte-counter given as decimal or
     hexadecimal integer. This is useful when large input data is stored
     split in separate files and when these files are so big that they should
-    be analyzed in separate **stringsext** runs.
+    be analysed in separate **stringsext** runs.
 
-    Note: in general it is better to treat all input files in one run by
+    Note: in general, it is better to treat all input files in one run by
     listing them as command-line-parameter. Thus, **stringsext** concatenates
     the split input-files to one input-stream before analyzing it. This way
     it is able to even recognize split strings at the cutting edge between
@@ -228,26 +227,28 @@ as *GNU strings* replacement.
 :   Unicode-block-filter UBF applied after decoding to UTF-8.
 
     The decoder first searches for validly encoded character sequences in the
-    input stream. Then the sequence of valid characters is decoded into a
-    chunk of UTF-8 characters. Additionally, every chunk
-    has to pass 4 filters before finally being printed: `--chars-min`,
-    `--ascii-filter`, `--unicode-bloc-filter` and `--grep-char`.
+    input stream. Then, the sequence of valid characters is decoded into a
+    chunk of UTF-8 characters, which has to pass 4 filters before being
+    printed: "`--chars-min`", "`--ascii-filter`", "`--unicode-bloc-filter`" and
+    "`--grep-char`".
 
-    The Unicode-block-filter applies to all decoded UTF-8 characters `>
-    U+007f` and can be parametrized with the`--unicode-block-filter` option
-    which is a 64-bit integer given in hexadecimal, prepended with `0x...`.
+    The Unicode-block-filter applies to all decoded UTF-8 characters "`>
+    U+007f`" and can be parametrized with the`--unicode-block-filter`" option
+    which is a 64-bit integer given in hexadecimal, prepended with "`0x...`".
 
-    Every bit `0..=63` maps to one leading-byte's code position in `0xC0..0xFF`,
-    e.g. if bit 0 is set -> all characters with leading byte `0xC0` pass the
-    filter; if bit 1 is set -> all characters with leading byte `0xC1`,
-    pass the filter. Otherwise, the character is rejected. For example,
-    to print only Syriac, set UFB to `0x1000_0000` (bit number 29 set) and
-    AF to '0x0'. Table 3 on page <https://en.wikipedia.org/wiki/UTF-8> 
-    shows all UTF-8-leading-bytes and their codes.
+    Every bit "`0..=63`" maps to one leading-byte's code position in
+    "`0xC0..0xFF`", e.g. if bit 0 is set -> all characters with leading byte
+    "`0xC0`" pass the filter; if bit 1 is set -> all characters with leading
+    byte "`0xC1`", pass the filter. Otherwise, the character is rejected. For
+    example, to print only Syriac, set UFB to "`0x1000_0000`" (bit number 29
+    set) and AF to '0x0'. This instructs the filter to let pass only UTF-8
+    characters, whose leading byte is "`0xDC`". Table 3 on page
+    <https://en.wikipedia.org/wiki/UTF-8> shows UTF-8-leading-bytes and
+    their codes.
 
     Alternatively, predefined alias names for the most common Unicode-blocks
-    can be used: e.g.`Latin`, `Cyrillic`, `Greek` and others. See the output of
-    `--list-encodings` for more predefined filter names.
+    can be used: e.g. "`Latin`", "`Cyrillic`", "`Greek`" and many others. See the
+    output of "`--list-encodings`" for more predefined filter names.
 
 
 **-V, \--version**
@@ -268,10 +269,10 @@ as *GNU strings* replacement.
 # OUTPUT FORMAT
 
 The way **stringsext** prints its output can be configured with the following
-options: `--no-metadata`, `--radix` and `--output-line-len`. The first
-`--no-metadata` controls if metadata is presented printed, `--radix`
-determins if and how the byte-counter is shown and the latter
-`--output-line-len` at what byte position string-findings are wrapped to the
+options: "`--no-metadata`", "`--radix`" and "`--output-line-len`". The first
+"`--no-metadata`" controls if metadata is presented printed, "`--radix`
+determines if and how the byte-counter is shown and the latter
+"`--output-line-len`" at what byte position string-findings are wrapped to the
 next line.
 
 **stringsext**'s output syntax is best illustrated by example. Consider
@@ -290,26 +291,26 @@ A >3c 	(a UTF-8)	And In Your Life                                 (9)
 A  3c+	(b ascii)	 Your Work                                       (10)
 ```
 
-This `A` in the first column indicates, that the input comes from the first
-input file `test.txt`. `B` denotes the second input file, etc.
+(3): The letter "`A`" in the first column indicates, that the input originates
+from the first input file "`test.txt`". "`B`" denotes the second input file, etc.
 
-(3): `0` indicates, that the string-finding `Who Moved My Cheese?` was found
-at position `0x0`.
+(3): "`0`" indicates, that the string-finding "`Who Moved My Cheese?`" was found
+at position "`0x0`".
 
-(4): `<1e` means, that the string-finding `An A-Mazing Way To Deal With C`
-was found somewhere in `0x1..=0x1e`. The implemented algorithm guarantees
-that the string-finding is never more than 30 bytes (`-q 30`) away from
-the shown position, here: `0x1e`.
+(4): "`<1e`" means, that the string-finding "`An A-Mazing Way To Deal With C`"
+was found somewhere in "`0x1..=0x1e`". In addition, the implemented algorithm
+guarantees that the string-finding is never more than 30 bytes (`-q 30`) away
+from the indicated position, here: "`0x1e`".
 
-(5): The string-finding `hange In` continues the previous string, hence `+`,
-and is situated `>1e`, meaning somewhere in the range `0x1f..=3b`.
-Here again, it is guaranteed, that the string-finding is always fewer 
-than 30 bytes (`-q 30`) away from `1e`.
+(5): The string-finding "`hange In`" continues the previous string, hence "`+`",
+and is situated "`>1e`", meaning somewhere in the range "`0x1f..=3b`".
+Here again, it is guaranteed, that the string-finding is always fewer
+than 30 bytes (`-q 30`) away from "`1e`".
 
-(3): `a` in `(a UTF-8)` indicates, that the string-finding `Who Moved My
-Cheese?` was found by the first scanner `-e utf8,10`.
+(3): "`a`" in "`(a UTF-8)`" indicates, that the string-finding "`Who Moved My
+Cheese?`" was found by the first scanner "`-e utf8,10`".
 
-(6): `b` refers to the second scanner, here `-e ascii,50`.
+(6): "`b`" refers to the second scanner, here "`-e ascii,50`".
 
 
 
@@ -323,7 +324,7 @@ Search for UTF-8 and UTF-16 Big-Endian encoded strings:
 
     stringsext -t x -e utf-8 -e utf-16be  someimage.raw
 
-The same, but read from `stdin`:
+The same, but read from "`stdin`":
 
     cat someimage.raw | stringsext -t x -e utf-8 -e utf-16be  -
 
@@ -331,9 +332,8 @@ Scan a non-file device:
 
     stringsext -t x -e utf-8 -e utf-16be  /dev/sda1
 
-Reduce the number of false positives, when scanning for
-UTF-16LE or UTF-16BE encoded strings. In the following example
-we search for Cyrillic only:
+Reduce the number of false positives, when scanning for UTF-16LE or UTF-16BE
+encoded strings. In the following example we search for Cyrillic only:
 
     stringsext -t x -e UTF-16le,,None,Cyrillic someimage.raw
 
@@ -353,6 +353,14 @@ Show the filter default values used in the above example:
 
     stringsext -d -t x -e UTF-16be -e UTF-16le someimage.raw
 
+Search for path-names and URLs in some disk-partition:
+
+    sudo stringsext -tx -e utf-8 -n 15 -g 47 /dev/disk/by-uuid/91C8-2721
+
+Equivalent:
+
+    sudo stringsext -tx -e utf-8,15,,,47 /dev/disk/by-uuid/91C8-2721
+
 
 # OPERATING PRINCIPLE
 
@@ -364,16 +372,18 @@ binary data streams.
 
 Scanners are parametrized with the **\--encoding ENC** option. Multiple scanners
 may operate in parallel. Their search field is divided into input chunks of
-`--output-line-len` bytes (see source code documentation for details) and
-send simultaneously to all scanners.
+"`--output-line-len`" bytes (see source code documentation for details).
 
-Before being printed, valid strings have to pass four different **filter** whose
-filter criteria are defined with the parameters: *MIN*, *AF*, *UBF* or *GREP*.
+Before being printed, valid strings must pass four different **filter**, whose
+filter criteria are defined with the parameters: *MIN*, *AF*, *UBF* or *GREP*
+(see above).
+
 
 # LIMITATIONS
 
-The ASCII-character GREP, searched with the `--grep_char` option, must appear
-in the first `--output-line-len` bytes to be reliably found in long strings.
+The ASCII-character GREP, searched with the "`--grep_char`" option, must appear
+in the first "`--output-line-len`" bytes to be reliably found in long strings.
+Increase "`--output-line-len`" if you search for very long strings.
 
 # RESOURCES
 
