@@ -9,8 +9,8 @@ use crate::counter_offset_default;
 use crate::encoding_default;
 use crate::input::ByteCounter;
 use crate::options::ARGS;
-use crate::options::OUTPUT_LINE_LEN_MIN;
-use crate::output_line_len_default;
+use crate::options::OUTPUT_LINE_CHAR_NB_MIN;
+use crate::output_line_char_nb_max_default;
 use anyhow::{anyhow, Context, Result};
 use encoding_rs::*;
 use lazy_static::lazy_static;
@@ -421,10 +421,10 @@ pub struct Mission {
     /// A filter, defining additional criteria for a finding to be printed.
     pub filter: Utf8Filter,
 
-    /// Maximum length of output-lines in UTF-8 bytes. Findings that do not fit,
-    /// will be wrapped to two or more lines. The label `+` indicates that this
-    /// line is the continuation of the previous line.
-    pub output_line_len: usize,
+    /// Maximum length of output-lines in UTF-8 characters. Findings that do not
+    /// fit, will be wrapped to two or more lines. The label `+` indicates that
+    /// this line is the continuation of the previous line.
+    pub output_line_char_nb_max: usize,
 
     /// The `encoding_rs` decoder has no direct support for ASCII. As a
     /// workaround, we simulate the missing ASCII-decoder with the
@@ -570,11 +570,11 @@ impl Missions {
         let flag_output_line_len =
             parse_integer!(flag_output_line_len, usize::from_str_radix, usize::from_str);
         if let Some(m) = flag_output_line_len {
-            if m < OUTPUT_LINE_LEN_MIN {
+            if m < OUTPUT_LINE_CHAR_NB_MIN {
                 return Err(anyhow!(
                     "minimum for `--output-line-len` is `{}`, \
                      you tried: `{}`.",
-                    OUTPUT_LINE_LEN_MIN,
+                    OUTPUT_LINE_CHAR_NB_MIN,
                     m
                 ));
             }
@@ -615,19 +615,19 @@ impl Missions {
                 },
             };
 
-            let output_line_len = match flag_output_line_len {
+            let output_line_char_nb_max = match flag_output_line_len {
                 Some(n) => n,
-                None => output_line_len_default!(),
+                None => output_line_char_nb_max_default!(),
             };
 
-            if output_line_len < OUTPUT_LINE_LEN_MIN {
+            if output_line_char_nb_max < OUTPUT_LINE_CHAR_NB_MIN {
                 return Err(anyhow!(
                     "Scanner {}: \
                      minimum for `--output-line-len` is `{}`, \
                      you tried: `{}`.",
                     char::from((mission_id + 97) as u8),
-                    OUTPUT_LINE_LEN_MIN,
-                    output_line_len,
+                    OUTPUT_LINE_CHAR_NB_MIN,
+                    output_line_char_nb_max,
                 ));
             }
 
@@ -703,7 +703,7 @@ impl Missions {
                 encoding,
                 chars_min_nb,
                 filter,
-                output_line_len,
+                output_line_char_nb_max,
                 mission_id: mission_id as u8,
                 print_encoding_as_ascii,
             });

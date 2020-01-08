@@ -60,10 +60,11 @@ pub struct SplitStr<'a> {
     inp: &'a str,
 
     /// Initially points to the first byte of the `inp`-buffer. In case `ok_s` is
-    /// very long and has `>=ok_s_len_max`, the iterator stops and sends out
-    /// `ok_s`. Then `inp_start_p` is moved to the first byte after `ok_s` so that
-    /// the next `next()` deals with the rest of the string. This way the second
-    /// half will be identified to be the continuation of the first part.
+    /// very long and has `>=ok_char_nb_max` characters, the iterator stops and
+    /// sends out `ok_s`. Then `inp_start_p` is moved to the first byte after
+    /// `ok_s` so that the next `next()` deals with the rest of the string. This
+    /// way the second half will be identified to be the continuation of the
+    /// first part.
     inp_start_p: *const u8,
 
     /// Points to the first byte after the end of `inp` buffer.
@@ -75,7 +76,7 @@ pub struct SplitStr<'a> {
 
     /// Criteria that influences the search performed by `next()`. Normally only
     /// substrings larger than `>=chars_min_nb` will be returned by `next()`.
-    /// This rule concerning only substrings touching one o fthe `inp` buffer
+    /// This rule concerning only substrings touching one of the `inp` buffer
     /// boundaries has 2 exceptions:
     ///   
     /// 1. When `last_s_was_maybe_cut` is set and
@@ -109,12 +110,8 @@ pub struct SplitStr<'a> {
     utf8f: Utf8Filter,
 
     /// This imposes an additional constraint to the iterator and instructs him
-    /// to never return substrings longer than `s_len_max`. Usually this is equal
-    /// the `inp`-buffer's length, but there can be exceptions of longer
-    /// `inp`-buffers. For example when the previous run has left some
-    /// non-treated `left_over` bytes which are then prepended to the
-    /// `inp`-buffer. In the worst case, such an `inp` is then twice as large.
-    s_len_max: usize,
+    /// to never return substrings longer than `s_char_nb_max`.
+    s_char_nb_max: usize,
 }
 
 /// This enum describes result variants of the `SplitStr::next()` output.
@@ -169,7 +166,7 @@ impl<'a> SplitStr<'a> {
         last_s_was_maybe_cut: bool,
         invalid_bytes_after_inp: bool,
         utf8f: Utf8Filter,
-        s_len_max: usize,
+        s_char_nb_max: usize,
     ) -> SplitStr {
         unsafe {
             SplitStr {
@@ -187,7 +184,7 @@ impl<'a> SplitStr<'a> {
                 // We will set this to false later, if `utf8f.grep_char` requires some
                 // additional checking.
                 utf8f,
-                s_len_max,
+                s_char_nb_max,
             }
         }
     }
@@ -209,24 +206,21 @@ impl<'a> Iterator for SplitStr<'a> {
         let mut ok_s_len = 0usize;
         let mut ok_char_nb = 0usize;
         // The longest `ok_s` we want to return in one `next()` iteration is
-        // of length `ok_s_len_max`, which the usual `inp`-buffer size
-        // when no extra bytes are prepended.
+        // of length `ok_char_nb_max`.
         // When we return such a maximum length string, we
-        // keep the rest in `inp` for `next()`. Such a long string can only
-        // appear, when some bytes form the last run had been prepended to
-        // 'inp'.
-        let ok_s_len_max = self.s_len_max;
+        // keep the rest in `inp` for `next()`.
+        let ok_char_nb_max = self.s_char_nb_max;
 
         // The following loop has 4 exits:
         // 1. We finished the whole buffer: `self.p >= self.inp`
-        // 2. A long string was found: `ok_s_len > ok_s_len_max`,
+        // 2. A long string was found: `ok_char_nb > ok_char_nb_max`,
         //   `p` points to the first of the remaining bytes, left
         //    for the next `next()` run.
         // 3. We found a substring at the beginning of the buffer;
         // 4. We found a substring in somewhere in middle of the buffer;
 
         // Exit 1. and 2.
-        while self.p < self.inp_end_p && ok_s_len < ok_s_len_max {
+        while self.p < self.inp_end_p && ok_char_nb < ok_char_nb_max {
             // We do not need an additional boundary check, because we
             // know from above that there is at least one character in
             // `inp` and there are only valid UTF-8 in here.
@@ -314,17 +308,13 @@ impl<'a> Iterator for SplitStr<'a> {
         // Exit 2 or 3:
         let s_touches_right_boundary = unsafe { ok_s_p.add(ok_s_len) } >= self.inp_end_p;
 
-        let s_is_maybe_cut =
-            ok_s_len >= ok_s_len_max || (s_touches_right_boundary && !self.invalid_bytes_after_inp);
+        let s_is_maybe_cut = ok_char_nb >= ok_char_nb_max
+            || (s_touches_right_boundary && !self.invalid_bytes_after_inp);
         let s_completes_previous_s = s_touches_left_boundary && self.last_s_was_maybe_cut;
 
         // With this flag we tell the caller, that he should not immediately
         // print the returned string, but rather insert it at the the beginning
         // of the next input buffer and decode and run `SplitStr` again.
-        //
-        // Note, we require, that `ok_s_len` is at least 1 byte SMALLER then
-        // `self.s_len_max` (`ok_s_len < self.s_len_max`). This way
-        // we print strings that fill the whole output line directly.
         //
         // Note, `&& !s_completes_previous_s` guarantees, that
         // `s_is_to_be_filtered_again` is only set out for the first part
@@ -341,10 +331,10 @@ impl<'a> Iterator for SplitStr<'a> {
         // 2. When the first part (==`!not_completes_previous`) of a longer
         // string who touches the right buffer boundary
         // (`==s_touches_right_boundary`) did start somewhere in the middle of
-        // the buffer (==`ok_s_len < self.s_len_max`). We actually could
+        // the buffer (==`ok_char_nb < self.s_char_nb_max`). We actually could
         // print it out now, because it has the minimum length, but we want to
         // print the beginning of a every string as long as possible (approx
-        // `output_line_length`). Instead, we rather set
+        // `output_line_char_nb_max`). Instead, we rather set
         // `s_is_to_be_filtered_again` instruction the caller to insert
         // this string at the beginning of the next buffer. Doing so, we
         // guarantee, that string beginnings are always assembled, even if they
@@ -352,12 +342,12 @@ impl<'a> Iterator for SplitStr<'a> {
         // `stringsext` through additional filters, e.g. searching for
         // particular patterns.
         //
-        // As `ok_char_nb < chars_min_nb` is part of `ok_s_len < self.s_len_max`
+        // As `ok_char_nb < chars_min_nb` is part of `ok_s_len < self.s_char_nb_max`
         // we do not need to add this condition explicitly below.
         let s_is_to_be_filtered_again = !s_completes_previous_s
             && s_touches_right_boundary
             && !self.invalid_bytes_after_inp
-            && (ok_s_len < self.s_len_max || !grep_char_ok);
+            && (ok_char_nb < self.s_char_nb_max || !grep_char_ok);
 
         let s_satisfies_min_char_rule = ok_char_nb >= self.chars_min_nb as usize;
         let s_satisfies_grep_char_rule = grep_char_ok;
@@ -383,7 +373,7 @@ impl<'a> Iterator for SplitStr<'a> {
         };
 
         // Exit was 2: prepare the inner state for the next `next()` run.
-        if ok_s_len >= ok_s_len_max {
+        if ok_char_nb >= ok_char_nb_max {
             self.inp_start_p = self.p;
         };
         self.last_s_was_maybe_cut = s_is_maybe_cut;

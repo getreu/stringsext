@@ -194,13 +194,13 @@ as *GNU strings* replacement.
 
 **-q** *NUM*, *\--output-line-len*=*NUM*  
 
-:   Set output-line-length in UTF-8 bytes. Length of the printed output line
-    in UTF-8 bytes (string-findings only, metadata excluded). The line-length
-    is limited by some internal buffer size value (see "`OUTPUT_BUF_LEN`" in
-    source code). A value "`NUM`" bigger than "`OUTPUT_BUF_LEN`" is set to
-    "`OUT_PUT_LEN`". The longer the line-length is, the fewer strings will be
-    wrapped to the next line. The downside with long output lines is, that
-    the scanner loses precision in locating the findings.
+:   Set the printed output-line-length in UTF-8 characters (string-findings
+    only, metadata excluded). The line-length is limited by some internal
+    buffer size value (see "`OUTPUT_BUF_LEN`" in source code). A value
+    "`NUM`" bigger than "`OUTPUT_BUF_LEN/2`" is set to "`OUTPUT_BUF_LEN/2`".
+    The longer the line-length is, the fewer strings will be wrapped to the
+    next line. The downside with long output lines is, that the scanner loses
+    precision in locating the findings.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
 

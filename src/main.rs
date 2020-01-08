@@ -18,7 +18,8 @@
 //!
 //!  3. Each thread runs a search in `main::slice` == `scanner::input_buffer`. The
 //!  search is performed by `scanner::scan()`, which cuts the `scanner::input_buffer`
-//!  into smaller chunks of size `output_line_len` hereafter called `input_window`.
+//!  into smaller chunks of size 2*`output_line_char_nb_max` bytes hereafter called
+//! `input_window`.
 //!
 //!  4. The `Decoder` runs through the `input_window`, searches for valid strings and
 //!  decodes them into UTF-8-chunks.
@@ -27,7 +28,7 @@
 //!  analyzed if parts of it satisfy certain filter conditions.
 //!
 //!  6. Doing so, the `helper::SplitStr` cuts the UTF-8-chunk into even smaller
-//!  `SplitStr`-chunks not longer than `output_line_len` and sends them back to the
+//!  `SplitStr`-chunks not longer than `output_line_char_nb_max` and sends them back to the
 //!  `scanner::scan()` loop.
 //!
 //!  7. There the `SplitStr`-chunk is packed into a `finding::Finding` object and
@@ -105,7 +106,8 @@ fn run() -> Result<(), anyhow::Error> {
                 Some(ref fname) => {
                     let f = File::create(&Path::new(fname.as_str()))?;
                     // There is at least one `Mission` in `MISSIONS`.
-                    let output_line_len = MISSIONS[0].output_line_len + OUTPUT_LINE_METADATA_LEN;
+                    let output_line_len =
+                        2 * MISSIONS[0].output_line_char_nb_max + OUTPUT_LINE_METADATA_LEN;
                     let f = LineWriter::with_capacity(output_line_len, f);
                     Box::new(f) as Box<dyn Write>
                 }

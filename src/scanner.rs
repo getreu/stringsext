@@ -91,7 +91,7 @@ impl<'a> ScannerState {
             // We multiply `mission.chars_min_nb` by 4, because it is
             // counted Unicode-codepoints and a codepoint can have
             // maximum 4 bytes in UTF-8.
-            last_scan_run_leftover: String::with_capacity(mission.output_line_len as usize),
+            last_scan_run_leftover: String::with_capacity(mission.output_line_char_nb_max as usize),
             last_run_str_was_printed_and_is_maybe_cut_str: false,
             consumed_bytes: mission.counter_offset,
         }
@@ -153,8 +153,8 @@ pub fn scan<'a>(
         ss.last_run_str_was_printed_and_is_maybe_cut_str;
 
     // In many encodings (e.g. UTF16), to fill one `output_line` we need more bytes of input.
-    // When the string gets longer than `output_line_len`, `SplitStr` will wrap the line.
-    let decoder_input_window = 2 * ss.mission.output_line_len;
+    // If ever the string gets longer than `output_line_char_nb_max`, `SplitStr` will wrap the line.
+    let decoder_input_window = 2 * ss.mission.output_line_char_nb_max;
     let mut is_last_window = false;
 
     // iterate over `input_buffer with ``decoder_input_window`-sized slices.
@@ -270,7 +270,7 @@ pub fn scan<'a>(
                 continue_str_if_possible,
                 invalid_bytes_after_split_str_buffer,
                 ss.mission.filter,
-                ss.mission.output_line_len,
+                ss.mission.output_line_char_nb_max,
             ) {
                 if !chunk.s_is_to_be_filtered_again {
                     // We keep it for printing.
@@ -377,7 +377,7 @@ mod tests {
             chars_min_nb: 3,
             // this is a pass all filter
             filter: UTF8_FILTER_ALL_VALID,
-            output_line_len: 10,
+            output_line_char_nb_max: 10,
         };
     }
     lazy_static! {
@@ -389,7 +389,7 @@ mod tests {
             chars_min_nb: 3,
             // this is a pass all filter
             filter: UTF8_FILTER_LATIN,
-            output_line_len: 10,
+            output_line_char_nb_max: 10,
         };
     }
 
@@ -406,7 +406,7 @@ mod tests {
                 ubf: UBF_LATIN,
                 grep_char: Some(42),
             },
-            output_line_len: 10,
+            output_line_char_nb_max: 10,
         };
     }
 
@@ -418,7 +418,7 @@ mod tests {
             encoding: &Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
             chars_min_nb: 3,
             filter: UTF8_FILTER_ALL_VALID,
-            output_line_len: 10,
+            output_line_char_nb_max: 10,
         };
     }
     lazy_static! {
@@ -434,7 +434,7 @@ mod tests {
                 ubf: UBF_NONE,
                 grep_char: None,
             },
-            output_line_len: 10,
+            output_line_char_nb_max: 10,
         };
     }
     lazy_static! {
@@ -446,7 +446,7 @@ mod tests {
             chars_min_nb: 4,
             // this is a pass all filter
             filter: UTF8_FILTER_LATIN,
-            output_line_len: 60,
+            output_line_char_nb_max: 60,
         };
     }
     #[test]
@@ -659,12 +659,12 @@ mod tests {
 
         assert_eq!(fc.v[0].position, 10015);
         assert_eq!(fc.v[0].position_precision, Precision::Before);
-        assert_eq!(fc.v[0].s, "no no€St");
+        assert_eq!(fc.v[0].s, "no no€Stre");
         // Here the line is full.
 
         assert_eq!(fc.v[1].position, 10015);
         assert_eq!(fc.v[1].position_precision, Precision::After);
-        assert_eq!(fc.v[1].s, "ream end.");
+        assert_eq!(fc.v[1].s, "am end.");
 
         assert_eq!(fc.first_byte_position, 10015);
         assert_eq!(fc.str_buf_overflow, false);
@@ -804,7 +804,7 @@ mod tests {
 
         assert_eq!(fc.first_byte_position, 10_000);
         assert_eq!(fc.str_buf_overflow, false);
-        assert_eq!(fc.v.len(), 3);
+        assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].position, 10_000);
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
@@ -813,11 +813,7 @@ mod tests {
 
         assert_eq!(fc.v[1].position, 10_000);
         assert_eq!(fc.v[1].position_precision, Precision::After);
-        assert_eq!(fc.v[1].s, "\u{f782}h\u{f783}ijk");
-
-        assert_eq!(fc.v[2].position, 10_000);
-        assert_eq!(fc.v[2].position_precision, Precision::After);
-        assert_eq!(fc.v[2].s, "\u{f789}\u{f790}");
+        assert_eq!(fc.v[1].s, "\u{f782}h\u{f783}ijk\u{f789}\u{f790}");
 
         assert_eq!(
             // We only compare the first 35 bytes, the others are 0 anyway.

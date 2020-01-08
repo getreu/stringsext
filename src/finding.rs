@@ -142,13 +142,13 @@ impl<'a> Deref for FindingCollection<'a> {
 /// not determine its exact position.
 pub enum Precision {
     /// The finding is located somewhere before `Finding::position`. It is
-    /// guarantied, that the finding is not farer than `--output-line-len -1`
+    /// guarantied, that the finding is not farer than 2*`--output-line-len`
     /// bytes (or the previous finding from the same scanner) away.
     Before,
     /// The algorithm could determine the exact position of the `Finding` at
     /// `Finding::position`.
     Exact,
-    /// The finding is located some `[1..output_line_len]` bytes after
+    /// The finding is located some `[1..2* --output_line_len]` bytes after
     /// `Finding::position` or - in any case - always before the next
     /// `Finding::position`.
     After,

@@ -46,7 +46,7 @@ macro_rules! counter_offset_default {
 /// Default value when no `--output-line-len`
 /// command-line-argument is given. Must be `usize`.
 #[macro_export]
-macro_rules! output_line_len_default {
+macro_rules! output_line_char_nb_max_default {
     () => {
         60usize
     };
@@ -54,7 +54,7 @@ macro_rules! output_line_len_default {
 
 /// There must be space for at least 3 long Unicode characters,
 /// to guarantee progress in streaming. You want much longer lines.
-pub const OUTPUT_LINE_LEN_MIN: usize = 12;
+pub const OUTPUT_LINE_CHAR_NB_MIN: usize = 6;
 
 /// Message printed for command-line `--help`.
 const USAGE: &str = concat!(
@@ -84,8 +84,8 @@ Options:
     chars_min_default!(),
     ").
  -p FILE, --output=FILE         Print not to stdout but in file.
- -q NUM, --output-line-len=NUM  Output line length in UTF-8 bytes (default: ",
-    output_line_len_default!(),
+ -q NUM, --output-line-len=NUM  Output line length in UTF-8 characters (default: ",
+    output_line_char_nb_max_default!(),
     ").
  -s NUM, --counter-offset=NUM   Start counting input bytes with NUM (default: ",
     counter_offset_default!(),
