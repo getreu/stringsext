@@ -207,7 +207,7 @@ impl<'a> Iterator for SplitStr<'a> {
         let mut grep_char_ok = self.utf8f.grep_char.is_none();
         let mut ok_s_p = self.p;
         let mut ok_s_len = 0usize;
-        let mut ok_chars_nb = 0usize;
+        let mut ok_char_nb = 0usize;
         // The longest `ok_s` we want to return in one `next()` iteration is
         // of length `ok_s_len_max`, which the usual `inp`-buffer size
         // when no extra bytes are prepended.
@@ -266,7 +266,7 @@ impl<'a> Iterator for SplitStr<'a> {
             if self.utf8f.pass_filter(leading_byte) {
                 // This char is good. We keep on going.
                 ok_s_len += char_len;
-                ok_chars_nb += 1;
+                ok_char_nb += 1;
                 // Set the pointer to the next char.
                 self.p = unsafe { self.p.add(char_len) };
             } else {
@@ -276,10 +276,10 @@ impl<'a> Iterator for SplitStr<'a> {
                 self.p = unsafe { self.p.add(char_len) };
 
                 // Exit 3:
-                if self.last_s_was_maybe_cut && ok_chars_nb > 0 && ok_s_p == self.inp_start_p {
+                if self.last_s_was_maybe_cut && ok_char_nb > 0 && ok_s_p == self.inp_start_p {
                     break;
                 // Exit 4:
-                } else if ok_chars_nb >= self.chars_min_nb as usize && grep_char_ok {
+                } else if ok_char_nb >= self.chars_min_nb as usize && grep_char_ok {
                     // Yes, we collected enough for this run. The rest of the
                     // buffer can be treated later in a `next()`.
                     break;
@@ -289,7 +289,7 @@ impl<'a> Iterator for SplitStr<'a> {
                 // We start from the top: optimistically and assume the next char is
                 // good. The filter will reject the next char if we were wrong.
                 ok_s_len = 0;
-                ok_chars_nb = 0;
+                ok_char_nb = 0;
                 ok_s_p = self.p;
                 grep_char_ok = self.utf8f.grep_char.is_none();
             }
@@ -352,18 +352,18 @@ impl<'a> Iterator for SplitStr<'a> {
         // `stringsext` through additional filters, e.g. searching for
         // particular patterns.
         //
-        // As `ok_chars_nb < chars_min_nb` is part of `ok_s_len < self.s_len_max`
+        // As `ok_char_nb < chars_min_nb` is part of `ok_s_len < self.s_len_max`
         // we do not need to add this condition explicitly below.
         let s_is_to_be_filtered_again = !s_completes_previous_s
             && s_touches_right_boundary
             && !self.invalid_bytes_after_inp
             && (ok_s_len < self.s_len_max || !grep_char_ok);
 
-        let s_satisfies_min_char_rule = ok_chars_nb >= self.chars_min_nb as usize;
+        let s_satisfies_min_char_rule = ok_char_nb >= self.chars_min_nb as usize;
         let s_satisfies_grep_char_rule = grep_char_ok;
 
         // Have we counted right?
-        debug_assert_eq!(char_count(ok_s), ok_chars_nb, "We count wrongly.");
+        debug_assert_eq!(char_count(ok_s), ok_char_nb, "We count wrongly.");
 
         // We dismiss this substring, because the `grep_char` condition is not
         // satisfied. There is only one exception, when we should not dismiss:
