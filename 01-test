@@ -1,0 +1,14 @@
+#!/bin/sh
+
+cargo test \
+    && echo Cargo test succeeded. \
+    || ( echo Cargo test failed. && exit 1 )
+
+
+cd ./test
+# We search for `?`.
+../target/debug/stringsext -q 16 -g 63 -tx -a All-Ctrl -u Common -e UTF-8 -e utf-16le -e utf-16be input  > output
+
+diff output expected_output \
+    && echo Commandline test succeeded. \
+    || echo Commandline test failed.
