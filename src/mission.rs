@@ -28,7 +28,7 @@ use std::str::FromStr;
 /// Unless otherwise specified on the command line, his filter is default for
 /// ASCII-encoding searches.
 pub const UTF8_FILTER_ASCII_MODE_DEFAULT: Utf8Filter = Utf8Filter {
-    af: AF_ALL & !AF_CTRL | AF_WHITESPACE,
+    af: AF_ALL & !AF_CTRL,
     ubf: UBF_NONE,
     grep_char: None,
 };
@@ -42,7 +42,7 @@ pub const UTF8_FILTER_ASCII_MODE_DEFAULT: Utf8Filter = Utf8Filter {
 /// Unless otherwise specified on the command line, this filter
 /// is default for non-ASCII-encoding searches.
 pub const UTF8_FILTER_NON_ASCII_MODE_DEFAULT: Utf8Filter = Utf8Filter {
-    af: AF_ALL & !AF_CTRL | AF_WHITESPACE,
+    af: AF_ALL & !AF_CTRL,
     ubf: UBF_COMMON,
     grep_char: None,
 };
