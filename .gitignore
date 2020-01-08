@@ -5,4 +5,4 @@ target
 *.1
 *.1.gz
 .vscode/
-test/output
+tests/functional/output

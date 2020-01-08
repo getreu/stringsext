@@ -1,14 +1,30 @@
 #!/bin/sh
 
+# Unit testing
+
 cargo test \
     && echo Cargo test succeeded. \
     || ( echo Cargo test failed. && exit 1 )
 
 
-cd ./test
-# We search for `?`.
-../target/debug/stringsext -q 16 -g 63 -tx -a All-Ctrl -u Common -e UTF-8 -e utf-16le -e utf-16be input  > output
+# Functional tests
 
-diff output expected_output \
-    && echo Commandline test succeeded. \
-    || echo Commandline test failed.
+cd ./tests/functional/
+
+cargo build
+
+# We search for `?`.
+../../target/debug/stringsext -q 16 -g 63 -tx -a All-Ctrl -u Common \
+    -e UTF-8 -e utf-16le -e utf-16be input1  > output
+
+diff output expected_output1 \
+    && echo Commandline test 1 succeeded. \
+    || ( echo Commandline test 1 failed. && exit 2 )
+
+# We search for `:`.
+../../target/debug/stringsext -n 10 -q 32 -g 58 -tx -a All-Ctrl -u Common \
+    -e UTF-8 -e utf-16le -e utf-16be input1 input2  > output
+
+diff output expected_output2 \
+    && echo Commandline test 2 succeeded. \
+    || ( echo Commandline test 2 failed. && exit 3 )

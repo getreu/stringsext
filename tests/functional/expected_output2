@@ -1,0 +1,200 @@
+﻿
+A  500 	(a UTF-8)	A Gathering: Chicago
+A <540 	(a UTF-8)	Who Moved My Cheese?: The Story
+A <580 	(a UTF-8)	The Mice: Sniff & Scurry
+A >580 	(a UTF-8)	The Little people: Hem & Haw
+A <640 	(a UTF-8)	A Discussion: Later That Same Da
+A >640+	(a UTF-8)	y
+A <700 	(a UTF-8)	the mice: "Sniff" and "Scurry;' 
+A >700+	(a UTF-8)	and
+A >700 	(a UTF-8)	the Little people: "Hem" and "Ha
+A >700+	(a UTF-8)	w" 
+A  900 	(a UTF-8)	hing in common:
+A  1a80 	(a UTF-8)	common: every morning, they each
+A >1a80+	(a UTF-8)	 pu
+A  1ac0+	(a UTF-8)	t on their jogging suits and run
+A >1ac0+	(a UTF-8)	ning
+A  27c0 	(a UTF-8)	them smile. One read:
+A  2ec0 	(a UTF-8)	Who Moved My Cheese? The Movie:
+A  2fc0 	(a UTF-8)	Aft A-Mawng Change Profile:
+A  3200 	(a UTF-8)	To learn more, visit:
+B <10272 	(b UTF-16LE)	input device path: "%s"
+B <102b2 	(b UTF-16LE)	sub-path (%hhd,%hhd): "%s"
+B <10332 	(b UTF-16LE)	Could not get file info: %r
+B <10372 	(b UTF-16LE)	Couldn't open "%s": %r
+B <104b2 	(b UTF-16LE)	Could not create variable: %r
+B  10572 	(b UTF-16LE)	nbootorder: %d
+B <105b2 	(b UTF-16LE)	BootOrder: 
+B >105b2 	(b UTF-16LE)	file DP: %s
+B  105f2 	(b UTF-16LE)	device path: "%s"
+B <10632 	(b UTF-16LE)	CSV data: "%s"
+B >10632 	(b UTF-16LE)	filename: "%s"
+B <10672 	(b UTF-16LE)	label: "%s"
+B >10672 	(b UTF-16LE)	arguments: "%s"
+B <106f2 	(b UTF-16LE)	Could not read file "%s": %r
+B <10732 	(b UTF-16LE)	File looks like:
+B  107b2 	(b UTF-16LE)	t get info for "%s": %r
+B <107f2 	(b UTF-16LE)	Could not read \EFI\%s\: %r
+B <10872 	(b UTF-16LE)	Couldn't open \EFI\%s\%s: %r
+B <108b2 	(b UTF-16LE)	Could not process \EFI\%s\%s: %r
+B <108f2 	(b UTF-16LE)	Couldn't find file system: %r
+B <10932 	(b UTF-16LE)	Couldn't open file system: %r
+B <10972 	(b UTF-16LE)	Couldn't open EFI: %r
+B <109b2 	(b UTF-16LE)	Couldn't set file position: %r
+B <109f2 	(b UTF-16LE)	Could not read \EFI\: %r
+B <10a72 	(b UTF-16LE)	%d Couldn't open %s: %r
+B <10ab2 	(b UTF-16LE)	LoadImage failed: %r
+B >10ab2 	(b UTF-16LE)	Device path: "%s"
+B <10af2 	(b UTF-16LE)	StartImage failed: %r
+B  10bf2 	(b UTF-16LE)	 find loaded image: %r
+B <10cb2 	(b UTF-16LE)	Error: could not find boot optio
+B >10cb2+	(b UTF-16LE)	ns: %r
+B <10ef2 	(b UTF-16LE)	TPM logging failed: %r
+B  10fb2 	(b UTF-16LE)	w%a:%d %a() 
+B <11072 	(b UTF-16LE)	Failed to read the keystroke: %r
+B  110b2+	(b UTF-16LE)	OK
+B <11472 	(b UTF-16LE)	%s: (0x%x) %s
+B <114b2 	(b UTF-16LE)	SSL Error: %a:%d %a(): %r
+B  117b2 	(b UTF-16LE)	x:%x:%x:%x:%x:%x:%x
+B <11fb2 	(b UTF-16LE)	%02d/%02d/%02d  %02d:%02d%c
+B  12132 	(b UTF-16LE)	%*a%X: %-.48a *%a*
+B <12172 	(b UTF-16LE)	Press Enter to continue :
+B  125f2 	(a UTF-8)	%lu:%s:%s:%d:%s
+B  12632 	(a UTF-8)	assertion failed: *(unsigned int
+B >12632+	(a UTF-8)	 *)lock == 1
+B <12832 	(a UTF-8)	assertion failed: *sbuffer != NU
+B >12832+	(a UTF-8)	LL || bu
+B  12872+	(a UTF-8)	ffer != NULL
+B >12872 	(a UTF-8)	assertion failed: *currlen <= *m
+B >12872+	(a UTF-8)	axlen
+B <128b2 	(a UTF-8)	assertion failed: *sbuffer != NU
+B >128b2+	(a UTF-8)	LL
+B >128b2 	(a UTF-8)	%s:%d: OpenSSL internal error: %
+B  128f2+	(a UTF-8)	s
+B >128f2 	(a UTF-8)	error:%08lX:%s:%s:%s
+B <1d7f2 	(a UTF-8)	assertion failed: ctx->digest->m
+B >1d7f2+	(a UTF-8)	d_size <= EVP_MAX_MD_SIZE
+B <1d832 	(a UTF-8)	assertion failed: l <= sizeof(c-
+B  1d872+	(a UTF-8)	>iv)
+B >1d872 	(a UTF-8)	assertion failed: j <= sizeof(c-
+B >1d872+	(a UTF-8)	>iv)
+B  1d8b2 	(a UTF-8)	assertion failed: EVP_CIPHER_key
+B >1d8b2+	(a UTF-8)	_length(cipher) <= (int)
+B  1d8f2+	(a UTF-8)	sizeof(md_tmp)
+B >1d8f2 	(a UTF-8)	assertion failed: EVP_CIPHER_iv_
+B >1d8f2+	(a UTF-8)	length(cipher) <
+B  1d932+	(a UTF-8)	= 16
+B >1d932 	(a UTF-8)	assertion failed: keylen <= size
+B >1d932+	(a UTF-8)	of key
+B  1d972 	(a UTF-8)	assertion failed: j <= (int)size
+B >1d972+	(a UTF-8)	of(ctx->
+B  1d9b2+	(a UTF-8)	key)
+B <1d9f2 	(a UTF-8)	assertion failed: chunk >= 0
+B <1deb2 	(a UTF-8)	assertion failed: i != 0
+B <1e0f2 	(a UTF-8)	:BAD OBJECT
+B >1e0f2 	(a UTF-8)	:BAD BOOLEAN
+B >1e0f2 	(a UTF-8)	[HEX DUMP]:
+B <1e132 	(a UTF-8)	:BAD INTEGER
+B >1e132 	(a UTF-8)	:BAD ENUMERATED
+B  1e7f2 	(a UTF-8)	assertion failed: vv == NULL
+B <1ecf2 	(a UTF-8)	assertion failed: ctx->cipher->b
+B >1ecf2+	(a UTF-8)	lock_size == 1 || ctx->cipher->b
+B >1ecf2+	(a UTF-8)	lock_size == 8 |
+B  1ed32+	(a UTF-8)	| ctx->cipher->block_size == 16
+B >1ed32 	(a UTF-8)	assertion failed: EVP_CIPHER_CTX
+B  1ed72+	(a UTF-8)	_iv_length(ctx) <= (int)sizeof(c
+B >1ed72+	(a UTF-8)	tx->iv)
+B  1edb2 	(a UTF-8)	assertion failed: bl <= (int)siz
+B >1edb2+	(a UTF-8)	eof(ctx->buf)
+B <1edf2 	(a UTF-8)	assertion failed: b <= sizeof ct
+B >1edf2+	(a UTF-8)	x->buf
+B >1edf2 	(a UTF-8)	assertion failed: b <= sizeof ct
+B >1edf2+	(a UTF-8)	x->final
+B  1f232 	(a UTF-8)	assertion failed: num == 1 && ct
+B >1f232+	(a UTF-8)	x->num_untrusted == num
+B <1f272 	(a UTF-8)	assertion failed: num > i && i >
+B >1f272+	(a UTF-8)	 0 && ss == 0
+B <1f2b2 	(a UTF-8)	assertion failed: ctx->num_untru
+B >1f2b2+	(a UTF-8)	sted <= num
+B >1f2b2 	(a UTF-8)	assertion failed: num == ctx->nu
+B >1f2b2+	(a UTF-8)	m_untrus
+B  1f2f2+	(a UTF-8)	ted
+B <1f5f2 	(a UTF-8)	assertion failed: pp == NULL || 
+B >1f5f2+	(a UTF-8)	*pp != NULL
+B <1f772 	(a UTF-8)	%*sPolicy: 
+B >1f772 	(a UTF-8)	%*sCPS: %s
+B >1f772 	(a UTF-8)	%*sUser Notice:
+B <1f7b2 	(a UTF-8)	%*sUnknown Qualifier: 
+B >1f7b2 	(a UTF-8)	%*sOrganization: %s
+B >1f7b2 	(a UTF-8)	%*sNumber%s: 
+B <1f7f2 	(a UTF-8)	%*sExplicit Text: %s
+B <1fa32 	(a UTF-8)	%*sFull Name:
+B <1fa72 	(a UTF-8)	%*sRelative Name:
+B  1faf2 	(a UTF-8)	%*sCRL Issuer:
+B <1fd72 	(a UTF-8)	IP Address:<invalid>
+B <1fdb2 	(a UTF-8)	%*sPath Length Constraint: 
+B >1fdb2 	(a UTF-8)	%*sPolicy Language: 
+B <1fdf2 	(a UTF-8)	%*sPolicy Text: %s
+B <1ff32 	(a UTF-8)	Not Before: 
+B >1ff32 	(a UTF-8)	Not After: 
+B <200f2 	(a UTF-8)	%*sVersion: %ld (0x%lX)
+B <20132 	(a UTF-8)	%*sZone: %s, User: 
+B <201f2 	(a UTF-8)	%s %2d %02d:%02d:%02d%.*s %d%s
+B <202b2 	(a UTF-8)	'()+,-./:=?
+B <206f2 	(a UTF-8)	%s %2d %02d:%02d:%02d %d%s
+B <20a32 	(a UTF-8)	:EXTERNAL TYPE %s
+B <20a72 	(a UTF-8)	ERROR: selector [%d] invalid
+B <21fb2 	(a UTF-8)	:':+:1:K:Q:[:c:g:m:y:
+B <229b2 	(a UTF-8)	assertion failed: bits > prime_m
+B >229b2+	(a UTF-8)	ultiplier_bits
+B <22a32 	(a UTF-8)	%s: (%d bit)
+B >22a32 	(a UTF-8)	private-key:
+B >22a32 	(a UTF-8)	public-key:
+B >22a32 	(a UTF-8)	generator:
+B >22a32 	(a UTF-8)	subgroup order:
+B <22a72 	(a UTF-8)	subgroup factor:
+B <22ab2 	(a UTF-8)	recommended-private-length: %d b
+B >22ab2+	(a UTF-8)	its
+B  22bb2 	(a UTF-8)	Content-Type: application/ocsp-r
+B >22bb2+	(a UTF-8)	equest
+B >22bb2 	(a UTF-8)	Content-Length: %d
+B  22bf2 	(a UTF-8)	%*scrlUrl: 
+B >22bf2 	(a UTF-8)	%*scrlNum: 
+B >22bf2 	(a UTF-8)	%*scrlTime: 
+B <22c32 	(a UTF-8)	%*sIssuer: 
+B >22c32 	(a UTF-8)	Private-Key: (%d bit)
+B <22c72 	(a UTF-8)	publicExponent:
+B >22c72 	(a UTF-8)	Public-Key: (%d bit)
+B >22c72 	(a UTF-8)	privateExponent:
+B <22cb2 	(a UTF-8)	exponent1:
+B >22cb2 	(a UTF-8)	exponent2:
+B >22cb2 	(a UTF-8)	coefficient:
+B <22cf2 	(a UTF-8)	Hash Algorithm: 
+B >22cf2 	(a UTF-8)	Mask Algorithm: 
+B <22d32 	(a UTF-8)	Salt Length: 0x
+B <22d72 	(a UTF-8)	Trailer Field: 0x
+B <22e32 	(a UTF-8)	Certificate:
+B <22e72 	(a UTF-8)	%8sVersion: %ld (0x%lx)
+B >22e72 	(a UTF-8)	%8sVersion: Unknown (%ld)
+B >22e72 	(a UTF-8)	        Serial Number:
+B <22eb2 	(a UTF-8)	        Issuer:%c
+B  22ef2 	(a UTF-8)	            Not Before: 
+B <22f32 	(a UTF-8)	            Not After : 
+B >22f32 	(a UTF-8)	        Subject:%c
+B >22f32 	(a UTF-8)	        Subject Public Key Info:
+B <22f72 	(a UTF-8)	%12sPublic Key Algorithm: 
+B <22fb2 	(a UTF-8)	%8sIssuer Unique ID: 
+B >22fb2 	(a UTF-8)	%8sSubject Unique ID: 
+B <22ff2 	(a UTF-8)	        Subject OCSP hash: 
+B >22ff2 	(a UTF-8)	        Public key OCSP hash: 
+B <23032 	(a UTF-8)	    Signature Algorithm: 
+B >23032 	(a UTF-8)	%*sTrusted Uses:
+B <23072 	(a UTF-8)	%*sRejected Uses:
+B <230b2 	(a UTF-8)	%*sAlias: %s
+B >230b2 	(a UTF-8)	%*sKey Id: 
+B <231f2 	(a UTF-8)	othername:<unsupported>
+B >231f2 	(a UTF-8)	X400Name:<unsupported>
+B <23232 	(a UTF-8)	EdiPartyName:<unsupported>
+B >23232 	(a UTF-8)	IP Address:%d.%d.%d.%d
+B <23272 	(a UTF-8)	IP Address:<invalid>
+B >23272 	(a UTF-8)	Registered ID:
