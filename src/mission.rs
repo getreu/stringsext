@@ -216,9 +216,11 @@ pub const UNICODE_BLOCK_FILTER_ALIASSE: [([u8; 12], u64, [u8; 25]); 18] = [
 ];
 
 /// ASCII filter:
-/// Let all ASCII pass filter (U+00..U+100)
+/// Let all ASCII pass the filter (0x01..0x100)
+/// except Null (0x00) which is "end of string" marker.
+/// [Null character - Wikipedia](https://en.wikipedia.org/wiki/Null_character)
 #[allow(dead_code)]
-pub const AF_ALL: u128 = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
+pub const AF_ALL: u128 = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fffe;
 
 /// ASCII filter:
 /// Nothing passes ASCII pass filter
@@ -226,20 +228,29 @@ pub const AF_ALL: u128 = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_ffff;
 pub const AF_NONE: u128 = !AF_ALL;
 
 /// ASCII filter:
-/// Controls: (U+00..U+21, U+7F)
+/// Controls: (0x00..0x20, 0x7F)
+/// [C0 and C1 control codes - Wikipedia]
+/// (https://en.wikipedia.org/wiki/C0_and_C1_control_codes)
+/// Unlike traditional `strings` we exclude "Space" (0x20) here, as
+/// it can appear in filenames. Instead, we consider "Space" to be
+/// a regular character.
 #[allow(dead_code)]
-pub const AF_CTRL: u128 = 0x8000_0000_0000_0000_0000_0001_ffff_ffff;
+pub const AF_CTRL: u128 = 0x8000_0000_0000_0000_0000_0000_ffff_ffff;
 
 /// ASCII filter:
-/// White-space (as used in original `strings` implementation):
-/// (U+09, U+20)
+/// White-space
+/// (0x09..=0x0c, 0x20)
+/// [C0 and C1 control codes - Wikipedia]
+/// (https://en.wikipedia.org/wiki/C0_and_C1_control_codes)
+/// It do not include "Carriage Return" (0x0d) here. This way strings are
+/// divided into shorter chunks and we get more location information.
 #[allow(dead_code)]
-pub const AF_WHITESPACE: u128 = 0x0000_0000_0000_0000_0000_0001_0000_0200;
+pub const AF_WHITESPACE: u128 = 0x0000_0000_0000_0000_0000_0001_0000_1e00;
 
 /// ASCII filter:
-/// Same as traditional `strings`.
+/// Set defaults close to those in traditional `strings`.
 #[allow(dead_code)]
-pub const AF_DEFAULT: u128 = AF_ALL & !AF_CTRL | AF_WHITESPACE;
+pub const AF_DEFAULT: u128 = AF_ALL & !AF_CTRL;
 
 pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
     (*b"All         ", AF_ALL, *b"all ASCII = pass all     "),
