@@ -41,6 +41,7 @@ User documentation
 
 *   [Manual page](https://blog.getreu.net/projects/stringsext/stringsext--man.html)
 *   [Blogposts about Stringsext](https://blog.getreu.net/tags/stringsext/)
+*   [Paper about Stringsext](https://commons.erau.edu/jdfsl/vol14/iss2/4)
 
 Developer documentation
 
