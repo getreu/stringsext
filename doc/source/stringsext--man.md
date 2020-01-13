@@ -156,13 +156,13 @@ as *GNU strings* replacement.
 
 **-g** *ASCII_CODE*, **\--grep-char**=*ASCII_CODE*
 
-:       Print only findings having at least one character with ASCII_CODE.
-        "`--grep-char`" is one of the 4 filters decoded output lines must pass
-        before being printed. "`--grep-char`" checks for the presence of
-        ASCII_CODE in the first output-line of a string-finding. The
-        ASCII-code can be given as decimal or hexadecimal number. The latter
-        starts with "`0x...`". Useful values are "`47`" (`/`) or "`92`" (`\`) for
-        path search.
+:   Print only findings having at least one character with ASCII_CODE.
+    "`--grep-char`" is one of the 4 filters decoded output lines must pass
+    before being printed. "`--grep-char`" checks for the presence of
+    ASCII_CODE in the first output-line of a string-finding. The ASCII-code
+    can be given as decimal or hexadecimal number. The latter starts with
+    "`0x...`". Useful values are "`47`" (`/`) or "`92`" (`\`) for path
+    search.
 
 **-h, \--help**
 
