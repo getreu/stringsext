@@ -225,7 +225,7 @@ pub const AF_ALL: u128 = 0xffff_ffff_ffff_ffff_ffff_ffff_ffff_fffe;
 /// ASCII filter:
 /// Nothing passes ASCII pass filter
 #[allow(dead_code)]
-pub const AF_NONE: u128 = !AF_ALL;
+pub const AF_NONE: u128 = 0x0000_0000_0000_0000_0000_0000_0000_0000;
 
 /// ASCII filter:
 /// Controls: (0x00..0x20, 0x7F)
