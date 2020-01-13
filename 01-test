@@ -28,3 +28,12 @@ diff output expected_output1 \
 diff output expected_output2 \
     && echo Commandline test 2 succeeded. \
     || ( echo Commandline test 2 failed. && exit 3 )
+
+# We search for nothing. Do we get nothing?
+../../target/debug/stringsext -q 32 -tx -a None -u None \
+    -e UTF-8 -e utf-16le -e utf-16be input1 input2  > output
+
+diff output expected_output3 \
+    && echo Commandline test 3 succeeded. \
+    || ( echo Commandline test 3 failed. && exit 4 )
+
