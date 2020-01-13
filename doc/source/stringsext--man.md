@@ -290,13 +290,13 @@ at position "`0x0`".
 
 (4): "`<1e`" means, that the string-finding "`An A-Mazing Way To Deal With C`"
 was found somewhere in "`0x1..=0x1e`". In addition, the implemented algorithm
-guarantees that the string-finding is never more than 30 bytes (`-q 30`) away
+guarantees that the string-finding is never more than 60 bytes (2* `-q 30`) away
 from the indicated position, here: "`0x1e`".
 
 (5): The string-finding "`hange In`" continues the previous string, hence "`+`",
 and is situated "`>1e`", meaning somewhere in the range "`0x1f..=3b`".
 Here again, it is guaranteed, that the string-finding is always fewer
-than 30 bytes (`-q 30`) away from "`1e`".
+than 60 bytes (2*`-q 30`) away from "`1e`".
 
 (3): "`a`" in "`(a UTF-8)`" indicates, that the string-finding "`Who Moved My
 Cheese?`" was found by the first scanner "`-e utf8,10`".
