@@ -32,8 +32,31 @@ option in the manual page for more details.
 **stringsext** is mainly useful for extracting Unicode content out of
 non-text files.
 
-When invoked with `stringsext -e ascii -c i` **stringsext** can be used
+When invoked with `stringsext -e ascii` **stringsext** can be used
 as *GNU strings* replacement.
+
+
+### Screenshot
+
+```
+stringsext -tx -e utf-8 -e utf-16le -e utf-16be \
+           -n 10 -a None -u African  /dev/disk/by-uuid/567a8410
+
+ 3de2fff0+	(b UTF-16LE)	ݒݓݔݕݖݗݙݪ
+ 3de30000+	(b UTF-16LE)	ݫݱݶݷݸݹݺ
+<3de36528 	(a UTF-8)	فيأنمامعكلأورديافىهولملكاولهبسالإنهيأيقدهلثمبهلوليبلايبكشيام
+>3de36528+	(a UTF-8)	أمنتبيلنحبهممشوش
+<3de3a708 	(a UTF-8)	علىإلىهذاآخرعددالىهذهصورغيركانولابينعرضذلكهنايومقالعليانالكن
+>3de3a708+	(a UTF-8)	حتىقبلوحةاخرفقطعبدركنإذاكمااحدإلافيهبعضكيفبح
+ 3de3a780+	(a UTF-8)	ثومنوهوأناجدالهاسلمعندليسعبرصلىمنذبهاأنهمثلكنتالاحيثمصرشرححو
+ 3de3a7f8+	(a UTF-8)	لوفياذالكلمرةانتالفأبوخاصأنتانهاليعضووقدابنخيربنتلكمشاءوهياب
+ 3de3a870+	(a UTF-8)	وقصصومارقمأحدنحنعدمرأياحةكتبدونيجبمنهتحتجهةسنةيتمكرةغزةنفسبي
+ 3de3a8e8+	(a UTF-8)	تللهلناتلكقلبلماعنهأولشيءنورأمافيكبكلذاترتببأنهمسانكبيعفقدحس
+ 3de3a960+	(a UTF-8)	نلهمشعرأهلشهرقطرطلب
+ 3df4cca8 	(c UTF-16BE)	փօև։֋֍֏֑֛֚֓֕֗֙֜֝֞׹
+<3df4cd20 	(c UTF-16BE)	־ֿ׀ׁׂ׃ׅׄ׆ׇ׈׉׊׋
+```
+
 
 ### Documentation
 
