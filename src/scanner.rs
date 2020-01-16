@@ -188,12 +188,28 @@ pub fn scan<'a>(
 
             // The target encoding is always UTF-8.
             if decoder_written > 0 {
-                // We check if the previous scan left some remaining bytes in
-                // the Decoder. This is a complicated corner case. First we
-                // check if this is the first round. The remaining bytes have to
-                // taken into account only if they had been completed by this
-                // run to a multibyte UTF-8. If the first character is a
-                // multibyte UTF-8, then the first bit of the first byte is set.
+                // With the following `if`, we check if the previous scan has
+                // potentially left some remaining bytes in the Decoder's inner
+                // state. This is a complicated corner case, because the inner
+                // state of the `encoding_rs` decoder is private and there is
+                // yet not method to query if the decoder is in a neutral state.
+                // Read the related Issue [Enhancement: get read access to the
+                // decoder's inner state · Issue #48 ·
+                // hsivonen/encoding_rs](https://github.com/hsivonen/encoding_rs/issues/48)
+                //
+                // As a workaround, we first check if this is the first round
+                // (`decoder_input_start == 0`). Seeing, that we only know the
+                // `ByteCounter` precisely at that point and that all other
+                // round's findings will be tagged `Precision::After` anyway,
+                // there is no need to investigate further in these cases.
+                //
+                // We can reduce the cases of double decoding by checking if the
+                // first decoded character is a multi-byte UTF-8. If yes, this
+                // means (in most cases), that no bytes had been stored in the
+                // decoder's inner state and therefore we can assume that the
+                // first character was found exactly at `decoder_input_start`.
+                // If so, we can then tag this string-finding with
+                // `Precision::exact`.
                 if decoder_input_start == 0 && starts_with_multibyte_char(output_buffer_slice) {
                     // The only way to find out from which scan() run the first
                     // bytes came, is to scan again with a new Decoder and compare
@@ -212,13 +228,12 @@ pub fn scan<'a>(
                         &mut buffer[..],
                         true,
                     );
-                    // When the result of the two decoders is not the same, as
-                    // the bytes originating from the previous run, we know the
-                    // extra bytes come from the previous run. Unfortunately
-                    // there is no way to determine how many the decoder had
-                    // internally stored. I can be one, two, or three. We only
-                    // know that the multibyte sequence started some byte before
-                    // 0.
+                    // When the result of the two decoders is not the same, as the
+                    // bytes originating from the previous run, we know the extra
+                    // bytes come from the previous run. Unfortunately there is no
+                    // way to determine how many the decoder had internally stored.
+                    // I can be one, two, or three. We only know that the multibyte
+                    // sequence started some byte before 0.
 
                     if (written == 0)
                         || (fc.output_buffer_bytes[0..written] != buffer_bytes[0..written])
