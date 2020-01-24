@@ -48,7 +48,7 @@ macro_rules! counter_offset_default {
 #[macro_export]
 macro_rules! output_line_char_nb_max_default {
     () => {
-        60usize
+        64usize
     };
 }
 
