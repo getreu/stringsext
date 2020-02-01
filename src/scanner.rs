@@ -158,7 +158,7 @@ pub fn scan<'a>(
     let mut is_last_window = false;
 
     // iterate over `input_buffer with ``decoder_input_window`-sized slices.
-    'input_window_loop: while decoder_input_start < input_buffer.len() {
+    '_input_window_loop: while decoder_input_start < input_buffer.len() {
         decoder_input_end = match decoder_input_start + decoder_input_window {
             n if n < input_buffer.len() => n, // There are at least one byte more left in `input_buffer`.
             _ => {
@@ -279,7 +279,7 @@ pub fn scan<'a>(
             // Now we split `split_str_buffer` into substrings and store them in
             // vector `fc.v`.
 
-            'chunk_loop: for chunk in SplitStr::new(
+            '_chunk_loop: for chunk in SplitStr::new(
                 split_str_buffer,
                 ss.mission.chars_min_nb,
                 continue_str_if_possible,
