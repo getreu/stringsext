@@ -186,7 +186,7 @@ as *GNU strings* replacement.
 
 :   Print to *FILE* instead of *stdout*.
 
-**-q** *NUM*, *\--output-line-len*=*NUM*  
+**-q** *NUM*, **\--output-line-len**=*NUM*  
 
 :   Set the printed output-line-length in UTF-8 characters (string-findings
     only, metadata excluded). The line-length is limited by some internal
