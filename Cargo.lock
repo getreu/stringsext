@@ -117,7 +117,7 @@ dependencies = [
 
 [[package]]
 name = "stringsext"
-version = "2.1.0"
+version = "2.1.1"
 dependencies = [
  "anyhow 1.0.26 (registry+https://github.com/rust-lang/crates.io-index)",
  "docopt 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
