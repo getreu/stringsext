@@ -368,8 +368,8 @@ characters. **stringsext** is a tool to extract graphic characters out of
 binary data streams.
 
 Scanners are parametrized with the **\--encoding ENC** option. Multiple scanners
-may operate in parallel. Their search field is divided into input chunks of
-"`--output-line-len`" bytes (see source code documentation for details).
+may operate in parallel. Their search field is divided into input chunks of "2 *
+`--output-line-len`" bytes (see source code documentation for details).
 
 Before being printed, valid strings must pass four different **filter**, whose
 filter criteria are defined with the parameters: *MIN*, *AF*, *UBF* or *GREP*
