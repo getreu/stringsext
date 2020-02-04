@@ -115,7 +115,7 @@ as *GNU strings* replacement.
     For the most common use-cases, predefined filters can be set:
     e.g. alias names like "`All-Ctrl`" or "`All-Ctrl+Wsp`" are shorthand 
     terms for ASCII-filters "all codes, but no control-codes" or
-    "all codes, including white-space, but no control-codes.
+    "all codes, including white-space, but no control-codes".
     See the output of "`--list-encodings`" for more details 
     about filter-names.
 
