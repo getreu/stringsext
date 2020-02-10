@@ -77,6 +77,8 @@ Repository
 
 *   [Stringsext on Github](https://github.com/getreu/stringsext)
 
+*   [Stringsext on Gitlab](https://gitlab.com/getreu/stringsext)
+
 ### Distribution
 
 Binaries
