@@ -382,6 +382,31 @@ The ASCII-character GREP, searched with the "`--grep_char`" option, must appear
 in the first "`--output-line-len`" bytes to be reliably found in long strings.
 Increase "`--output-line-len`" if you search for very long strings.
 
+## Limitations related to the encoding_rs library
+
+**stringsext** version 2 uses the external library **encoding_rs** to decode
+the incoming stream. Compared to the previous library **rust-encoding** 
+used in **stringsext** version 1, the current library has some shortcomings
+mainly due to the restrictive API policy of the **encoding_rs** project.
+
+1. **stringsext** could be faster, if **encoding_rs** were extensible
+   (**rust-encoding** was): [feature request: ASCII-filter · Issue #46 ·
+   hsivonen/encoding_rs](https://github.com/hsivonen/encoding_rs/issues/46)
+
+2. **stringsext**'s location counter could be more precise if the encoder
+   state were observable: [Enhancement: get read access to the decoder's
+   inner state · Issue #48 ·
+   hsivonen/encoding_rs](https://github.com/hsivonen/encoding_rs/issues/48)
+
+3. **stringsext**'s encoding list could be more up to date, if **encoding_rs**'
+   list were `public`: [Make encoding lists public by getreu · Pull Request
+   #47 ·
+   hsivonen/encoding_rs](https://github.com/hsivonen/encoding_rs/pull/47)
+
+While being desirable, the **stringsext** project does not have the required
+resources to maintain a fork of **encoding_rs**.
+
+
 # RESOURCES
 
 **Project website:** <https://github.com/getreu/stringsext>
