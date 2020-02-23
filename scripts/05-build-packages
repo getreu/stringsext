@@ -1,4 +1,5 @@
 #!/bin/sh
+cd ..
 
 # Cargo deb saves the built package in
 # target/x86_64-unknown-linux-gnu/debian

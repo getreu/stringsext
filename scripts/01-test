@@ -12,7 +12,7 @@ fi
 
 # Functional tests
 
-cd ./tests/functional/
+cd ../tests/functional/
 
 cargo build
 

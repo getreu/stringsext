@@ -1,6 +1,6 @@
 #!/bin/sh
 #set -x
-
+cd ..
 find target -mindepth 2 -not -path "*/release/stringsext" \
                         -not -path "*/release/stringsext.exe" \
                         -not -path "*/debian" \

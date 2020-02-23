@@ -7,13 +7,13 @@ sudo apt-get install libc6-dev-i386
 rustup target add i686-unknown-linux-gnu
 
 cargo build --target x86_64-unknown-linux-gnu  --release
-strip -s ./target/x86_64-unknown-linux-gnu/release/stringsext
+strip -s ../target/x86_64-unknown-linux-gnu/release/stringsext
 
 cargo build --target x86_64-unknown-linux-musl --release
-strip -s ./target/x86_64-unknown-linux-musl/release/stringsext
+strip -s ../target/x86_64-unknown-linux-musl/release/stringsext
 
 cargo build --target i686-unknown-linux-musl   --release
-strip -s ./target/i686-unknown-linux-musl/release/stringsext
+strip -s ../target/i686-unknown-linux-musl/release/stringsext
 
 cargo build --target i686-unknown-linux-gnu    --release
-strip -s ./target/i686-unknown-linux-gnu/release/stringsext
+strip -s ../target/i686-unknown-linux-gnu/release/stringsext
