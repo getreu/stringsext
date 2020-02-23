@@ -1,4 +1,4 @@
-doc/build
+doc/build/html/_downloads/
 target
 *.sw?
 *.html

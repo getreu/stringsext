@@ -3,6 +3,11 @@ name = "stringsext"
 version = "2.1.1"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2018"
+readme = "README.md"
+description = "find multi-byte-encoded strings in binary data"
+license = "MIT/Apache-2.0"
+categories = ["command-line-utilities"]
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -15,3 +20,22 @@ serde_derive = "1.0.104"
 itertools = "0.8.2"
 scoped_threadpool = "0.1.9"
 anyhow = "1.0.26"
+
+# Metadata for debian packages with cargo-deb
+
+[package.metadata.deb]
+maintainer = "Jens Getreu, <getreu@web.de>"
+copyright = "2015-2020, Jens Getreu <getreu@web.de>"
+depends = "$auto"
+extended-description = """\
+stringsext is a Unicode enhancement of the GNU strings tool with additional\
+functionalities: stringsext recognizes Cyrillic, Arabic, CJKV characters and\
+other scripts in all supported multi-byte-encodings, while GNU strings fails\
+in finding any of these scripts in UTF-16 and many other encodings. """
+section = "utilities"
+priority = "optional"
+assets = [
+    ["doc/build/html/index.html", "usr/share/doc/stringsext/", "644"],
+    ["doc/build/man/man1/stringsext.1.gz", "/usr/share/man/man1/", "644"],
+    ["target/release/stringsext", "usr/bin/", "755"]
+]

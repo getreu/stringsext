@@ -1,8 +1,10 @@
 #!/bin/sh
-set -x
+#set -x
 
 find target -mindepth 2 -not -path "*/release/stringsext" \
                         -not -path "*/release/stringsext.exe" \
+                        -not -path "*/debian" \
+                        -not -path "*/debian/stringsext*.deb" \
                         -not -path "*/release/*.md" \
                         -not -path "*/release" \
                         -not -path "target/doc*"  \
