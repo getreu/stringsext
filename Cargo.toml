@@ -6,8 +6,11 @@ edition = "2018"
 readme = "README.md"
 description = "find multi-byte-encoded strings in binary data"
 license = "MIT/Apache-2.0"
-categories = ["command-line-utilities"]
-
+categories = ["command-line-utilities", "encoding", "text-processing", 
+              "filesystem"]
+documentation = "https://blog.getreu.net/projects/stringsext/stringsext--man.html"
+homepage = "https://blog.getreu.net/projects/stringsext/"
+repository = "https://github.com/getreu/stringsext"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -17,7 +20,7 @@ lazy_static = "1.4.0"
 docopt = "1.1.0"
 serde = "1.0.104"
 serde_derive = "1.0.104"
-itertools = "0.8.2"
+itertools = "0.9.0"
 scoped_threadpool = "0.1.9"
 anyhow = "1.0.26"
 
