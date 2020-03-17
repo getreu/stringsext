@@ -278,6 +278,7 @@ lazy_static! {
         ARGS.flag_counter_offset.as_ref(),
         &ARGS.flag_encoding,
         ARGS.flag_chars_min.as_ref(),
+        ARGS.flag_same_unicode_block,
         ARGS.flag_ascii_filter.as_ref(),
         ARGS.flag_unicode_block_filter.as_ref(),
         ARGS.flag_grep_char.as_ref(),
@@ -405,7 +406,7 @@ pub struct Mission {
     /// When true imposes an addition condition for findings:
     /// Advises the filter to only accept multi-characters in a finding with
     /// the same leading byte. This does not affect 1-byte ASCII characters.
-    pub require_same_leading_bytes: bool,
+    pub require_same_unicode_block: bool,
 
     /// A filter, defining additional criteria for a finding to be printed.
     pub filter: Utf8Filter,
@@ -518,6 +519,7 @@ impl Missions {
         flag_counter_offset: Option<&String>,
         flag_encoding: &[String],
         flag_chars_min_nb: Option<&String>,
+        flag_same_unicode_block: bool,
         flag_ascii_filter: Option<&String>,
         flag_unicode_block_filter: Option<&String>,
         flag_grep_char: Option<&String>,
@@ -603,6 +605,8 @@ impl Missions {
                     None => chars_min_default!(),
                 },
             };
+
+            let require_same_unicode_block = flag_same_unicode_block;
 
             let output_line_char_nb_max = match flag_output_line_len {
                 Some(n) => n,
@@ -691,7 +695,7 @@ impl Missions {
                 counter_offset,
                 encoding,
                 chars_min_nb,
-                require_same_leading_bytes: false, // TODuO
+                require_same_unicode_block,
                 filter,
                 output_line_char_nb_max,
                 mission_id: mission_id as u8,

@@ -153,8 +153,8 @@ fn run() -> Result<(), anyhow::Error> {
                         let fc = scan(&mut ss, input_file_id, slice, is_last_input_buffer);
                         // Send the result to the receiver thread.
                         tx.send(fc).expect(
-                            "Error: Can not sent result. \
-                             Is the output stream writeable? Is there enough space? ",
+                            "Error: Can not sent result through output channel. \
+                             Write permissions? Is there enough space? ",
                         );
                     });
                 }
@@ -197,6 +197,7 @@ mod tests {
             flag_list_encodings: false,
             flag_version: false,
             flag_chars_min: Some("5".to_string()),
+            flag_same_unicode_block: true,
             flag_grep_char: None,
             flag_radix: Some(Radix::X),
             flag_output: None,
@@ -213,6 +214,7 @@ mod tests {
             ARGS.flag_counter_offset.as_ref(),
             &ARGS.flag_encoding,
             ARGS.flag_chars_min.as_ref(),
+            ARGS.flag_same_unicode_block,
             ARGS.flag_ascii_filter.as_ref(),
             ARGS.flag_unicode_block_filter.as_ref(),
             ARGS.flag_grep_char.as_ref(),

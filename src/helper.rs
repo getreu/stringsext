@@ -91,7 +91,7 @@ pub struct SplitStr<'a> {
     /// If set, an additional filter criteria is imposed:
     /// A finding can only have UFT-8 multi-byte characters that start with the
     /// same leading byte.
-    require_same_leading_bytes: bool,
+    require_same_unicode_block: bool,
 
     /// The caller informs the iterator, that the last string of the previous run
     /// was maybe cut. When the first substring of this run touches the left
@@ -170,7 +170,7 @@ impl<'a> SplitStr<'a> {
     pub fn new(
         inp: &str,
         chars_min_nb: u8,
-        require_same_leading_bytes: bool,
+        require_same_unicode_block: bool,
         last_s_was_maybe_cut: bool,
         invalid_bytes_after_inp: bool,
         utf8f: Utf8Filter,
@@ -187,7 +187,7 @@ impl<'a> SplitStr<'a> {
                 // Points to the first byte to be treated, when next is called.
                 p: inp.as_ptr(),
                 chars_min_nb,
-                require_same_leading_bytes,
+                require_same_unicode_block,
                 last_s_was_maybe_cut,
                 invalid_bytes_after_inp,
                 // We will set this to false later, if `utf8f.grep_char` requires some
@@ -276,7 +276,7 @@ impl<'a> Iterator for SplitStr<'a> {
             } else {
                 // char_len > 1
                 if self.utf8f.pass_ubf_filter(leading_byte) {
-                    if !self.require_same_leading_bytes
+                    if !self.require_same_unicode_block
                         || leading_byte == last_multi_char_leading_byte
                         || last_multi_char_leading_byte == 0
                     {
@@ -639,7 +639,7 @@ mod tests {
     }
 
     #[test]
-    fn test_split_s_require_same_leading_bytes() {
+    fn test_split_s_require_same_unicode_block() {
         // We filter Latin + ASCII.
         let utf8f = Utf8Filter {
             af: AF_ALL,

@@ -87,6 +87,7 @@ Options:
  -q NUM, --output-line-len=NUM  Output line length in UTF-8 characters (default: ",
     output_line_char_nb_max_default!(),
     ").
+ -r, --same-unicode-block       Require finding to be Unicode-block homogen. 
  -s NUM, --counter-offset=NUM   Start counting input bytes with NUM (default: ",
     counter_offset_default!(),
     ").
@@ -113,6 +114,7 @@ pub struct Args {
     pub flag_grep_char: Option<String>,
     pub flag_list_encodings: bool,
     pub flag_chars_min: Option<String>,
+    pub flag_same_unicode_block: bool,
     pub flag_output: Option<String>,
     pub flag_output_line_len: Option<String>,
     pub flag_counter_offset: Option<String>,
@@ -165,14 +167,15 @@ mod tests {
                 "utf-8",
                 "-V",
                 "-l",
+                "-s",
+                "1500",
                 "-p",
                 "outfile",
                 "-q",
                 "40",
-                "-s",
-                "1500",
                 "-t",
                 "o",
+                "-r",
                 "infile1",
                 "infile2",
             ]
@@ -191,6 +194,7 @@ mod tests {
         assert_eq!(args.flag_version, true);
         assert_eq!(args.flag_list_encodings, true);
         assert_eq!(args.flag_chars_min, Some("10".to_string()));
+        assert_eq!(args.flag_same_unicode_block, true);
         assert_eq!(args.flag_grep_char, Some("64".to_string()));
         assert_eq!(args.flag_radix, Some(Radix::O));
         assert_eq!(args.flag_counter_offset, Some("1500".to_string()));
