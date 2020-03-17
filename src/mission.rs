@@ -330,6 +330,7 @@ impl Utf8Filter {
     /// UTF-8 leading byte `b`. It assumes that `b<=0x7f`!
     #[inline]
     pub fn pass_af_filter(&self, b: u8) -> bool {
+        debug_assert!(b & 0x80 == 0x00);
         // We treat b values 0-128 here.
         1 << b & self.af != 0
     }
@@ -337,6 +338,7 @@ impl Utf8Filter {
     /// UTF-8 leading byte `b`. It assumes that `b>0x7f`!
     #[inline]
     pub fn pass_ubf_filter(&self, b: u8) -> bool {
+        debug_assert!(b & 0x80 == 0x80);
         // We do not have to check for invalid continuation-bytes here, because we know the
         // input is valid UTF-8 and therefor the continuation-byte-codes `0x80..0xBF` can not
         // appear here. We treat b values of 192-255 here (128-191 can not occur in leading
@@ -399,6 +401,11 @@ pub struct Mission {
 
     /// Minimum required string length in Bytes for a finding to be printed.
     pub chars_min_nb: u8,
+
+    /// When true imposes an addition condition for findings:
+    /// Advises the filter to only accept multi-characters in a finding with
+    /// the same leading byte. This does not affect 1-byte ASCII characters.
+    pub require_same_leading_bytes: bool,
 
     /// A filter, defining additional criteria for a finding to be printed.
     pub filter: Utf8Filter,
@@ -684,6 +691,7 @@ impl Missions {
                 counter_offset,
                 encoding,
                 chars_min_nb,
+                require_same_leading_bytes: false, // TODuO
                 filter,
                 output_line_char_nb_max,
                 mission_id: mission_id as u8,

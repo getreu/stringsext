@@ -136,7 +136,6 @@ pub fn scan<'a>(
     // Copy last run leftover bytes at the beginning of `output_buffer`.
     let mut last_window_leftover_len = 0usize;
     if !ss.last_scan_run_leftover.is_empty() {
-        // TODO:
         // We don't need to copy here, we just rewind temporarily
         // `decoder_output_start` to `ss.last_scan_run_leftover`.
         fc.output_buffer_bytes
@@ -282,6 +281,7 @@ pub fn scan<'a>(
             '_chunk_loop: for chunk in SplitStr::new(
                 split_str_buffer,
                 ss.mission.chars_min_nb,
+                ss.mission.require_same_leading_bytes,
                 continue_str_if_possible,
                 invalid_bytes_after_split_str_buffer,
                 ss.mission.filter,
@@ -390,6 +390,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
+            require_same_leading_bytes: false,
             // this is a pass all filter
             filter: UTF8_FILTER_ALL_VALID,
             output_line_char_nb_max: 10,
@@ -402,6 +403,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
+            require_same_leading_bytes: false,
             // this is a pass all filter
             filter: UTF8_FILTER_LATIN,
             output_line_char_nb_max: 10,
@@ -415,6 +417,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
+            require_same_leading_bytes: false,
             // this is a pass all filter
             filter: Utf8Filter {
                 af: AF_ALL & !AF_CTRL | AF_WHITESPACE,
@@ -432,6 +435,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
             chars_min_nb: 3,
+            require_same_leading_bytes: false,
             filter: UTF8_FILTER_ALL_VALID,
             output_line_char_nb_max: 10,
         };
@@ -443,6 +447,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
             chars_min_nb: 3,
+            require_same_leading_bytes: false,
             // this is a pass all filter
             filter: Utf8Filter {
                 af: AF_ALL & !AF_CTRL | AF_WHITESPACE,
@@ -459,6 +464,7 @@ mod tests {
             print_encoding_as_ascii: false,
             encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 4,
+            require_same_leading_bytes: false,
             // this is a pass all filter
             filter: UTF8_FILTER_LATIN,
             output_line_char_nb_max: 60,

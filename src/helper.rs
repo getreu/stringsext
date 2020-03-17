@@ -4,6 +4,8 @@ use crate::mission::Utf8Filter;
 #[cfg(test)]
 use crate::mission::AF_ALL;
 #[cfg(test)]
+use crate::mission::UBF_GREEK;
+#[cfg(test)]
 use crate::mission::UBF_LATIN;
 #[cfg(test)]
 use crate::mission::UBF_NONE;
@@ -86,6 +88,11 @@ pub struct SplitStr<'a> {
     ///    also. Such a substring tagged `is_s_to_be_filtered_again` when returning.
     chars_min_nb: u8,
 
+    /// If set, an additional filter criteria is imposed:
+    /// A finding can only have UFT-8 multi-byte characters that start with the
+    /// same leading byte.
+    require_same_leading_bytes: bool,
+
     /// The caller informs the iterator, that the last string of the previous run
     /// was maybe cut. When the first substring of this run touches the left
     /// boundary of `inp`, we will tag it `s_completes_previous_s` when
@@ -163,6 +170,7 @@ impl<'a> SplitStr<'a> {
     pub fn new(
         inp: &str,
         chars_min_nb: u8,
+        require_same_leading_bytes: bool,
         last_s_was_maybe_cut: bool,
         invalid_bytes_after_inp: bool,
         utf8f: Utf8Filter,
@@ -179,6 +187,7 @@ impl<'a> SplitStr<'a> {
                 // Points to the first byte to be treated, when next is called.
                 p: inp.as_ptr(),
                 chars_min_nb,
+                require_same_leading_bytes,
                 last_s_was_maybe_cut,
                 invalid_bytes_after_inp,
                 // We will set this to false later, if `utf8f.grep_char` requires some
@@ -208,7 +217,7 @@ impl<'a> Iterator for SplitStr<'a> {
         let mut ok_char_nb = 0usize;
         // We keep track only of last chars when they are multibyte and when
         // they have passed the filter. Otherwise, we set this to 0.
-        let mut _last_multi_char_leading_byte = 0;
+        let mut last_multi_char_leading_byte = 0;
         // The longest `ok_s` we want to return in one `next()` iteration is
         // of length `ok_char_nb_max`.
         // When we return such a maximum length string, we
@@ -262,16 +271,27 @@ impl<'a> Iterator for SplitStr<'a> {
             // the filter, is in `first_byte`, so we apply
             // the filter to `leading_byte`.
 
-            let char_is_ok = if char_len == 1 {
-                self.utf8f.pass_af_filter(leading_byte)
+            let (char_is_ok, goto_next_char) = if char_len == 1 {
+                (self.utf8f.pass_af_filter(leading_byte), true)
             } else {
                 // char_len > 1
                 if self.utf8f.pass_ubf_filter(leading_byte) {
-                    _last_multi_char_leading_byte = leading_byte;
-                    true
+                    if !self.require_same_leading_bytes
+                        || leading_byte == last_multi_char_leading_byte
+                        || last_multi_char_leading_byte == 0
+                    {
+                        last_multi_char_leading_byte = leading_byte;
+                        (true, true)
+                    } else {
+                        // char is ok, but has different leading byte
+                        last_multi_char_leading_byte = leading_byte;
+                        // second false means: this char will be scanned again.
+                        (false, false)
+                    }
                 } else {
-                    _last_multi_char_leading_byte = 0;
-                    false
+                    last_multi_char_leading_byte = 0;
+                    // second true means we switch to the next character
+                    (false, true)
                 }
             };
 
@@ -285,7 +305,9 @@ impl<'a> Iterator for SplitStr<'a> {
                 // This char did not please the filter.
 
                 // We set the pointer to the next char.
-                self.p = unsafe { self.p.add(char_len) };
+                if goto_next_char {
+                    self.p = unsafe { self.p.add(char_len) };
+                };
 
                 // Exit 3:
                 if self.last_s_was_maybe_cut && ok_char_nb > 0 && ok_s_p == self.inp_start_p {
@@ -462,7 +484,7 @@ mod tests {
 
         let b = "€abc€defg€hijk€lm€opq";
 
-        let mut iter = SplitStr::new(b, 3, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 3, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abc");
         assert_eq!(r.s_completes_previous_s, false);
@@ -476,7 +498,7 @@ mod tests {
 
         let b = "ab€€defg€hijk€lm€opq";
 
-        let mut iter = SplitStr::new(b, 3, true, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 3, false, true, false, utf8f, b.len());
         // Corner case: input=true + first string too short, but touches left boundary
         // -> Printed although too short, because it completes string from last run.
         let r = iter.next().unwrap();
@@ -497,7 +519,7 @@ mod tests {
 
         let b = "ab€€defg€hijk€lm€op";
 
-        let mut iter = SplitStr::new(b, 3, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 3, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
         assert_eq!(r.s_completes_previous_s, false);
@@ -512,7 +534,7 @@ mod tests {
 
         let b = "€abc€defg€hijk€lm";
 
-        let mut iter = SplitStr::new(b, 4, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
         let r = iter.next().unwrap();
@@ -527,7 +549,7 @@ mod tests {
 
         let b = "€abc€defg€hijk€lmno€";
 
-        let mut iter = SplitStr::new(b, 4, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
         let r = iter.next().unwrap();
@@ -543,7 +565,7 @@ mod tests {
         // > 7 bytes
         let b = "abc€defghiÜjklmnpqrs€";
 
-        let mut iter = SplitStr::new(b, 4, false, false, utf8f, 7);
+        let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, 7);
         let r = iter.next().unwrap();
         // Note, this is longer than 7 bytes.
         assert_eq!(r.s, "defghiÜ");
@@ -570,7 +592,7 @@ mod tests {
 
         let b = "abcdefghijklm";
 
-        let mut iter = SplitStr::new(b, 4, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abcdefghijklm");
         assert_eq!(r.s_completes_previous_s, false);
@@ -581,7 +603,7 @@ mod tests {
 
         let b = "abcdefghijklm€";
 
-        let mut iter = SplitStr::new(b, 4, false, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abcdefghijklm");
         assert_eq!(r.s_completes_previous_s, false);
@@ -592,7 +614,7 @@ mod tests {
 
         let b = "öö€€ääää€üü€éééé€";
 
-        let mut iter = SplitStr::new(b, 4, true, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 4, false, true, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "öö");
         let r = iter.next().unwrap();
@@ -612,9 +634,46 @@ mod tests {
 
         let b = "öö€€ääää€üü€éééé€";
 
-        let mut iter = SplitStr::new(b, 4, true, false, utf8f_ascii, b.len());
+        let mut iter = SplitStr::new(b, 4, false, true, false, utf8f_ascii, b.len());
         assert_eq!(iter.next(), None);
     }
+
+    #[test]
+    fn test_split_s_require_same_leading_bytes() {
+        // We filter Latin + ASCII.
+        let utf8f = Utf8Filter {
+            af: AF_ALL,
+            ubf: UBF_LATIN | UBF_GREEK,
+            grep_char: None,
+        };
+
+        // Additional filter is off.
+        let b = "0α1βγöäü€α2βγöäüöαβγαg34αäβüäöüαβγöäü";
+
+        let mut iter = SplitStr::new(b, 3, false, false, false, utf8f, b.len());
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "0α1βγöäü");
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "α2βγöäüöαβγαg34αäβüäöüαβγöäü");
+        assert_eq!(iter.next(), None);
+
+        // Additional filter is on.
+        let b = "0α1βγöäü€α2βγöäüöαβγαg34αäβüäöü";
+
+        let mut iter = SplitStr::new(b, 4, true, false, false, utf8f, b.len());
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "0α1βγ");
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "α2βγ");
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "öäüö");
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "αβγαg34α");
+        let r = iter.next().unwrap();
+        assert_eq!(r.s, "üäöü");
+        assert_eq!(iter.next(), None);
+    }
+
     #[test]
     fn test_split_s_grep_char() {
         // We filter Latin + ASCII.
@@ -626,7 +685,7 @@ mod tests {
 
         let b = "ac€€xefg€xijk€xm€xp";
 
-        let mut iter = SplitStr::new(b, 3, true, false, utf8f, b.len());
+        let mut iter = SplitStr::new(b, 3, false, true, false, utf8f, b.len());
         // Corner case: input=true + first string too short, but touches left boundary
         // -> Printed although too short, because it completes string from last run.
         let r = iter.next().unwrap();
@@ -654,7 +713,7 @@ mod tests {
             grep_char: Some(b'b'),
         };
 
-        let mut iter = SplitStr::new(b, 2, true, false, my_utf8f, 3);
+        let mut iter = SplitStr::new(b, 2, false, true, false, my_utf8f, 3);
         // Corner case: input=true + first string too short, but touches left boundary
         // -> Printed although too short, because it completes string from last run.
         // Only this have the compulsory "b".
@@ -674,7 +733,7 @@ mod tests {
             grep_char: Some(b'x'),
         };
 
-        let mut iter = SplitStr::new(b, 2, true, false, my_utf8f, 3);
+        let mut iter = SplitStr::new(b, 2, false, true, false, my_utf8f, 3);
         // Corner case: input=true + first string too short, but touches left boundary
         // -> Printed although too short, because it completes string from last run.
         // The first passes, because we told there should be no
@@ -734,7 +793,7 @@ mod tests {
             grep_char: Some(b'y'),
         };
 
-        let mut iter = SplitStr::new(b, 3, false, false, my_utf8f, b.len());
+        let mut iter = SplitStr::new(b, 3, false, false, false, my_utf8f, b.len());
         // Corner case: input=false + first string too short, but touches left boundary
         // -> Not printed, because it does not complete the string from last run.
         // No others have the compulsory "y", so they are not printed, except the last,
