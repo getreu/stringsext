@@ -1,4 +1,4 @@
-% STRINGSEXT(1) Version 2.1.1 | Stringsext Documentation
+% STRINGSEXT(1) Version 2.2.0 | Stringsext Documentation
 
 <!--
 previous versions
@@ -52,6 +52,9 @@ Version: 2.1.0
 
 Date: 2020-02-01
 Version: 2.1.0
+
+Date: 2020-03-17
+Version: 2.2.0
 -->
 
 # NAME
@@ -77,7 +80,7 @@ binary data: It prints all graphic character sequences in *FILE* or
 
 Unlike *GNU strings* **stringsext** can be configured to search for
 valid characters not only in ASCII but also in many other input
-encodings, e.g.: utf-8, utf-16be, utf-16le, big5, euc-jp, koi8-r
+encodings, e.g.: *utf-8, utf-16be, utf-16le, big5, euc-jp, koi8-r*
 and many others. **\--list-encodings** shows a list of valid encoding
 names based on the WHATWG Encoding Standard. When more than one encoding
 is specified, the scan is performed in different threads simultaneously.
@@ -198,6 +201,18 @@ as *GNU strings* replacement.
     The longer the line-length is, the fewer strings will be wrapped to the
     next line. The downside with long output lines is, that the scanner loses
     precision in locating the findings.
+
+**-r**, **\--same-unicode-block**
+
+:   Require all characters in a finding to originate from the same Unicode
+    block. This option helps to reduce false positives, especially when
+    scanning for UTF-16. When set, "`stringsext`" prints only Unicode block
+    homogenous strings. For example: "`-u All -n 10 -r`" finds a sequence of at
+    least 10 Cyrillic characters in a row or finds at least 10 Greek characters
+    in a row, whereas it ignores strings with randomly Cyrillic-Greek mixed
+    characters.  Technically this option guarantees, that all multibyte
+    characters of a finding - encoded as UTF-8 - start with the same leading
+    byte.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
 

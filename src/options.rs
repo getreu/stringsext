@@ -84,7 +84,7 @@ Options:
     chars_min_default!(),
     ").
  -p FILE, --output=FILE         Print not to stdout but in file.
- -q NUM, --output-line-len=NUM  Output line length in UTF-8 characters (default: ",
+ -q NUM, --output-line-len=NUM  Output line length in Unicode-codepoints (default: ",
     output_line_char_nb_max_default!(),
     ").
  -r, --same-unicode-block       Require finding to be Unicode-block homogen. 
