@@ -326,40 +326,22 @@ pub struct Utf8Filter {
 }
 
 impl Utf8Filter {
-    /// When the decoder finds a valid Unicode character, it decodes it into
-    /// UTF-8. The leading byte of this UTF-8 multi-byte-character must then pass
-    /// an additional filter before being printed: the so called `Utf8Filter`. It
-    /// comes with three independant filter criteria. The function `pass_filter()`
-    /// evaluates the first two criteria:
-    ///
-    /// 1. The Ascii-Filter `Utf8Filter::asf` is applied when the UTF-8 leading
-    /// byte of the decoded character is smaller or equal than `0x7f`.
-    ///
-    /// 2. When the UTF-8 leading byte is greater than `0xC0`, the
-    /// Unicode-block-filter `Utf8Filter::ubf` is applied instead.
-    ///
-    /// The UTF-8 leading-byte-codes between `0x80..=0xbf` map to invalid
-    /// continuation bytes which can never appear in valid UTF-8 strings. As we
-    /// know that the decoder only produces valid UTF-8, the filter does not need
-    /// to check this corner case . Note that the filter evaluates solely UTF-8
-    /// leading bytes, continuation bytes are ignored!
+    /// This function applies the Ascii-Filter `Utf8Filter::asf` to the
+    /// UTF-8 leading byte `b`. It assumes that `b<=0x7f`!
     #[inline]
-    pub fn pass_filter(&self, b: u8) -> bool {
-        // Test if we should use the second `ubf` tuple.
-        if b & 0x80 == 0x00 {
-            // If the corresponding `ubf` bit is set, we accept b.
-            // We treat b values 0-128 here.
-            return 1 << b & self.af != 0;
-        } else {
-            // If the corresponding `ubf` bit is set, we accept b. We do not
-            // have to check for invalid continuation-bytes here, because we
-            // know the input is valid UTF-8 and therefor the
-            // continuation-byte-codes `0x80..0xBF` can not appear here. We
-            // treat b values of 192-255 here (128-191 can not occur in leading
-            // UTF-8 bytes). We first map values 192-255 -> 0-128 with (b &
-            // 0x3f)
-            return 1 << (b & 0x3f) & self.ubf != 0;
-        }
+    pub fn pass_af_filter(&self, b: u8) -> bool {
+        // We treat b values 0-128 here.
+        1 << b & self.af != 0
+    }
+    /// This function applies the Unicode-Block-Filter `Utf8Filter::ubf` to the
+    /// UTF-8 leading byte `b`. It assumes that `b>0x7f`!
+    #[inline]
+    pub fn pass_ubf_filter(&self, b: u8) -> bool {
+        // We do not have to check for invalid continuation-bytes here, because we know the
+        // input is valid UTF-8 and therefor the continuation-byte-codes `0x80..0xBF` can not
+        // appear here. We treat b values of 192-255 here (128-191 can not occur in leading
+        // UTF-8 bytes). We first map values 192-255 -> 0-128 with (b & 0x3f)
+        1 << (b & 0x3f) & self.ubf != 0
     }
 }
 
@@ -774,13 +756,13 @@ mod tests {
         };
 
         // Check lower bits
-        assert_eq!(utf8f.pass_filter("A".as_bytes()[0]), true);
-        assert_eq!(utf8f.pass_filter("€".as_bytes()[0]), false);
+        assert_eq!(utf8f.pass_af_filter("A".as_bytes()[0]), true);
+        assert_eq!(utf8f.pass_ubf_filter("€".as_bytes()[0]), false);
         // Check upper bits
         // first byte of © in UTF-8 is 0xC2.       0xC2 & 0x80 = bit 0x42
-        assert_eq!(utf8f.pass_filter("©".as_bytes()[0]), true);
+        assert_eq!(utf8f.pass_ubf_filter("©".as_bytes()[0]), true);
         // first byte of © in UTF-8 is 0xE2.       0xE2 & 0x80 = bit 0x62
-        assert_eq!(utf8f.pass_filter("€".as_bytes()[0]), false);
+        assert_eq!(utf8f.pass_ubf_filter("€".as_bytes()[0]), false);
     }
 
     #[test]

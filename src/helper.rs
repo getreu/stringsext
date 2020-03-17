@@ -189,6 +189,7 @@ impl<'a> SplitStr<'a> {
         }
     }
 }
+
 /// The iterator's `next()` returns some `SplitStrResult`-object, which is
 /// essentially a substring `&str` pointing into a
 /// `FindingCollection::output_buffer_bytes` with some additional information.
@@ -205,6 +206,9 @@ impl<'a> Iterator for SplitStr<'a> {
         let mut ok_s_p = self.p;
         let mut ok_s_len = 0usize;
         let mut ok_char_nb = 0usize;
+        // We keep track only of last chars when they are multibyte and when
+        // they have passed the filter. Otherwise, we set this to 0.
+        let mut _last_multi_char_leading_byte = 0;
         // The longest `ok_s` we want to return in one `next()` iteration is
         // of length `ok_char_nb_max`.
         // When we return such a maximum length string, we
@@ -257,7 +261,21 @@ impl<'a> Iterator for SplitStr<'a> {
             // All information we need to check if the char pleases
             // the filter, is in `first_byte`, so we apply
             // the filter to `leading_byte`.
-            if self.utf8f.pass_filter(leading_byte) {
+
+            let char_is_ok = if char_len == 1 {
+                self.utf8f.pass_af_filter(leading_byte)
+            } else {
+                // char_len > 1
+                if self.utf8f.pass_ubf_filter(leading_byte) {
+                    _last_multi_char_leading_byte = leading_byte;
+                    true
+                } else {
+                    _last_multi_char_leading_byte = 0;
+                    false
+                }
+            };
+
+            if char_is_ok {
                 // This char is good. We keep on going.
                 ok_s_len += char_len;
                 ok_char_nb += 1;
