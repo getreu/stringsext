@@ -18,7 +18,7 @@ cargo build
 
 # We search for `?`.
 ../../target/debug/stringsext -q 16 -g 63 -tx -a All-Ctrl -u Common \
-    -e UTF-8 -e utf-16le -e utf-16be input1  > output
+    -e UTF-8 -e utf-16le -e utf-16be -- input1  > output
 
 if diff output expected_output1
 then
@@ -29,7 +29,7 @@ fi
 
 # We search for `:`.
 ../../target/debug/stringsext -n 10 -q 32 -g 58 -tx -a All-Ctrl -u Common \
-    -e UTF-8 -e utf-16le -e utf-16be input1 input2  > output
+    -e UTF-8 -e utf-16le -e utf-16be -- input1 input2  > output
 
 if diff output expected_output2
 then
@@ -40,7 +40,7 @@ fi
 
 # We search for nothing. Do we get nothing?
 ../../target/debug/stringsext -q 32 -tx -a None -u None \
-    -e UTF-8 -e utf-16le -e utf-16be input1 input2  > output
+    -e UTF-8 -e utf-16le -e utf-16be -- input1 input2  > output
 
 if diff output expected_output3
 then

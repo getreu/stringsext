@@ -14,20 +14,20 @@ use std::str;
 /// user, the program exits.
 
 pub fn help() {
-    if ARGS.flag_version {
+    if ARGS.version {
         println!("Version {}, {}", VERSION.unwrap_or("unknown"), AUTHOR);
         process::exit(0);
     };
 
-    if ARGS.flag_debug_options {
+    if ARGS.debug_option {
         println!("GIVEN COMMANDLINE-ARGUMENTS\n");
         println!("Input files\n-----------");
-        for (n, name) in ARGS.arg_FILE.iter().enumerate() {
-            println!("{} = {}", char::from((n + 65) as u8), name);
+        for (n, name) in ARGS.inputs.iter().enumerate() {
+            println!("{} = {:?}", char::from((n + 65) as u8), name);
         }
 
         println!("\nEncoding and filter definitions\n-------------------------------");
-        for (n, name) in ARGS.flag_encoding.iter().enumerate() {
+        for (n, name) in ARGS.encoding.iter().enumerate() {
             println!("{} = {}", char::from((n + 97) as u8), name);
         }
 
@@ -44,7 +44,7 @@ pub fn help() {
         process::exit(0);
     };
 
-    if ARGS.flag_list_encodings {
+    if ARGS.list_encodings {
         // Is there a way to programmatically query a list from `Encoding`?
         // This list is taken from the `Encoding` source file (2019-12-11)
         // and may  not be up to date.

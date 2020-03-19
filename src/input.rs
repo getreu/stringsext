@@ -7,9 +7,9 @@ use std::io;
 use std::io::Read;
 use std::iter::Peekable;
 use std::path::Path;
+use std::path::PathBuf;
 use std::slice;
 use std::slice::Iter;
-use std::string::String;
 
 /// This is the type used to count bytes in the input stream. Maybe in a future
 /// version we raise this to `u128`.
@@ -26,16 +26,16 @@ pub const INPUT_BUF_LEN: usize = 0x20;
 
 /// Struct to store the `Slicer`-iterator state. The iterator fills the
 /// `input-buffer` with bytes coming from files, whose names are given in the
-/// vector `ARGS.arg_FILE`. When one file is exhausted, the iterator switches
-/// automatically and transparently to the next file in `ARGS.arg_FILE`. When no
+/// vector `ARGS.inputs`. When one file is exhausted, the iterator switches
+/// automatically and transparently to the next file in `ARGS.inputs`. When no
 /// data is left in any file, `next()` returns `None`.
 
 pub struct Slicer<'a> {
-    /// An iterator over `ARGS.arg_FILE` wrapped in an option. If the option is
+    /// An iterator over `ARGS.inputs` wrapped in an option. If the option is
     /// `Some()`, then the input should be read from files, whose filenames are
     /// delivered with the iterator's `next()`. If the option is `None`, then the
     /// data comes from `std::stdin`.
-    filename_iter: Option<Peekable<Iter<'a, String>>>,
+    filename_iter: Option<Peekable<Iter<'a, PathBuf>>>,
 
     /// The reader associated with the current file.
     reader: Box<dyn Read>,
@@ -43,8 +43,8 @@ pub struct Slicer<'a> {
     /// An index identifying the source of the input:
     /// The input comes from:
     /// * 0: `stdin`,
-    /// * 1: the first file in `ARGS.arg_FILE`,
-    /// * 2: the second file in `ARGS.arg_FILE`,
+    /// * 1: the first file in `ARGS.inputs`,
+    /// * 2: the second file in `ARGS.inputs`,
     /// * 3: ...
     current_input_idx: usize,
 
@@ -60,7 +60,9 @@ pub struct Slicer<'a> {
 impl<'a> Slicer<'_> {
     #[inline]
     pub fn new() -> Self {
-        if (ARGS.arg_FILE.is_empty()) || ((ARGS.arg_FILE.len() == 1) && ARGS.arg_FILE[0] == "-") {
+        if (ARGS.inputs.is_empty())
+            || ((ARGS.inputs.len() == 1) && ARGS.inputs[0] == Path::new("-"))
+        {
             Self {
                 filename_iter: None,
                 reader: Box::new(io::stdin()) as Box<dyn Read>,
@@ -69,14 +71,14 @@ impl<'a> Slicer<'_> {
                 input_buffer: [0u8; INPUT_BUF_LEN],
             }
         } else {
-            let mut filename_iter = ARGS.arg_FILE.iter().peekable();
+            let mut filename_iter = ARGS.inputs.iter().peekable();
             // `unwrap()` is save because we know `if` above, that there is at least one
             // filename.
             let filename = filename_iter.next().unwrap();
             let reader = match File::open(&Path::new(filename)) {
                 Ok(file) => Box::new(file) as Box<dyn Read>,
                 Err(e) => {
-                    eprintln!("Error: can not read file`{}`: {}", filename, e);
+                    eprintln!("Error: can not read file`{:?}`: {}", filename, e);
                     Box::new(io::empty()) as Box<dyn Read>
                 }
             };
@@ -98,7 +100,7 @@ impl<'a> Slicer<'_> {
 }
 
 /// Iterator over the input stream coming from `std::stdin` or from files whose
-/// names are listed in `ARGS.arg_FILES`.
+/// names are listed in `ARGS.inputsS`.
 impl<'a> Iterator for Slicer<'a> {
     /// The iterator's `next()` returns a tuple `(&[u8], Option<u8>, bool)` with 3 members:
     /// * First member `&[u8]`: \
@@ -106,8 +108,8 @@ impl<'a> Iterator for Slicer<'a> {
     /// * Second member `Option<u8>`:\
     ///   A label identifying the origin of the bytes in `&[u8]`:\
     ///   * `None`: the origin of the input is `stdin`,
-    ///   * `Some(1)`: the bytes come from the first file in `ARGS.arg_FILES`,
-    ///   * `Some(2)`: the bytes come from the second file in `ARGS.arg_FILES`,
+    ///   * `Some(1)`: the bytes come from the first file in `ARGS.inputsS`,
+    ///   * `Some(2)`: the bytes come from the second file in `ARGS.inputsS`,
     ///   * `Some(3)`: ...
     ///  * Third member `bool`:\
     ///    * `true`: this chunk of input data is the very last one. All further

@@ -275,14 +275,14 @@ pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
 
 lazy_static! {
     pub static ref MISSIONS: Missions = Missions::new(
-        ARGS.flag_counter_offset.as_ref(),
-        &ARGS.flag_encoding,
-        ARGS.flag_chars_min.as_ref(),
-        ARGS.flag_same_unicode_block,
-        ARGS.flag_ascii_filter.as_ref(),
-        ARGS.flag_unicode_block_filter.as_ref(),
-        ARGS.flag_grep_char.as_ref(),
-        ARGS.flag_output_line_len.as_ref(),
+        ARGS.counter_offset.as_ref(),
+        &ARGS.encoding,
+        ARGS.chars_min.as_ref(),
+        ARGS.same_unicode_block,
+        ARGS.ascii_filter.as_ref(),
+        ARGS.unicode_block_filter.as_ref(),
+        ARGS.grep_char.as_ref(),
+        ARGS.output_line_len.as_ref(),
     )
     .unwrap_or_else(|error| {
         eprintln!("Error while parsing command-line arguments: {:?}", error);

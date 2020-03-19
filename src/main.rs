@@ -102,9 +102,9 @@ fn run() -> Result<(), anyhow::Error> {
         // Receive `FindingCollection`s from scanner threads.
         merger = thread::spawn(move || {
             // Set up output channel.
-            let mut output = match ARGS.flag_output {
+            let mut output = match ARGS.output {
                 Some(ref fname) => {
-                    let f = File::create(&Path::new(fname.as_str()))?;
+                    let f = File::create(&Path::new(fname))?;
                     // There is at least one `Mission` in `MISSIONS`.
                     let output_line_len =
                         2 * MISSIONS[0].output_line_char_nb_max + OUTPUT_LINE_METADATA_LEN;
@@ -188,37 +188,38 @@ mod tests {
     use crate::scanner::ScannerState;
     use itertools::Itertools;
     use lazy_static::lazy_static;
+    use std::path::PathBuf;
 
     lazy_static! {
         pub static ref ARGS: Args = Args {
-            arg_FILE: vec!["myfile.txt".to_string()],
-            flag_debug_options: false,
-            flag_encoding: vec!["ascii".to_string(), "utf-8".to_string()],
-            flag_list_encodings: false,
-            flag_version: false,
-            flag_chars_min: Some("5".to_string()),
-            flag_same_unicode_block: true,
-            flag_grep_char: None,
-            flag_radix: Some(Radix::X),
-            flag_output: None,
-            flag_output_line_len: Some("30".to_string()),
-            flag_no_metadata: false,
-            flag_counter_offset: Some("5000".to_string()),
-            flag_ascii_filter: None,
-            flag_unicode_block_filter: None,
+            inputs: vec![PathBuf::from("myfile.txt")],
+            debug_option: false,
+            encoding: vec!["ascii".to_string(), "utf-8".to_string()],
+            list_encodings: false,
+            version: false,
+            chars_min: Some("5".to_string()),
+            same_unicode_block: true,
+            grep_char: None,
+            radix: Some(Radix::X),
+            output: None,
+            output_line_len: Some("30".to_string()),
+            no_metadata: false,
+            counter_offset: Some("5000".to_string()),
+            ascii_filter: None,
+            unicode_block_filter: None,
         };
     }
 
     lazy_static! {
         pub static ref MISSIONS: Missions = Missions::new(
-            ARGS.flag_counter_offset.as_ref(),
-            &ARGS.flag_encoding,
-            ARGS.flag_chars_min.as_ref(),
-            ARGS.flag_same_unicode_block,
-            ARGS.flag_ascii_filter.as_ref(),
-            ARGS.flag_unicode_block_filter.as_ref(),
-            ARGS.flag_grep_char.as_ref(),
-            ARGS.flag_output_line_len.as_ref(),
+            ARGS.counter_offset.as_ref(),
+            &ARGS.encoding,
+            ARGS.chars_min.as_ref(),
+            ARGS.same_unicode_block,
+            ARGS.ascii_filter.as_ref(),
+            ARGS.unicode_block_filter.as_ref(),
+            ARGS.grep_char.as_ref(),
+            ARGS.output_line_len.as_ref(),
         )
         .unwrap();
     }

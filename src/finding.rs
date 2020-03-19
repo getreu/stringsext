@@ -220,21 +220,21 @@ impl PartialOrd for Finding<'_> {
 impl<'a> Finding<'a> {
     pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
         out.write_all("\n".as_bytes())?;
-        if !ARGS.flag_no_metadata {
-            if ARGS.arg_FILE.len() > 1 {
+        if !ARGS.no_metadata {
+            if ARGS.inputs.len() > 1 {
                 if let Some(i) = self.input_file_id {
                     // map 1 -> 'A', 2 -> 'B', 3 -> 'C'
                     out.write_all(&[i + 64 as u8, b' '])?;
                 }
             };
 
-            if ARGS.flag_radix.is_some() {
+            if ARGS.radix.is_some() {
                 match &self.position_precision {
                     Precision::After => out.write_all(b">")?,
                     Precision::Exact => out.write_all(b" ")?,
                     Precision::Before => out.write_all(b"<")?,
                 };
-                match ARGS.flag_radix {
+                match ARGS.radix {
                     Some(Radix::X) => out.write_fmt(format_args!("{:0x}", self.position,))?,
                     Some(Radix::D) => out.write_fmt(format_args!("{:0}", self.position,))?,
                     Some(Radix::O) => out.write_fmt(format_args!("{:0o}", self.position,))?,
@@ -247,7 +247,7 @@ impl<'a> Finding<'a> {
                 };
             }
 
-            if ARGS.flag_encoding.len() > 1 {
+            if ARGS.encoding.len() > 1 {
                 // map 0 -> 'a', 1 -> 'b', 2 -> 'c' ...
                 out.write_all(&[b'(', self.mission.mission_id + 97 as u8, b' '])?;
                 out.write_all(if self.mission.print_encoding_as_ascii {
