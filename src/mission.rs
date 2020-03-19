@@ -684,7 +684,7 @@ impl Missions {
             let encoding = &Encoding::for_label((enc_name).as_bytes()).with_context(|| {
                 format!(
                     "Scanner {}: \
-                     invalid input encoding name `{}`, try option `--list-encodings`.",
+                     invalid input encoding name `{}`, try flag `--list-encodings`.",
                     char::from((mission_id + 97) as u8),
                     enc_name
                 )

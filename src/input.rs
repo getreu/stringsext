@@ -100,7 +100,7 @@ impl<'a> Slicer<'_> {
 }
 
 /// Iterator over the input stream coming from `std::stdin` or from files whose
-/// names are listed in `ARGS.inputsS`.
+/// names are listed in `ARGS.inputs`.
 impl<'a> Iterator for Slicer<'a> {
     /// The iterator's `next()` returns a tuple `(&[u8], Option<u8>, bool)` with 3 members:
     /// * First member `&[u8]`: \
@@ -108,8 +108,8 @@ impl<'a> Iterator for Slicer<'a> {
     /// * Second member `Option<u8>`:\
     ///   A label identifying the origin of the bytes in `&[u8]`:\
     ///   * `None`: the origin of the input is `stdin`,
-    ///   * `Some(1)`: the bytes come from the first file in `ARGS.inputsS`,
-    ///   * `Some(2)`: the bytes come from the second file in `ARGS.inputsS`,
+    ///   * `Some(1)`: the bytes come from the first file in `ARGS.inputs`,
+    ///   * `Some(2)`: the bytes come from the second file in `ARGS.inputs`,
     ///   * `Some(3)`: ...
     ///  * Third member `bool`:\
     ///    * `true`: this chunk of input data is the very last one. All further

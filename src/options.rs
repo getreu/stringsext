@@ -41,7 +41,7 @@ pub const OUTPUT_LINE_CHAR_NB_MIN: usize = 6;
 /// See man-page and the output of `--list-encodings` and `--help` for more
 /// information about their meaning.
 pub struct Args {
-    /// <ascii-filter> applied after decoding (see
+    /// filter applied after decoding (see
     /// `--list-encodings` for AF examples)
     #[structopt(long, short = "a")]
     pub ascii_filter: Option<String>,
@@ -81,7 +81,7 @@ pub struct Args {
     // enable byte-counter with radix `o`, `x` or `d`
     #[structopt(long, short = "t", possible_values = &Radix::variants(), case_insensitive = true)]
     pub radix: Option<Radix>,
-    /// set Unicode-block-filter UBF applied after decoding
+    /// filter applied after decoding
     /// (see `--list-encodings` for UBF examples)
     #[structopt(long, short = "u")]
     pub unicode_block_filter: Option<String>,
