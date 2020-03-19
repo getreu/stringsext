@@ -116,9 +116,9 @@ Repository
 
   - Package for Debian and Ubuntu:
 
-    [x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.0_amd64.deb](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.0_amd64.deb)
 
-    [i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb)
+    [i686-unknown-linux-gnu/debian/stringsext_2.3.0_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.0_i386.deb)
 
 * Installable Unix man-page:
 
