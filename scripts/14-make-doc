@@ -1,5 +1,5 @@
 #!/bin/sh
 cd ../doc
-./make-doc
+./make--all
 
 cargo rustdoc  -p stringsext -- --document-private-items 
