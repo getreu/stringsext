@@ -2,12 +2,12 @@
 
 extern crate encoding_rs;
 
-use crate::ascii_enc_label;
 use crate::input::ByteCounter;
 use crate::input::INPUT_BUF_LEN;
 use crate::mission::Mission;
 use crate::options::Radix;
 use crate::options::ARGS;
+use crate::options::ASCII_ENC_LABEL;
 use std::io::Write;
 use std::ops::Deref;
 use std::str;
@@ -251,7 +251,7 @@ impl<'a> Finding<'a> {
                 // map 0 -> 'a', 1 -> 'b', 2 -> 'c' ...
                 out.write_all(&[b'(', self.mission.mission_id + 97 as u8, b' '])?;
                 out.write_all(if self.mission.print_encoding_as_ascii {
-                    ascii_enc_label!().as_bytes()
+                    ASCII_ENC_LABEL.as_bytes()
                 } else {
                     self.mission.encoding.name().as_bytes()
                 })?;

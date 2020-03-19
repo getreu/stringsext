@@ -1,10 +1,10 @@
 //! Help the user with command-line-arguments.
 
-use crate::ascii_enc_label;
 use crate::mission::ASCII_FILTER_ALIASSE;
 use crate::mission::UNICODE_BLOCK_FILTER_ALIASSE;
 use crate::mission::{Missions, MISSIONS};
 use crate::options::ARGS;
+use crate::options::ASCII_ENC_LABEL;
 use crate::AUTHOR;
 use crate::VERSION;
 use std::process;
@@ -52,7 +52,7 @@ pub fn help() {
         println!("Format: --encoding=[ENC_NAME],[MIN],[AF,UBF],[GREP]\n\n");
         println!("ENC_NAME (Encoding)=");
         let list: [&'static str; 41] = [
-            ascii_enc_label!(),
+            ASCII_ENC_LABEL,
             "Big5",
             "EUC-JP",
             "EUC-KR",

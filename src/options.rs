@@ -1,6 +1,7 @@
 //! This module deals with command-line arguments and directly related data
 //! structures.
 
+use crate::input::ByteCounter;
 use clap::arg_enum;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
@@ -8,50 +9,24 @@ use structopt::StructOpt;
 
 /// Encoding name literal used when simulating non-built-in
 /// ASCII-decoder.
-#[macro_export]
-macro_rules! ascii_enc_label {
-    () => {
-        "ascii"
-    };
-}
+pub const ASCII_ENC_LABEL: &str = "ascii";
 
 /// If no command-line argument `--chars_min` is given
 /// and none is specified in `--encoding` use this.
 /// Must be one of `--list-encodings`.
-#[macro_export]
-macro_rules! encoding_default {
-    () => {
-        //ascii_enc_label!()
-        "UTF-8"
-    };
-}
+pub const ENCODING_DEFAULT: &str = "UTF-8";
 
 /// Default value, when no `--chars-min` command-line-argument
 /// is given. Must be `u8`.
-#[macro_export]
-macro_rules! chars_min_default {
-    () => {
-        4u8
-    };
-}
+pub const CHARS_MIN_DEFAULT: u8 = 4;
 
 /// Default value, when no `--counter-offset` command-line-argument
-/// is given. Must be of type `ByteCounter`.
-#[macro_export]
-macro_rules! counter_offset_default {
-    () => {
-        0
-    };
-}
+/// is given.
+pub const COUNTER_OFFSET_DEFAULT: ByteCounter = 0;
 
 /// Default value when no `--output-line-len`
-/// command-line-argument is given. Must be `usize`.
-#[macro_export]
-macro_rules! output_line_char_nb_max_default {
-    () => {
-        64usize
-    };
-}
+/// command-line-argument is given.
+pub const OUTPUT_LINE_CHAR_NB_MAX_DEFAULT: usize = 64;
 
 /// There must be space for at least 3 long Unicode characters,
 /// to guarantee progress in streaming. You want much longer lines.

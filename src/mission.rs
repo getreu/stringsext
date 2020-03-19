@@ -3,14 +3,14 @@
 
 extern crate anyhow;
 extern crate encoding_rs;
-use crate::ascii_enc_label;
-use crate::chars_min_default;
-use crate::counter_offset_default;
-use crate::encoding_default;
 use crate::input::ByteCounter;
 use crate::options::ARGS;
+use crate::options::ASCII_ENC_LABEL;
+use crate::options::CHARS_MIN_DEFAULT;
+use crate::options::COUNTER_OFFSET_DEFAULT;
+use crate::options::ENCODING_DEFAULT;
+use crate::options::OUTPUT_LINE_CHAR_NB_MAX_DEFAULT;
 use crate::options::OUTPUT_LINE_CHAR_NB_MIN;
-use crate::output_line_char_nb_max_default;
 use anyhow::{anyhow, Context, Result};
 use encoding_rs::*;
 use lazy_static::lazy_static;
@@ -572,7 +572,7 @@ impl Missions {
         }
 
         let mut v = Vec::new();
-        let encoding_default: &[String; 1] = &[String::from_str(&*encoding_default!()).unwrap()];
+        let encoding_default: &[String; 1] = &[ENCODING_DEFAULT.to_string()];
 
         let enc_iter = if flag_encoding.is_empty() {
             encoding_default.iter()
@@ -588,12 +588,12 @@ impl Missions {
 
             let mut enc_name = match enc_name {
                 Some(s) => s,
-                None => encoding_default!(),
+                None => ENCODING_DEFAULT,
             };
 
             let counter_offset = match flag_counter_offset {
                 Some(n) => n,
-                None => counter_offset_default!(),
+                None => COUNTER_OFFSET_DEFAULT,
             };
 
             // If `char_min_nb` is not defined in `enc_opt`
@@ -602,7 +602,7 @@ impl Missions {
                 Some(n) => n,
                 None => match flag_chars_min_nb {
                     Some(n) => n,
-                    None => chars_min_default!(),
+                    None => CHARS_MIN_DEFAULT,
                 },
             };
 
@@ -610,7 +610,7 @@ impl Missions {
 
             let output_line_char_nb_max = match flag_output_line_len {
                 Some(n) => n,
-                None => output_line_char_nb_max_default!(),
+                None => OUTPUT_LINE_CHAR_NB_MAX_DEFAULT,
             };
 
             if output_line_char_nb_max < OUTPUT_LINE_CHAR_NB_MIN {
@@ -628,16 +628,15 @@ impl Missions {
             // "x-user-defined" and the `UTF8_FILTER_ASCII_MODE_DEFAULT`-filter,
             // if not otherwise specified.
 
-            let filter_af = filter_af.unwrap_or(flag_ascii_filter.unwrap_or(
-                if enc_name == ascii_enc_label!() {
+            let filter_af =
+                filter_af.unwrap_or(flag_ascii_filter.unwrap_or(if enc_name == ASCII_ENC_LABEL {
                     UTF8_FILTER_ASCII_MODE_DEFAULT.af
                 } else {
                     UTF8_FILTER_NON_ASCII_MODE_DEFAULT.af
-                },
-            ));
+                }));
 
             let filter_ubf = filter_ubf.unwrap_or(flag_unicode_block_filter.unwrap_or(
-                if enc_name == ascii_enc_label!() {
+                if enc_name == ASCII_ENC_LABEL {
                     UTF8_FILTER_ASCII_MODE_DEFAULT.ubf
                 } else {
                     UTF8_FILTER_NON_ASCII_MODE_DEFAULT.ubf
@@ -649,7 +648,7 @@ impl Missions {
                 None => match flag_grep_char {
                     Some(f) => Some(f),
                     None => {
-                        if enc_name == ascii_enc_label!() {
+                        if enc_name == ASCII_ENC_LABEL {
                             UTF8_FILTER_ASCII_MODE_DEFAULT.grep_char
                         } else {
                             UTF8_FILTER_NON_ASCII_MODE_DEFAULT.grep_char
@@ -677,7 +676,7 @@ impl Missions {
             };
 
             let mut print_encoding_as_ascii = false;
-            if enc_name == ascii_enc_label!() {
+            if enc_name == ASCII_ENC_LABEL {
                 print_encoding_as_ascii = true;
                 enc_name = "x-user-defined"
             };
