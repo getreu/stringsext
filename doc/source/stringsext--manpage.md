@@ -334,44 +334,44 @@ List available encodings and predefined filter names:
 
 Search for UTF-8 and UTF-16 Big-Endian encoded strings:
 
-    stringsext -t x -e utf-8 -e utf-16be  someimage.raw
+    stringsext -t x -e utf-8 -e utf-16be -- someimage.raw
 
 The same, but read from "`stdin`":
 
-    cat someimage.raw | stringsext -t x -e utf-8 -e utf-16be  -
+    cat someimage.raw | stringsext -t x -e utf-8 -e utf-16be -- -
 
 Scan a non-file device:
 
-    stringsext -t x -e utf-8 -e utf-16be  /dev/sda1
+    stringsext -t x -e utf-8 -e utf-16be -- /dev/sda1
 
 Reduce the number of false positives, when scanning for UTF-16LE or UTF-16BE
 encoded strings. In the following example we search for Cyrillic only:
 
-    stringsext -t x -e UTF-16le,,None,Cyrillic someimage.raw
+    stringsext -t x -e UTF-16le,,None,Cyrillic -- someimage.raw
 
 Search for UTF-16LE encoded Arabic and the digits 0 to 9:
 
-    stringsext -t x -e UTF-16le,,0x3f000000000000,Arabic someimage.raw
+    stringsext -t x -e UTF-16le,,0x3f000000000000,Arabic -- someimage.raw
 
 Search for UTF-8 encoded Syriac and all ASCII, control-codes excluded:
 
-    stringsext -t x -e UTF-8,,All-Ctrl,0x10000000 someimage.raw
+    stringsext -t x -e UTF-8,,All-Ctrl,0x10000000 -- someimage.raw
 
 Combine Little-Endian and Big-Endian scanning:
 
-    stringsext -t x -e UTF-16be -e UTF-16le someimage.raw
+    stringsext -t x -e UTF-16be -e UTF-16le -- someimage.raw
 
 Show the filter default values used in the above example:
 
-    stringsext -d -t x -e UTF-16be -e UTF-16le someimage.raw
+    stringsext -d -t x -e UTF-16be -e UTF-16le -- someimage.raw
 
 Search for path-names and URLs in some disk-partition:
 
-    sudo stringsext -tx -e utf-8 -n 15 -g 47 /dev/disk/by-uuid/91C8-2721
+    sudo stringsext -tx -e utf-8 -n 15 -g 47 -- /dev/disk/by-uuid/91C8-2721
 
 Equivalent:
 
-    sudo stringsext -tx -e utf-8,15,,,47 /dev/disk/by-uuid/91C8-2721
+    sudo stringsext -tx -e utf-8,15,,,47 -- /dev/disk/by-uuid/91C8-2721
 
 
 # OPERATING PRINCIPLE
