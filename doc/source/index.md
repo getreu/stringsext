@@ -62,19 +62,19 @@ stringsext -tx -e utf-8 -e utf-16le -e utf-16be \
 
 User documentation
 
-*   [Manual page (html)](https://blog.getreu.net/projects/stringsext/stringsext--manpage.html)
+*   [Manual page (html)](/projects/stringsext/stringsext--manpage.html)
 
-*   [Manual page (pdf)](https://blog.getreu.net/_downloads/stringsext--manpage.pdf)
+*   [Manual page (pdf)](/_downloads/stringsext--manpage.pdf)
 
-*   [Blogposts about Stringsext](https://blog.getreu.net/tags/stringsext/)
+*   [Blogposts about Stringsext](/tags/stringsext/)
 
 *   [Paper about Stringsext](https://commons.erau.edu/jdfsl/vol14/iss2/4)
 
 Developer documentation
 
-*   [API documentation](https://blog.getreu.net/projects/stringsext/stringsext/index.html)
+*   [API documentation](/projects/stringsext/stringsext/index.html)
 
-*   [Forensic Tool Development with Rust](https://blog.getreu.net/projects/forensic-tool-development-with-rust)
+*   [Forensic Tool Development with Rust](/projects/forensic-tool-development-with-rust)
 
 ## Source code
 
@@ -102,31 +102,31 @@ Repository
 
   - Executable for Windows:
 
-    [x86_64-pc-windows-gnu/release/stringsext.exe](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-pc-windows-gnu/release/stringsext.exe)
+    [x86_64-pc-windows-gnu/release/stringsext.exe](/projects/stringsext/_downloads/x86_64-pc-windows-gnu/release/stringsext.exe)
 
   - Binary for Linux:
 
-    [x86_64-unknown-linux-gnu/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/release/stringsext)
+    [x86_64-unknown-linux-gnu/release/stringsext](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/release/stringsext)
 
-    [x86_64-unknown-linux-musl/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-musl/release/stringsext)
+    [x86_64-unknown-linux-musl/release/stringsext](/projects/stringsext/_downloads/x86_64-unknown-linux-musl/release/stringsext)
 
-    [i686-unknown-linux-gnu/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/release/stringsext)
+    [i686-unknown-linux-gnu/release/stringsext](/projects/stringsext/_downloads/i686-unknown-linux-gnu/release/stringsext)
 
-    [i686-unknown-linux-musl/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-musl/release/stringsext)
+    [i686-unknown-linux-musl/release/stringsext](/projects/stringsext/_downloads/i686-unknown-linux-musl/release/stringsext)
 
   - Package for Debian and Ubuntu:
 
-    [x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.2.0_amd64.deb)
 
-    [i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb)
+    [i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb](/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.2.0_i386.deb)
 
 * Installable Unix man-page:
 
-  - [stringsext.1.gz](https://blog.getreu.net/projects/stringsext/_downloads/stringsext.1.gz)
+  - [stringsext.1.gz](/projects/stringsext/_downloads/stringsext.1.gz)
 
 * Zipfile with all binaries and documentation:
 
-  - [stringsext all](https://blog.getreu.net/_downloads/stringsext.zip)
+  - [stringsext all](/_downloads/stringsext.zip)
 
 
 

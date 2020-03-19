@@ -1,0 +1,8 @@
+#!/bin/sh
+
+rm -r ./build
+
+./make--index 
+./make--stringsext--manpage
+./make--rustdoc-link
+
