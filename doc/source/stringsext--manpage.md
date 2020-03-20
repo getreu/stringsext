@@ -210,8 +210,8 @@ as *GNU strings* replacement.
     homogenous strings. For example: "`-u All -n 10 -r`" finds a sequence of at
     least 10 Cyrillic characters in a row or finds at least 10 Greek characters
     in a row, whereas it ignores strings with randomly Cyrillic-Greek mixed
-    characters.  Technically this option guarantees, that all multibyte
-    characters of a finding - encoded as UTF-8 - start with the same leading
+    characters.  Technically, this option guarantees, that all multibyte
+    characters of a finding - decoded into UTF-8 - start with the same leading
     byte.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
