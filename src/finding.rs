@@ -219,7 +219,7 @@ impl PartialOrd for Finding<'_> {
 
 impl<'a> Finding<'a> {
     pub fn print(&self, out: &mut dyn Write) -> Result<(), Box<std::io::Error>> {
-        out.write_all("\n".as_bytes())?;
+        out.write_all(b"\n")?;
         if !ARGS.no_metadata {
             if ARGS.inputs.len() > 1 {
                 if let Some(i) = self.input_file_id {
@@ -241,9 +241,9 @@ impl<'a> Finding<'a> {
                     None => {}
                 };
                 if self.s_completes_previous_s {
-                    out.write_all("+\t".as_bytes())?
+                    out.write_all(b"+\t")?
                 } else {
-                    out.write_all(" \t".as_bytes())?
+                    out.write_all(b" \t")?
                 };
             }
 

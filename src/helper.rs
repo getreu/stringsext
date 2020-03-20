@@ -419,14 +419,14 @@ impl<'a> Iterator for SplitStr<'a> {
         self.last_s_was_maybe_cut = s_is_maybe_cut;
 
         // Return results
-        return Some(SplitStrResult {
+        Some(SplitStrResult {
             s: ok_s,
             s_completes_previous_s,
             s_is_maybe_cut,
             s_is_to_be_filtered_again,
             s_satisfies_min_char_rule,
             s_satisfies_grep_char_rule,
-        });
+        })
     }
 }
 

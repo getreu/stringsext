@@ -628,20 +628,21 @@ impl Missions {
             // "x-user-defined" and the `UTF8_FILTER_ASCII_MODE_DEFAULT`-filter,
             // if not otherwise specified.
 
-            let filter_af =
-                filter_af.unwrap_or(flag_ascii_filter.unwrap_or(if enc_name == ASCII_ENC_LABEL {
+            let filter_af = filter_af.unwrap_or_else(|| {
+                flag_ascii_filter.unwrap_or(if enc_name == ASCII_ENC_LABEL {
                     UTF8_FILTER_ASCII_MODE_DEFAULT.af
                 } else {
                     UTF8_FILTER_NON_ASCII_MODE_DEFAULT.af
-                }));
+                })
+            });
 
-            let filter_ubf = filter_ubf.unwrap_or(flag_unicode_block_filter.unwrap_or(
-                if enc_name == ASCII_ENC_LABEL {
+            let filter_ubf = filter_ubf.unwrap_or_else(|| {
+                flag_unicode_block_filter.unwrap_or(if enc_name == ASCII_ENC_LABEL {
                     UTF8_FILTER_ASCII_MODE_DEFAULT.ubf
                 } else {
                     UTF8_FILTER_NON_ASCII_MODE_DEFAULT.ubf
-                },
-            ));
+                })
+            });
 
             let filter_grep_char = match filter_grep_char {
                 Some(f) => Some(f),
