@@ -9,3 +9,5 @@ mkdir --parents ./build/man/man1
 ./md2docbook2pdf ./source/stringsext--manpage.md ./build/pdf/stringsext--manpage.pdf
 ./md2docbook2html ./source/stringsext--manpage.md ./build/html/stringsext--manpage.html
 
+cd ./build/html/ 
+ln -s stringsext--manpage.html stringsext--man.html
