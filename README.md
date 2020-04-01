@@ -2,6 +2,12 @@
 title:    stringsext - search for multi-byte encoded strings in binary data
 ---
 
+[![Cargo](https://img.shields.io/crates/v/stringsext.svg)](
+https://crates.io/crates/stringsext)
+[![Documentation](https://docs.rs/stringsext/badge.svg)](
+https://docs.rs/stringsext)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
+https://github.com/getreu/stringsext)
 
 
 **stringsext** is a Unicode enhancement of the *GNU strings* tool with
@@ -132,46 +138,14 @@ Repository
 
 ## Building and installing
 
-1.  Install *Rust* with [rustup](https://www.rustup.rs/):
+1. [Install Rust](https://www.rust-lang.org/tools/install), e.g.
 
-        curl https://sh.rustup.rs -sSf | sh
+       curl https://sh.rustup.rs -sSf | sh
 
-   The fast-track procedure:
+2. Download, compile and install:
 
        cargo install stringsext
        sudo cp ~/.cargo/bin/stringsext /usr/local/bin
-
-2.  Download [stringsext](#stringsext):
-
-        git clone git@github.com:getreu/stringsext.git
-
-3.  Build
-
-    Enter the *Stringsext* directory where the file `Cargo.toml`
-    resides:
-    
-        cd stringsext
-    
-    Then execute:
-
-        cargo build --release
-        ./doc/make-doc
-
-4.  Install
-
-    a.  Linux:
-
-            # install binary
-            sudo cp target/release/stringsext /usr/local/bin/
-
-            # install man-page
-            sudo cp man/stringsext.1.gz /usr/local/man/man1/
-            sudo dpkg-reconfigure man-db   # e.g. Debian, Ubuntu
-
-    b.  Windows
-
-        Copy the binary `target/release/stringsext.exe` in a directory
-        listed in your `PATH` environment variable.
 
 This project follows [Semantic Versioning](https://semver.org/).
 
