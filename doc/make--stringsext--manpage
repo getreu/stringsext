@@ -6,7 +6,7 @@ mkdir --parents ./build/man/man1
 
 # Html page
 ./md2man ./source/stringsext--manpage.md ./build/man/man1/stringsext.1
-./md2docbook2pdf ./source/stringsext--manpage.md ./build/pdf/stringsext--manpage.pdf
+./docbook52pdf ./source/stringsext--manpage.md ./build/pdf/stringsext--manpage.pdf
 ./md2docbook2html ./source/stringsext--manpage.md ./build/html/stringsext--manpage.html
 
 cd ./build/html/ 
