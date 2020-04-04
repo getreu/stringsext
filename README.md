@@ -92,7 +92,8 @@ Repository
 
 ## Distribution
 
-* Binaries for latest release (Linux, Windows, iOS)
+* Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
+  Debian binaries)
 
     1. Open: [Releases · getreu/stringsext](https://github.com/getreu/stringsext/releases)
 
@@ -104,13 +105,13 @@ Repository
 
     5. Installation: see below.
 
-* Binaries and packages (usually built from lastest commit):
+* Binaries and packages (usually built from latest commit):
 
   - Executable for Windows:
 
     [x86_64-pc-windows-gnu/release/stringsext.exe](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-pc-windows-gnu/release/stringsext.exe)
 
-  - Binary for Linux:
+  - Binary for Debian 10 Buster:
 
     [x86_64-unknown-linux-gnu/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/release/stringsext)
 
@@ -120,11 +121,11 @@ Repository
 
     [i686-unknown-linux-musl/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-musl/release/stringsext)
 
-  - Package for Debian and Ubuntu:
+  - Package for Debian 10 Buster:
 
-    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.0_amd64.deb](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.0_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.1_amd64.deb](https://blog.getreu.net/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.1_amd64.deb)
 
-    [i686-unknown-linux-gnu/debian/stringsext_2.3.0_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.0_i386.deb)
+    [i686-unknown-linux-gnu/debian/stringsext_2.3.1_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.1_i386.deb)
 
 * Installable Unix man-page:
 

@@ -1,4 +1,4 @@
-% STRINGSEXT(1) Version 2.3.0 | Stringsext Documentation
+% STRINGSEXT(1) Version 2.3.1 | Stringsext Documentation
 
 <!--
 previous versions
@@ -55,6 +55,9 @@ Version: 2.2.0
 
 Date: 2020-03-19
 Version: 2.3.0
+
+Date: 2020-03-19
+Version: 2.3.1
 -->
 
 # NAME
