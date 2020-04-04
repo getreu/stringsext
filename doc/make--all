@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# Change to this script directory
+cd "${0%/*}"
+
 rm -r ./build
 
 ./make--index 

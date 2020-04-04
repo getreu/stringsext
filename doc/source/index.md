@@ -33,7 +33,7 @@ codepoints. As a result, the probability of encountering valid Unicode
 characters in a random byte stream, interpreted as UTF-16, is also 96%.
 In order to reduce this big number of false positives, **stringsext**
 provides a parametrizable Unicode-block-filter. See **\--encodings**
-option in the manual page for more details.
+and **\--same-unicode-block** options in the manual page for more details.
 
 **stringsext** is mainly useful for extracting Unicode content out of
 non-text files.
@@ -95,7 +95,7 @@ Repository
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
   Debian binaries)
 
-    1. Open: [Releases · getreu/stringsext](https://github.com/getreu/stringsext/releases)
+    1. Open: [Releases - getreu/stringsext](https://github.com/getreu/stringsext/releases)
 
     2. Open the latest release.
 
