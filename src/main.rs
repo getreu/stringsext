@@ -81,13 +81,13 @@ use std::sync::mpsc;
 use std::thread;
 use std::thread::JoinHandle;
 
-/// Use the version-number defined in `../Cargo.toml`.
+/// Uses the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /// (c) Jens Getreu
 const AUTHOR: &str = "(c) Jens Getreu, 2016-2020";
 
-/// Process the input stream in batches with threads. Then receive, merge, sort and
-/// print the results.
+/// Processes the input stream in batches with threads. Then receives, merges, sorts and
+/// prints the result
 
 fn run() -> Result<(), anyhow::Error> {
     let merger: JoinHandle<_>;
