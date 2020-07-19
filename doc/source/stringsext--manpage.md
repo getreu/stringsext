@@ -347,8 +347,11 @@ Scan a non-file device:
 
     stringsext -t x -e utf-8 -e utf-16be -- /dev/sda1
 
-Reduce the number of false positives, when scanning for UTF-16LE or UTF-16BE
-encoded strings. In the following example we search for Cyrillic only:
+Reduce the number of false positives, when scanning for UTF-16LE or UTF-16BE:
+
+    stringsext -t x --same-unicode-block -e UTF-16le -- someimage.raw
+   
+Search for Cyrillic only:
 
     stringsext -t x -e UTF-16le,,None,Cyrillic -- someimage.raw
 
@@ -364,17 +367,17 @@ Combine Little-Endian and Big-Endian scanning:
 
     stringsext -t x -e UTF-16be -e UTF-16le -- someimage.raw
 
-Show the filter default values used in the above example:
+Show the filter default values used in the above example for debugging:
 
     stringsext -d -t x -e UTF-16be -e UTF-16le -- someimage.raw
 
 Search for path-names and URLs in some disk-partition:
 
-    sudo stringsext -tx -e utf-8 -n 15 -g 47 -- /dev/disk/by-uuid/91C8-2721
+    sudo stringsext -t x -e utf-8 -n 15 -g 47 -- /dev/disk/by-uuid/91C8-2721
 
-Equivalent:
+Equivalent to the above:
 
-    sudo stringsext -tx -e utf-8,15,,,47 -- /dev/disk/by-uuid/91C8-2721
+    sudo stringsext -t x -e utf-8,15,,,47 -- /dev/disk/by-uuid/91C8-2721
 
 
 # OPERATING PRINCIPLE
