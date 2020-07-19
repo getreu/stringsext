@@ -215,7 +215,8 @@ as *GNU strings* replacement.
     in a row, whereas it ignores strings with randomly Cyrillic-Greek mixed
     characters.  Technically, this option guarantees, that all multibyte
     characters of a finding - decoded into UTF-8 - start with the same leading
-    byte.
+    byte. This might be the default behavoir, in some future version of 
+    **stringsext**.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
 
