@@ -6,7 +6,7 @@ edition = "2018"
 readme = "README.md"
 description = "find multi-byte-encoded strings in binary data"
 license = "MIT/Apache-2.0"
-categories = ["command-line-utilities", "encoding", "text-processing", 
+categories = ["command-line-utilities", "encoding", "text-processing",
               "filesystem"]
 documentation = "https://blog.getreu.net/projects/stringsext/stringsext--manpage.html"
 homepage = "https://blog.getreu.net/projects/stringsext/"
@@ -24,8 +24,9 @@ scoped_threadpool = "0.1.9"
 anyhow = "1.0.27"
 clap = "2.33.0"
 structopt = "0.3.12"
+pin-project = "0.4.23"
 
-# Metadata for debian packages with cargo-deb
+# Metadata for Debian packages with cargo-deb
 
 [package.metadata.deb]
 maintainer = "Jens Getreu, <getreu@web.de>"

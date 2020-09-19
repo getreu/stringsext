@@ -8,6 +8,7 @@ use crate::mission::Mission;
 use crate::options::Radix;
 use crate::options::ARGS;
 use crate::options::ASCII_ENC_LABEL;
+use pin_project::pin_project;
 use std::io::Write;
 use std::ops::Deref;
 use std::str;
@@ -31,6 +32,9 @@ pub const OUTPUT_BUF_LEN: usize = 0x40;
 pub const OUTPUT_LINE_METADATA_LEN: usize = 40;
 
 /// `FindingCollection` is a set of ordered `Finding` s.
+/// This struct is self referential, because `Finding` points into
+/// `output_buffer_bytes`, hence pinning is required here.
+#[pin_project]
 #[derive(Debug)]
 pub struct FindingCollection<'a> {
     /// `Finding` s in this vector are in chronological order.
@@ -44,6 +48,7 @@ pub struct FindingCollection<'a> {
     /// some `Finding`-objects stored in a `FindingCollection`. The
     /// `Finding`-objects have a `&str`-member called `Finding::s` that is
     /// a substring of `output_buffer_bytes`.
+    #[pin]
     pub output_buffer_bytes: Box<[u8]>,
     /// If `output_buffer` is too small to receive all findings, this is set
     /// `true` indicating that only the last `Finding` s could be stored. At
