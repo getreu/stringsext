@@ -1,4 +1,4 @@
-% STRINGSEXT(1) Version 2.3.1 | Stringsext Documentation
+% STRINGSEXT(1) Version 2.3.2 | Stringsext Documentation
 
 <!--
 previous versions
@@ -119,10 +119,10 @@ as *GNU strings* replacement.
 
     The integer AF is notated in hexadecimal with prefix "`0x...`".
     For the most common use-cases, predefined filters can be set:
-    e.g. alias names like "`All-Ctrl`" or "`All-Ctrl+Wsp`" are shorthand 
+    e.g. alias names like "`All-Ctrl`" or "`All-Ctrl+Wsp`" are shorthand
     terms for ASCII-filters "all codes, but no control-codes" or
     "all codes, including white-space, but no control-codes".
-    See the output of "`--list-encodings`" for more details 
+    See the output of "`--list-encodings`" for more details
     about filter-names.
 
 **-c**, **\--no-metadata**
@@ -163,7 +163,7 @@ as *GNU strings* replacement.
         The values given here override - for this ENC only - the default
         values given by "`--chars-min`", "`--ascii-filter`",
         "`--unicode-block-filter`" and "`--grep-char`".
-        
+
         "`--list-encodings`" prints a list of predefined filter-names.
 
 **-g** *ASCII_CODE*, **\--grep-char**=*ASCII_CODE*
@@ -195,7 +195,7 @@ as *GNU strings* replacement.
 
 :   Print to *FILE* instead of *stdout*.
 
-**-q** *NUM*, **\--output-line-len**=*NUM*  
+**-q** *NUM*, **\--output-line-len**=*NUM*
 
 :   Set the printed output-line-length in UTF-8 characters (string-findings
     only, metadata excluded). The line-length is limited by some internal
@@ -215,7 +215,7 @@ as *GNU strings* replacement.
     in a row, whereas it ignores strings with randomly Cyrillic-Greek mixed
     characters.  Technically, this option guarantees, that all multibyte
     characters of a finding - decoded into UTF-8 - start with the same leading
-    byte. This might be the default behavoir, in some future version of 
+    byte. This might be the default behavoir, in some future version of
     **stringsext**.
 
 **-s** *NUM*, **\--counter-offset**=*NUM*
@@ -351,7 +351,7 @@ Scan a non-file device:
 Reduce the number of false positives, when scanning for UTF-16LE or UTF-16BE:
 
     stringsext -t x --same-unicode-block -e UTF-16le -- someimage.raw
-   
+
 Search for Cyrillic only:
 
     stringsext -t x -e UTF-16le,,None,Cyrillic -- someimage.raw
@@ -407,7 +407,7 @@ Increase "`--output-line-len`" if you search for very long strings.
 ## Limitations related to the encoding_rs library
 
 **stringsext** version 2 uses the external library **encoding_rs** to decode
-the incoming stream. Compared to the previous library **rust-encoding** 
+the incoming stream. Compared to the previous library **rust-encoding**
 used in **stringsext** version 1, the current library has some shortcomings
 mainly due to the restrictive API policy of the **encoding_rs** project.
 

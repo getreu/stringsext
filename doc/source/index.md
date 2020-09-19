@@ -92,7 +92,7 @@ Repository
 
 ## Distribution
 
-* Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for 
+* Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for
   Debian binaries)
 
     1. Open: [Releases - getreu/stringsext](https://github.com/getreu/stringsext/releases)
@@ -123,9 +123,9 @@ Repository
 
   - Package for Debian 10 Buster:
 
-    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.1_amd64.deb](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.1_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.2_amd64.deb](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.2_amd64.deb)
 
-    [i686-unknown-linux-gnu/debian/stringsext_2.3.1_i386.deb](/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.1_i386.deb)
+    [i686-unknown-linux-gnu/debian/stringsext_2.3.2_i386.deb](/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.2_i386.deb)
 
 * Installable Unix man-page:
 
@@ -164,5 +164,5 @@ Copyright
 
 Build status
 
-*   ![status](https://travis-ci.org/getreu/stringsext.svg?branch=master)  
+*   ![status](https://travis-ci.org/getreu/stringsext.svg?branch=master)
 
