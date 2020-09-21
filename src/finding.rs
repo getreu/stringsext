@@ -8,9 +8,10 @@ use crate::mission::Mission;
 use crate::options::Radix;
 use crate::options::ARGS;
 use crate::options::ASCII_ENC_LABEL;
-use pin_project::pin_project;
 use std::io::Write;
+use std::marker::PhantomPinned;
 use std::ops::Deref;
+use std::pin::Pin;
 use std::str;
 
 /// `OUTPUT_BUF_LEN` needs to be long enough to hold all findings that are
@@ -32,9 +33,9 @@ pub const OUTPUT_BUF_LEN: usize = 0x40;
 pub const OUTPUT_LINE_METADATA_LEN: usize = 40;
 
 /// `FindingCollection` is a set of ordered `Finding` s.
-/// This struct is self referential, because `Finding` points into
+/// The structs `v` and `output_buffer_bytes` are
+/// self referential, because `v` points into
 /// `output_buffer_bytes`, hence pinning is required here.
-#[pin_project]
 #[derive(Debug)]
 pub struct FindingCollection<'a> {
     /// `Finding` s in this vector are in chronological order.
@@ -48,24 +49,25 @@ pub struct FindingCollection<'a> {
     /// some `Finding`-objects stored in a `FindingCollection`. The
     /// `Finding`-objects have a `&str`-member called `Finding::s` that is
     /// a substring of `output_buffer_bytes`.
-    #[pin]
     pub output_buffer_bytes: Box<[u8]>,
     /// If `output_buffer` is too small to receive all findings, this is set
     /// `true` indicating that only the last `Finding` s could be stored. At
     /// least one `Finding` got lost. This incident is reported to the user. If
     /// ever this happens, the `OUTPUT_BUF_LEN` was not chosen big enough.
     pub str_buf_overflow: bool,
+    _marker: PhantomPinned,
 }
 impl FindingCollection<'_> {
     pub fn new(byte_offset: ByteCounter) -> Self {
         // This buffer lives on the heap. let mut output_buffer_bytes =
         // Box::new([0u8; OUTPUT_BUF_LEN]);
         let output_buffer_bytes = Box::new([0u8; OUTPUT_BUF_LEN]);
-        Self {
+        FindingCollection {
             v: Vec::new(),
             first_byte_position: byte_offset,
             output_buffer_bytes,
             str_buf_overflow: false,
+            _marker: PhantomPinned,
         }
     }
 
@@ -94,9 +96,9 @@ impl FindingCollection<'_> {
         Ok(())
     }
 }
-/// This allows us to create an iterator from a `FindingCollection`.
 
-impl<'a> IntoIterator for &'a FindingCollection<'a> {
+/// This allows us to create an iterator from a `FindingCollection`.
+impl<'a> IntoIterator for &'a Pin<Box<FindingCollection<'a>>> {
     type Item = &'a Finding<'a>;
     type IntoIter = FindingCollectionIterator<'a>;
 

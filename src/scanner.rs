@@ -16,6 +16,7 @@ use crate::mission::{Utf8Filter, AF_ALL, AF_CTRL, AF_WHITESPACE, UBF_LATIN, UBF_
 use crate::mission::{UTF8_FILTER_ALL_VALID, UTF8_FILTER_LATIN};
 use encoding_rs::*;
 use std::ops::Deref;
+use std::pin::Pin;
 use std::slice;
 use std::str;
 
@@ -122,7 +123,7 @@ pub fn scan<'a>(
     input_file_id: Option<u8>,
     input_buffer: &[u8],
     is_last_input_buffer: bool,
-) -> FindingCollection<'a> {
+) -> Pin<Box<FindingCollection<'a>>> {
     let mut fc = FindingCollection::new(ss.consumed_bytes);
     // We do not clear `output_buffer_bytes`, we just overwrite.
 
@@ -371,7 +372,9 @@ pub fn scan<'a>(
     ss.last_run_str_was_printed_and_is_maybe_cut_str =
         last_window_str_was_printed_and_is_maybe_cut_str;
     ss.consumed_bytes += decoder_input_start as ByteCounter;
-    fc
+
+    // Now we pin the `FindingCollection`.
+    Box::pin(fc)
 }
 
 #[cfg(test)]

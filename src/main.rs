@@ -75,6 +75,7 @@ use std::io;
 use std::io::LineWriter;
 use std::io::Write;
 use std::path::Path;
+use std::pin::Pin;
 use std::process;
 use std::str;
 use std::sync::mpsc;
@@ -95,7 +96,6 @@ fn run() -> Result<(), anyhow::Error> {
     {
         let n_threads = MISSIONS.len();
         let (tx, rx) = mpsc::sync_channel(n_threads);
-
         //
         // Receiver thread:
 
@@ -117,11 +117,16 @@ fn run() -> Result<(), anyhow::Error> {
 
             'batch_receiver: loop {
                 // collect
-                let mut results: Vec<FindingCollection> = Vec::with_capacity(n_threads);
+                let mut results: Vec<Pin<Box<FindingCollection>>> = Vec::with_capacity(n_threads);
                 for _ in 0..n_threads {
                     results.push(match rx.recv() {
+                        // It would be safe to unpin here, as only read operations on data follow:
+                        //       Ok(fc) => unsafe { *Pin::into_inner_unchecked(fc) },
+                        // Instead, we implement `IntoIterator` for the pinned `Pin<Box<FindingCollection>>` type,
+                        // allowing us to `kmerge` a vector of type `Vec<Pin<Box<FindingCollection>>>`.
+                        // In this way no unsafe is needed.
                         Ok(fc) => fc,
-                        Err(_) => break 'batch_receiver,
+                        _ => break 'batch_receiver,
                     });
                 }
                 // merge
@@ -227,6 +232,8 @@ mod tests {
     /// Tests the concurrent scanning with 2 threads, while one thread merges and prints.
     #[test]
     fn test_merger() {
+        use std::pin::Pin;
+
         let inp = "abcdefgÜhijklmn€opÜqrstuvwÜxyz".as_bytes();
 
         let missions = &MISSIONS;
@@ -235,9 +242,11 @@ mod tests {
         let mut ss0 = ScannerState::new(&missions.v[0]);
         let mut ss1 = ScannerState::new(&missions.v[1]);
 
-        let mut resv: Vec<FindingCollection> = Vec::new();
-        resv.push(scan(&mut ss0, Some(0), inp, true));
-        resv.push(scan(&mut ss1, Some(0), inp, true));
+        let mut resv: Vec<Pin<Box<FindingCollection>>> = Vec::new();
+        let fc = scan(&mut ss0, Some(0), inp, true);
+        resv.push(fc);
+        let fc = scan(&mut ss1, Some(0), inp, true);
+        resv.push(fc);
 
         //println!("{:#?}", resv);
 
