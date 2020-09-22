@@ -17,7 +17,7 @@
 //!  its own `Mission` configuration.
 //!
 //!  3. Each thread runs a search in `main::slice` == `scanner::input_buffer`. The
-//!  search is performed by `scanner::scan()`, which cuts the `scanner::input_buffer`
+//!  search is performed by `scanner::FindingCollection::scan()`, which cuts the `scanner::input_buffer`
 //!  into smaller chunks of size 2*`output_line_char_nb_max` bytes hereafter called
 //! `input_window`.
 //!
@@ -29,7 +29,7 @@
 //!
 //!  6. Doing so, the `helper::SplitStr` cuts the UTF-8-chunk into even smaller
 //!  `SplitStr`-chunks not longer than `output_line_char_nb_max` and sends them back to the
-//!  `scanner::scan()` loop.
+//!  `scanner::FindingCollection::scan()` loop.
 //!
 //!  7. There the `SplitStr`-chunk is packed into a `finding::Finding` object and
 //!  then successively added to a `finding::FindingCollection`.
@@ -37,7 +37,7 @@
 //!  8. After finishing its run through the `input_window` the search continues with
 //!  the next `input_window. Goto 5.
 //!
-//!  9. When all `input_window` s are processed, `scanner::scan()` returns the
+//!  9. When all `input_window` s are processed, `scanner::FindingCollection::scan()` returns the
 //!  `finding::FindingCollection` to `main::run()` and exits.
 //!
 //!  10. `main::run()` waits for all threads to return their
@@ -67,7 +67,6 @@ use crate::help::help;
 use crate::input::Slicer;
 use crate::mission::MISSIONS;
 use crate::options::ARGS;
-use crate::scanner::scan;
 use crate::scanner::ScannerStates;
 use itertools::kmerge;
 use scoped_threadpool::Pool;
@@ -156,7 +155,12 @@ fn run() -> Result<(), anyhow::Error> {
                 for mut ss in sss.v.iter_mut() {
                     let tx = tx.clone();
                     scope.execute(move || {
-                        let fc = scan(&mut ss, input_file_id, slice, is_last_input_buffer);
+                        let fc = FindingCollection::scan(
+                            &mut ss,
+                            input_file_id,
+                            slice,
+                            is_last_input_buffer,
+                        );
                         // Send the result to the receiver thread.
                         tx.send(fc).expect(
                             "Error: Can not sent result through output channel. \
@@ -190,7 +194,6 @@ mod tests {
     use crate::finding_collection::FindingCollection;
     use crate::mission::Missions;
     use crate::options::{Args, Radix};
-    use crate::scanner::scan;
     use crate::scanner::ScannerState;
     use itertools::Itertools;
     use lazy_static::lazy_static;
@@ -244,9 +247,9 @@ mod tests {
         let mut ss1 = ScannerState::new(&missions.v[1]);
 
         let mut resv: Vec<Pin<Box<FindingCollection>>> = Vec::new();
-        let fc = scan(&mut ss0, Some(0), inp, true);
+        let fc = FindingCollection::scan(&mut ss0, Some(0), inp, true);
         resv.push(fc);
-        let fc = scan(&mut ss1, Some(0), inp, true);
+        let fc = FindingCollection::scan(&mut ss1, Some(0), inp, true);
         resv.push(fc);
 
         //println!("{:#?}", resv);
