@@ -53,6 +53,7 @@
 extern crate encoding_rs;
 
 mod finding;
+mod finding_collection;
 mod help;
 mod helper;
 mod input;
@@ -60,8 +61,8 @@ mod mission;
 mod options;
 mod scanner;
 
-use crate::finding::FindingCollection;
 use crate::finding::OUTPUT_LINE_METADATA_LEN;
+use crate::finding_collection::FindingCollection;
 use crate::help::help;
 use crate::input::Slicer;
 use crate::mission::MISSIONS;
@@ -185,8 +186,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::finding::FindingCollection;
     use crate::finding::Precision;
+    use crate::finding_collection::FindingCollection;
     use crate::mission::Missions;
     use crate::options::{Args, Radix};
     use crate::scanner::scan;

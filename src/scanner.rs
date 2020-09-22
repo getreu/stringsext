@@ -4,7 +4,8 @@
 extern crate encoding_rs;
 use crate::as_mut_str_unchecked_no_borrow_check;
 use crate::as_str_unchecked_no_borrow_check;
-use crate::finding::{Finding, FindingCollection, Precision};
+use crate::finding::{Finding, Precision};
+use crate::finding_collection::FindingCollection;
 use crate::helper::starts_with_multibyte_char;
 use crate::helper::SplitStr;
 use crate::input::ByteCounter;
