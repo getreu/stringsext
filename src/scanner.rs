@@ -6,10 +6,6 @@ extern crate encoding_rs;
 use crate::input::ByteCounter;
 use crate::mission::Mission;
 use crate::mission::MISSIONS;
-#[cfg(test)]
-use crate::mission::{Utf8Filter, AF_ALL, AF_CTRL, AF_WHITESPACE, UBF_LATIN, UBF_NONE};
-#[cfg(test)]
-use crate::mission::{UTF8_FILTER_ALL_VALID, UTF8_FILTER_LATIN};
 use encoding_rs::Decoder;
 use std::ops::Deref;
 
@@ -93,14 +89,15 @@ impl<'a> ScannerState {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use crate::finding::Precision;
     use crate::finding_collection::FindingCollection;
     use crate::mission::Mission;
+    use crate::mission::{Utf8Filter, AF_ALL, AF_CTRL, AF_WHITESPACE, UBF_LATIN, UBF_NONE};
+    use crate::mission::{UTF8_FILTER_ALL_VALID, UTF8_FILTER_LATIN};
     use encoding_rs::Encoding;
     use lazy_static::lazy_static;
-    use std::str;
 
     // To see println!() output in test run, launch
     // cargo test   -- --nocapture
@@ -529,80 +526,6 @@ mod tests {
         assert_eq!(fc.v[1].s, "def");
 
         assert_eq!(ss.consumed_bytes, 10031 + 8);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
-        assert_eq!(ss.last_scan_run_leftover, "");
-    }
-
-    #[test]
-    fn test_ascii_emulation() {
-        let m: &'static Mission = &MISSION_ALL_X_USER_DEFINED;
-
-        let mut ss = ScannerState::new(m);
-
-        let input = b"abcdefg\x58\x59\x80\x82h\x83ijk\x89\x90";
-
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
-
-        //println!("{:#?}", fc.v);
-
-        assert_eq!(fc.first_byte_position, 10_000);
-        assert_eq!(fc.str_buf_overflow, false);
-        assert_eq!(fc.v.len(), 2);
-
-        assert_eq!(fc.v[0].position, 10_000);
-        assert_eq!(fc.v[0].position_precision, Precision::Exact);
-        assert_eq!(fc.v[0].s, "abcdefgXY\u{f780}");
-        // Next output line.
-
-        assert_eq!(fc.v[1].position, 10_000);
-        assert_eq!(fc.v[1].position_precision, Precision::After);
-        assert_eq!(fc.v[1].s, "\u{f782}h\u{f783}ijk\u{f789}\u{f790}");
-
-        assert_eq!(
-            // We only compare the first 35 bytes, the others are 0 anyway.
-            unsafe { str::from_utf8_unchecked(&fc.output_buffer_bytes[..35]) },
-            "abcdefg\u{58}\u{59}\u{f780}\u{f782}h\u{f783}ijk\u{f789}\u{f790}\
-             \u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}"
-        );
-
-        assert_eq!(ss.consumed_bytes, 10000 + 18);
-        // false, because we told the `FindingCollection::scan()` this is the last run.
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
-        assert_eq!(ss.last_scan_run_leftover, "");
-
-        // Second run.
-
-        let m: &'static Mission = &MISSION_ASCII;
-
-        let mut ss = ScannerState::new(m);
-
-        let input = b"abcdefg\x58\x59\x80\x82h\x83ijk\x89\x90";
-
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
-
-        //println!("{:#?}", fc.v);
-
-        assert_eq!(fc.v.len(), 2);
-        assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
-
-        assert_eq!(fc.v[0].position, 10_000);
-        assert_eq!(fc.v[0].position_precision, Precision::Exact);
-        assert_eq!(fc.v[0].s, "abcdefgXY");
-        // Next output line.
-
-        assert_eq!(fc.v[1].position, 10_000);
-        assert_eq!(fc.v[1].position_precision, Precision::After);
-        // Note that `h` is gone.
-        assert_eq!(fc.v[1].s, "ijk");
-
-        assert_eq!(
-            // We only compare the first 35 bytes, the others are 0 anyway.
-            unsafe { str::from_utf8_unchecked(&fc.output_buffer_bytes[..35]) },
-            "abcdefg\u{58}\u{59}\u{f780}\u{f782}h\u{f783}ijk\u{f789}\u{f790}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}\u{0}"
-        );
-
-        assert_eq!(ss.consumed_bytes, 10000 + 18);
         assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
         assert_eq!(ss.last_scan_run_leftover, "");
     }
