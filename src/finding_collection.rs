@@ -35,7 +35,7 @@ pub struct FindingCollection<'a> {
     /// some `Finding`-objects stored in a `FindingCollection`. The
     /// `Finding`-objects have a `&str`-member called `Finding::s` that is
     /// a substring of `output_buffer_bytes`.
-    pub output_buffer_bytes: Box<[u8]>,
+    output_buffer_bytes: Box<[u8]>,
     /// If `output_buffer` is too small to receive all findings, this is set
     /// `true` indicating that only the last `Finding` s could be stored. At
     /// least one `Finding` got lost. This incident is reported to the user. If
