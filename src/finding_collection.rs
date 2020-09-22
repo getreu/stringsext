@@ -19,9 +19,13 @@ use std::slice;
 use std::str;
 
 /// `FindingCollection` is a set of ordered `Finding` s.
-/// The structs `v` and `output_buffer_bytes` are
-/// self referential, because `v` points into
-/// `output_buffer_bytes`, hence pinning is required here.
+/// The box `output_buffer_bytes` and the struct `Finding` are self-referential,
+/// because `Finding.s` points into `output_buffer_bytes`. Therefore, special
+/// care is taken that, `output_buffer_bytes` is protected from being moved in
+// memory:
+/// 1. `output_buffer_bytes` is private.
+/// 2. The returned `FindingCollection` is wrapped in a
+///    `Pin<Box<FindingCollection>>>`.
 #[derive(Debug)]
 pub struct FindingCollection<'a> {
     /// `Finding` s in this vector are in chronological order.
@@ -30,11 +34,11 @@ pub struct FindingCollection<'a> {
     /// `Finding.position` refer to `first_byte_position` as zero.
     pub first_byte_position: ByteCounter,
     /// A buffer containing the UTF-8 representation of all findings during one
-    /// `ScannerState::scan()` run. First, the `Decoder` fills in some UTF-8
+    /// `Self::from()` run. First, the `Decoder` fills in some UTF-8
     /// string. This string is then filtered. The result of this filtering is
-    /// some `Finding`-objects stored in a `FindingCollection`. The
-    /// `Finding`-objects have a `&str`-member called `Finding::s` that is
-    /// a substring of `output_buffer_bytes`.
+    /// a collection of `Finding`-objects stored in a `FindingCollection`. The
+    /// `Finding`-objects have a `&str`-member called `Finding.s` that is
+    /// a substring (slice) of `output_buffer_bytes`.
     output_buffer_bytes: Box<[u8]>,
     /// If `output_buffer` is too small to receive all findings, this is set
     /// `true` indicating that only the last `Finding` s could be stored. At
