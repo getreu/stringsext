@@ -199,7 +199,7 @@ pub mod tests {
         let mut ss = ScannerState::new(m);
 
         let input = b"a234567890b234567890c234";
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         assert_eq!(fc.v[0].position, 10000);
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
@@ -231,7 +231,7 @@ pub mod tests {
 
         let input = b"a234567890b234567890c2";
         // True because this is the only and last input.
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         assert_eq!(fc.v.len(), 3);
         assert_eq!(fc.first_byte_position, 10000);
@@ -266,7 +266,7 @@ pub mod tests {
 
         let input = b"You\xC0\x82\xC0co";
         // `false` because this is not the last input.
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         assert_eq!(fc.v[0].position, 10000);
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
@@ -284,7 +284,7 @@ pub mod tests {
 
         let input = b"me\xC0\x82\xC0home.";
         // True, because last input.
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         assert_eq!(fc.v.len(), 2);
         assert_eq!(fc.v[0].position, 10008);
@@ -315,7 +315,7 @@ pub mod tests {
 
         let input = b"You\xC0\x82\xC0co";
         // `false` because this is not the last input.
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         assert_eq!(fc.v.len(), 0);
 
@@ -330,7 +330,7 @@ pub mod tests {
 
         let input = b"me*\xC0\x82\xC0ho*me.\x82";
         // True, because last input.
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         assert_eq!(fc.v.len(), 2);
         assert_eq!(fc.v[0].position, 10008);
@@ -365,7 +365,7 @@ pub mod tests {
         let input = b"word\xe2\x82";
 
         // This `FindingCollection` is empty.
-        let _fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let _fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         //println!("{:#?}",fc);
 
@@ -374,7 +374,7 @@ pub mod tests {
         // last run.
         let input = b"\xacoh\xC0no no";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         //println!("{:#?}",fc);
 
@@ -391,7 +391,7 @@ pub mod tests {
         // of the € sign.
         let input = b"\xe2\x82\xacStream end.";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         //println!("{:#?}", fc);
 
@@ -423,7 +423,7 @@ pub mod tests {
 
         let input = b"ii\xC0abc\xC0\xC1de\xC0fgh\xC0ijk";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         //println!("{:#?}", fc.v);
 
@@ -448,7 +448,7 @@ pub mod tests {
         // Only "def" is long enough.
         let input = b"b\xC0\x82c\xC0def";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         //println!("{:#?}", fc.v);
 
@@ -481,7 +481,7 @@ pub mod tests {
 
         let input = "ii€ääà€€de€fgh€ijk".as_bytes();
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         //println!("{:#?}", fc.v);
 
@@ -508,7 +508,7 @@ pub mod tests {
         // Only "def" is long enough.
         let input = b"b\xC0\x82c\xC0def";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         //println!("{:#?}", fc.v);
 
@@ -552,7 +552,7 @@ pub mod tests {
         let mut ss = ScannerState::new(&m);
 
         let input = b"\x00\x00\x00\x00\x40\x00\x38\x00\x0c\x00\x40\x00\x2c\x00\x2b\x00";
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
         // Test that the bug is gone
         assert_ne!(fc.v.len(), 1);
         //assert_ne!(fc.v[0].s, "+");

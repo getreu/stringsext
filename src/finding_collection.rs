@@ -76,7 +76,7 @@ impl FindingCollection<'_> {
     /// In case this is the last `input_buffer` of the stream, `last` must be set
     /// to correctly flush the `ss.decoder`.
 
-    pub fn scan<'a>(
+    pub fn from<'a>(
         ss: &mut ScannerState,
         input_file_id: Option<u8>,
         input_buffer: &[u8],
@@ -430,7 +430,7 @@ mod tests {
 
         let input = b"abcdefg\x58\x59\x80\x82h\x83ijk\x89\x90";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, true);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, true);
 
         //println!("{:#?}", fc.v);
 
@@ -467,7 +467,7 @@ mod tests {
 
         let input = b"abcdefg\x58\x59\x80\x82h\x83ijk\x89\x90";
 
-        let fc = FindingCollection::scan(&mut ss, Some(0), input, false);
+        let fc = FindingCollection::from(&mut ss, Some(0), input, false);
 
         //println!("{:#?}", fc.v);
 

@@ -155,7 +155,7 @@ fn run() -> Result<(), anyhow::Error> {
                 for mut ss in sss.v.iter_mut() {
                     let tx = tx.clone();
                     scope.execute(move || {
-                        let fc = FindingCollection::scan(
+                        let fc = FindingCollection::from(
                             &mut ss,
                             input_file_id,
                             slice,
@@ -247,9 +247,9 @@ mod tests {
         let mut ss1 = ScannerState::new(&missions.v[1]);
 
         let mut resv: Vec<Pin<Box<FindingCollection>>> = Vec::new();
-        let fc = FindingCollection::scan(&mut ss0, Some(0), inp, true);
+        let fc = FindingCollection::from(&mut ss0, Some(0), inp, true);
         resv.push(fc);
-        let fc = FindingCollection::scan(&mut ss1, Some(0), inp, true);
+        let fc = FindingCollection::from(&mut ss1, Some(0), inp, true);
         resv.push(fc);
 
         //println!("{:#?}", resv);
