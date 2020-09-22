@@ -78,7 +78,7 @@ User documentation
 
 Developer documentation
 
-*   [API documentation](/projects/stringsext/stringsext/index.html)
+*   [API documentation](/projects/stringsext/_downloads/doc/stringsext/)
 
 *   [Forensic Tool Development with Rust](/projects/forensic-tool-development-with-rust)
 

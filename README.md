@@ -78,7 +78,7 @@ User documentation
 
 Developer documentation
 
-*   [API documentation](https://blog.getreu.net/projects/stringsext/stringsext/index.html)
+*   [API documentation](https://blog.getreu.net/projects/stringsext/_downloads/doc/stringsext/)
 
 *   [Forensic Tool Development with Rust](https://blog.getreu.net/projects/forensic-tool-development-with-rust)
 
