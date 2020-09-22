@@ -2,4 +2,4 @@
 cd ../doc
 ./make--all
 
-cargo rustdoc  -p stringsext -- --no-deps --document-private-items 
+cargo rustdoc  -p stringsext
