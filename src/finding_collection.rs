@@ -22,7 +22,7 @@ use std::str;
 /// The box `output_buffer_bytes` and the struct `Finding` are self-referential,
 /// because `Finding.s` points into `output_buffer_bytes`. Therefore, special
 /// care is taken that, `output_buffer_bytes` is protected from being moved in
-// memory:
+/// memory:
 /// 1. `output_buffer_bytes` is private.
 /// 2. The returned `FindingCollection` is wrapped in a
 ///    `Pin<Box<FindingCollection>>>`.

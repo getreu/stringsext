@@ -7,7 +7,7 @@ https://crates.io/crates/stringsext)
 [![Documentation](https://docs.rs/stringsext/badge.svg)](
 https://docs.rs/stringsext)
 [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](
-https://github.com/getreu/stringsext)
+https://gitlab.com/getreu/stringsext)
 
 
 **stringsext** is a Unicode enhancement of the *GNU strings* tool with
@@ -86,9 +86,9 @@ Developer documentation
 
 Repository
 
-*   [Stringsext on Github](https://github.com/getreu/stringsext)
-
 *   [Stringsext on Gitlab](https://gitlab.com/getreu/stringsext)
+
+*   [Stringsext on Github (mirror)](https://github.com/getreu/stringsext)
 
 ## Distribution
 

@@ -431,7 +431,7 @@ resources to maintain a fork of **encoding_rs**.
 
 # RESOURCES
 
-**Project website:** <https://github.com/getreu/stringsext>
+**Project website:** <https://gitlab.com/getreu/stringsext>
 
 # COPYING
 

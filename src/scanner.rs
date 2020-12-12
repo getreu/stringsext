@@ -491,13 +491,13 @@ pub mod tests {
 
         assert_eq!(fc.v[0].s, "ääà");
         assert_eq!(fc.v[0].position, 10000);
-        // This was cat at the edge of `input_window`.
+        // This was cut at the edge of `input_window`.
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
 
         // Note that "de" is missing, too short.
         assert_eq!(fc.v[1].s, "fgh");
         assert_eq!(fc.v[1].position, 10020);
-        // This was cat at the edge of `input_window`.
+        // This was cut at the edge of `input_window`.
         assert_eq!(fc.v[1].position_precision, Precision::Before);
 
         assert_eq!(ss.consumed_bytes, 10000 + 31);
@@ -521,7 +521,7 @@ pub mod tests {
         assert_eq!(fc.v[0].s, "ijkb");
 
         assert_eq!(fc.v[1].position, 10036);
-        // This was cat at the edge of `input_window`.
+        // This was cut at the edge of `input_window`.
         assert_eq!(fc.v[1].position_precision, Precision::Exact);
         assert_eq!(fc.v[1].s, "def");
 
