@@ -115,7 +115,7 @@ impl<'a> Finding<'a> {
             if ARGS.inputs.len() > 1 {
                 if let Some(i) = self.input_file_id {
                     // map 1 -> 'A', 2 -> 'B', 3 -> 'C'
-                    out.write_all(&[i + 64 as u8, b' '])?;
+                    out.write_all(&[i + 64_u8, b' '])?;
                 }
             };
 
@@ -140,7 +140,7 @@ impl<'a> Finding<'a> {
 
             if ARGS.encoding.len() > 1 {
                 // map 0 -> 'a', 1 -> 'b', 2 -> 'c' ...
-                out.write_all(&[b'(', self.mission.mission_id + 97 as u8, b' '])?;
+                out.write_all(&[b'(', self.mission.mission_id + 97_u8, b' '])?;
                 out.write_all(if self.mission.print_encoding_as_ascii {
                     ASCII_ENC_LABEL.as_bytes()
                 } else {
