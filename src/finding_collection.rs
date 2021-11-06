@@ -187,8 +187,8 @@ impl FindingCollection<'_> {
                         // Alternative code, but slower. let tmp_buffer: &mut str =
                         // std::str::from_utf8_mut(&mut buffer_bytes[..]).unwrap();
                         let (_, _, written) = empty_decoder.decode_to_str_without_replacement(
-                            &input_buffer[..],
-                            &mut buffer[..],
+                            input_buffer,
+                            &mut *buffer,
                             true,
                         );
                         // When the result of the two decoders is not the same, as the
