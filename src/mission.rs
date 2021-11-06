@@ -581,7 +581,7 @@ impl Missions {
 
         for (mission_id, enc_opt) in enc_iter.enumerate() {
             let (enc_name, chars_min_nb, filter_af, filter_ubf, filter_grep_char) =
-                Self::parse_enc_opt(&enc_opt)?;
+                Self::parse_enc_opt(enc_opt)?;
 
             // DEFINE DEFAULTS
 

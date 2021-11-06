@@ -255,7 +255,7 @@ impl FindingCollection<'_> {
                         // We keep it for printing.
                         fc.v.push(Finding {
                             input_file_id,
-                            mission: &ss.mission,
+                            mission: ss.mission,
                             position: ss.consumed_bytes + decoder_input_start as ByteCounter,
                             position_precision,
                             s: chunk.s,
