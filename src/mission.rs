@@ -264,7 +264,7 @@ pub const ASCII_FILTER_ALIASSE: [([u8; 12], u128, [u8; 25]); 6] = [
         AF_ALL & !AF_CTRL | AF_WHITESPACE,
         *b"all-control+whitespace   ",
     ),
-    (*b"Default     ", AF_DEFAULT, *b"all-control+whitespace   "),
+    (*b"Default     ", AF_DEFAULT, *b"all-control              "),
     (*b"None        ", AF_NONE, *b"block all 1-byte UTF-8   "),
     (
         *b"Wsp         ",
