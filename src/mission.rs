@@ -14,7 +14,6 @@ use crate::options::OUTPUT_LINE_CHAR_NB_MIN;
 use anyhow::{anyhow, Context, Result};
 use encoding_rs::*;
 use lazy_static::lazy_static;
-use std;
 use std::cmp;
 use std::cmp::{Eq, Ord};
 use std::fmt;
