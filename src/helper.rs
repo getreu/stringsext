@@ -44,7 +44,7 @@ macro_rules! as_mut_str_unchecked_no_borrow_check {
 
 /// A macro useful to reuse an existing buffer while ignoring eventual existing
 /// borrows. Make sure that this buffer is not used anymore before applying this!
-/// Buffer reuse helps to avoid additional memory-allocations.
+/// Buffer reuse helps to avoid additional memory allocations.
 #[macro_export]
 macro_rules! as_mut_slice_no_borrow_check {
     ($slice_u8:expr) => {{
@@ -276,6 +276,7 @@ impl<'a> Iterator for SplitStr<'a> {
             } else {
                 // char_len > 1
                 if self.utf8f.pass_ubf_filter(leading_byte) {
+                    #[allow(clippy::branches_sharing_code)]
                     if !self.require_same_unicode_block
                         || leading_byte == last_multi_char_leading_byte
                         || last_multi_char_leading_byte == 0
@@ -310,10 +311,10 @@ impl<'a> Iterator for SplitStr<'a> {
                 };
 
                 // Exit 3:
-                if self.last_s_was_maybe_cut && ok_char_nb > 0 && ok_s_p == self.inp_start_p {
-                    break;
+                if (self.last_s_was_maybe_cut && ok_char_nb > 0 && ok_s_p == self.inp_start_p)
                 // Exit 4:
-                } else if ok_char_nb >= self.chars_min_nb as usize && grep_char_ok {
+                ||  (ok_char_nb >= self.chars_min_nb as usize && grep_char_ok)
+                {
                     // Yes, we collected enough for this run. The rest of the
                     // buffer can be treated later in a `next()`.
                     break;
