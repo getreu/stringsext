@@ -1,6 +1,9 @@
 //! Parse and convert command-line-arguments into static `MISSION` structures,
 //! that are mainly used to initialize `ScannerState`-objects.
 
+#![allow(clippy::too_many_arguments)]
+#![allow(clippy::type_complexity)]
+
 extern crate anyhow;
 extern crate encoding_rs;
 use crate::input::ByteCounter;
@@ -493,7 +496,7 @@ macro_rules! parse_filter_parameter {
                     };
                 }
                 if oubf.is_some() {
-                    Some(oubf.unwrap())
+                    oubf
                 } else {
                     return Err(anyhow!(
                         "filter name `{}` is not valid, try `--list-encodings`",

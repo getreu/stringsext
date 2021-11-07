@@ -27,8 +27,8 @@ macro_rules! as_str_unchecked_no_borrow_check {
     }};
 }
 
-/// This macro is useful for zero-cost conversion from &[u8] to &str. Use
-/// this with care. Make sure, that the byte-slice boundaries always fit character
+/// This macro is useful for zero cost conversion from &[u8] to &str. Use
+/// this with care. Make sure, that the byte slice boundaries always fit character
 /// boundaries and that the slice only contains valid UTF-8. Also, check for potential
 /// race conditions yourself, because this disables borrow checking for
 /// `$slice_u8`.
@@ -37,6 +37,7 @@ macro_rules! as_str_unchecked_no_borrow_check {
 macro_rules! as_mut_str_unchecked_no_borrow_check {
     ($slice_u8:expr) => {{
         let ptr = $slice_u8.as_mut_ptr();
+        #[allow(clippy::unnecessary_mut_passed)]
         let len = $slice_u8.len();
         unsafe { str::from_utf8_unchecked_mut(slice::from_raw_parts_mut(ptr, len)) }
     }};
