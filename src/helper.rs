@@ -80,7 +80,7 @@ pub struct SplitStr<'a> {
     /// substrings larger than `>=chars_min_nb` will be returned by `next()`.
     /// This rule concerning only substrings touching one of the `inp` buffer
     /// boundaries has 2 exceptions:
-    ///   
+    ///
     /// 1. When `last_s_was_maybe_cut` is set and
     ///    the substring touches the left boundary of `inp`, the rule is ignored.
     /// 2. When a substring touches the right boundary of `inp`, it is always

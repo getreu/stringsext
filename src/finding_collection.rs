@@ -1,3 +1,4 @@
+#![allow(clippy::assertions_on_constants)]
 extern crate encoding_rs;
 
 use crate::as_mut_str_unchecked_no_borrow_check;
@@ -304,16 +305,16 @@ impl FindingCollection<'_> {
                     }
                     DecoderResult::OutputFull => {
                         // This should never happen. If ever it does we clear
-                        // the the FindingCollection to make more space and
+                        // the FindingCollection to make more space and
                         // forget all previous findings.
                         fc.clear_and_mark_incomplete();
                         eprintln!("Buffer overflow. Output buffer is too small to receive all decoder data.\
                             Some findings got lost in input {:x}..{:x} from file {:?} for scanner ({})!",
-                        ss.consumed_bytes,
-                        ss.consumed_bytes + decoder_input_start as ByteCounter,
-                        input_file_id,
-                        char::from((ss.mission.mission_id + 97) as u8),
-                    );
+                            ss.consumed_bytes,
+                            ss.consumed_bytes + decoder_input_start as ByteCounter,
+                            input_file_id,
+                            char::from((ss.mission.mission_id + 97) as u8),
+                        );
                         decoder_output_start = 0;
                         debug_assert!(
                         true,
