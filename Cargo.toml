@@ -2,7 +2,7 @@
 name = "stringsext"
 version = "2.3.3"
 authors = ["Jens Getreu <getreu@web.de>"]
-edition = "2018"
+edition = "2021"
 readme = "README.md"
 description = "find multi-byte-encoded strings in binary data"
 license = "MIT/Apache-2.0"
