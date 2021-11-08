@@ -1,6 +1,6 @@
 [package]
 name = "stringsext"
-version = "2.3.3"
+version = "2.3.4"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -15,16 +15,16 @@ repository = "https://github.com/getreu/stringsext"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-encoding_rs= "0.8.24"
+encoding_rs= "0.8.29"
 lazy_static = "1.4.0"
-serde = "1.0.116"
-serde_derive = "1.0.116"
-itertools = "0.9.0"
+serde = "1.0.130"
+serde_derive = "1.0.130"
+itertools = "0.10.1"
 scoped_threadpool = "0.1.9"
-anyhow = "1.0.32"
+anyhow = "1.0.45"
 clap = "2.33.3"
-structopt = "0.3.17"
-pin-project = "0.4.23"
+structopt = "0.3.25"
+pin-project = "1.0.8"
 
 # Metadata for Debian packages with cargo-deb
 

@@ -1,4 +1,4 @@
-% STRINGSEXT(1) Version 2.3.3 | Stringsext Documentation
+% STRINGSEXT(1) Version 2.3.4 | Stringsext Documentation
 
 <!--
 previous versions
