@@ -231,8 +231,7 @@ pub const AF_NONE: u128 = 0x0000_0000_0000_0000_0000_0000_0000_0000;
 
 /// ASCII filter:
 /// Controls: (0x00..0x20, 0x7F)
-/// [C0 and C1 control codes - Wikipedia]
-/// (https://en.wikipedia.org/wiki/C0_and_C1_control_codes)
+/// [C0 and C1 control codes - Wikipedia](<https://en.wikipedia.org/wiki/C0_and_C1_control_codes>)
 /// Unlike traditional `strings` we exclude "Space" (0x20) here, as
 /// it can appear in filenames. Instead, we consider "Space" to be
 /// a regular character.
@@ -242,8 +241,7 @@ pub const AF_CTRL: u128 = 0x8000_0000_0000_0000_0000_0000_ffff_ffff;
 /// ASCII filter:
 /// White-space
 /// (0x09..=0x0c, 0x20)
-/// [C0 and C1 control codes - Wikipedia]
-/// (https://en.wikipedia.org/wiki/C0_and_C1_control_codes)
+/// [C0 and C1 control codes - Wikipedia](<https://en.wikipedia.org/wiki/C0_and_C1_control_codes>)
 /// It do not include "Carriage Return" (0x0d) here. This way strings are
 /// divided into shorter chunks and we get more location information.
 #[allow(dead_code)]
