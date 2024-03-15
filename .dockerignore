@@ -1,0 +1,9 @@
+doc/build/
+target
+*.sw?
+*.html
+*.1
+*.1.gz
+.vscode/
+tests/functional/output
+.idea
