@@ -15,16 +15,16 @@ repository = "https://github.com/getreu/stringsext"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-encoding_rs= "0.8.29"
-lazy_static = "1.4.0"
-serde = "1.0.130"
-serde_derive = "1.0.130"
-itertools = "0.10.1"
+encoding_rs= "0.8.34"
+lazy_static = "1.5.0"
+serde = "1.0.210"
+serde_derive = "1.0.210"
+itertools = "0.10.5"
 scoped_threadpool = "0.1.9"
-anyhow = "1.0.45"
-clap = "2.33.3"
-structopt = "0.3.25"
-pin-project = "1.0.8"
+anyhow = "1.0.89"
+clap = "2.34.0"
+structopt = "0.3.26"
+pin-project = "1.1.5"
 
 # Metadata for Debian packages with cargo-deb
 
