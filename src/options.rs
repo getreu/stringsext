@@ -2,9 +2,9 @@
 //! structures.
 
 use crate::input::ByteCounter;
-use clap::arg_enum;
 use lazy_static::lazy_static;
 use std::path::PathBuf;
+use std::str::FromStr;
 use structopt::StructOpt;
 
 /// Encoding name literal used when simulating non-built-in
@@ -79,7 +79,7 @@ pub struct Args {
     #[structopt(long, short = "s")]
     pub counter_offset: Option<String>,
     // enable byte-counter with radix `o`, `x` or `d`
-    #[structopt(long, short = "t", possible_values = &Radix::variants(), case_insensitive = true)]
+    #[structopt(long, short = "t")]
     pub radix: Option<Radix>,
     /// filter applied after decoding
     /// (see `--list-encodings` for UBF examples)
@@ -90,8 +90,7 @@ pub struct Args {
     pub version: bool,
 }
 
-arg_enum! {
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Hash, Clone, Eq, PartialEq, Copy)]
 /// radix of the `byte-counter` when printed
 pub enum Radix {
     // octal
@@ -101,6 +100,17 @@ pub enum Radix {
     // decimal
     D,
 }
+
+impl FromStr for Radix {
+    type Err = String;
+    fn from_str(rad: &str) -> Result<Radix, Self::Err> {
+        match &*rad.to_ascii_lowercase() {
+            "o" => Ok(Radix::O),
+            "x" => Ok(Radix::X),
+            "d" => Ok(Radix::D),
+            _ => Err(String::from("can not convert radix variant")),
+        }
+    }
 }
 
 lazy_static! {
