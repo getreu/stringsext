@@ -85,7 +85,7 @@ use std::thread::JoinHandle;
 /// Uses the version-number defined in `../Cargo.toml`.
 const VERSION: Option<&'static str> = option_env!("CARGO_PKG_VERSION");
 /// (c) Jens Getreu
-const AUTHOR: &str = "(c) Jens Getreu, 2016-2020";
+const AUTHOR: &str = "(c) Jens Getreu, 2016-2024";
 
 /// Processes the input stream in batches with threads. Then receives, merges, sorts and
 /// prints the result
