@@ -11,42 +11,42 @@
 //!  # Operating principle
 
 //!  1. The iterator `input::Slicer` concatenates the input-files and cuts
-//!  the input stream into slices called `main::slice`.
+//!     the input stream into slices called `main::slice`.
 //!
 //!  2. In `main::run()` these slices are feed in parallel to threads, where each has
-//!  its own `Mission` configuration.
+//!     its own `Mission` configuration.
 //!
 //!  3. Each thread runs a search in `main::slice` == `scanner::input_buffer`. The
-//!  search is performed by `scanner::FindingCollection::scan()`, which cuts the `scanner::input_buffer`
-//!  into smaller chunks of size 2*`output_line_char_nb_max` bytes hereafter called
-//! `input_window`.
+//!     search is performed by `scanner::FindingCollection::scan()`, which cuts
+//!     the `scanner::input_buffer` into smaller chunks of size
+//!     2*`output_line_char_nb_max` bytes hereafter called `input_window`.
 //!
 //!  4. The `Decoder` runs through the `input_window`, searches for valid strings and
-//!  decodes them into UTF-8-chunks.
+//!     decodes them into UTF-8-chunks.
 //!
 //!  5. Each UTF-8-chunk is then fed into the filter `helper::SplitStr` to be
-//!  analyzed if parts of it satisfy certain filter conditions.
+//!     analyzed if parts of it satisfy certain filter conditions.
 //!
 //!  6. Doing so, the `helper::SplitStr` cuts the UTF-8-chunk into even smaller
-//!  `SplitStr`-chunks not longer than `output_line_char_nb_max` and sends them back to the
-//!  `scanner::FindingCollection::scan()` loop.
+//!     `SplitStr`-chunks not longer than `output_line_char_nb_max` and sends
+//!     them back to the  `scanner::FindingCollection::scan()` loop.
 //!
 //!  7. There the `SplitStr`-chunk is packed into a `finding::Finding` object and
-//!  then successively added to a `finding::FindingCollection`.
+//!     then successively added to a `finding::FindingCollection`.
 //!
 //!  8. After finishing its run through the `input_window` the search continues with
-//!  the next `input_window. Goto 5.
+//!     the next `input_window. Goto 5.
 //!
-//!  9. When all `input_window` s are processed, `scanner::FindingCollection::scan()` returns the
-//!  `finding::FindingCollection` to `main::run()` and exits.
+//!  9. When all `input_window` s are processed, `scanner::FindingCollection::scan()`
+//!     returns the `finding::FindingCollection` to `main::run()` and exits.
 //!
 //!  10. `main::run()` waits for all threads to return their
-//!  `finding::FindingCollection` s. Then, all `Findings` s are merged,
-//!  sorted and finally print out by `finding::print()`.
+//!      `finding::FindingCollection` s. Then, all `Findings` s are merged,
+//!      sorted and finally print out by `finding::print()`.
 //!
 //!  11. While the print still running, the next `main::slice` ==
-//!  `scanner::input_buffer` is sent to all threads for the next search.
-//!  Goto 3.
+//!      `scanner::input_buffer` is sent to all threads for the next search.
+//!      Goto 3.
 //!
 //!  12. `main::run()` exits when all `main::slice` s are processed.
 
