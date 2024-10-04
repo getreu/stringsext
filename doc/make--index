@@ -7,5 +7,5 @@ mkdir --parents ./build/man/man1
 cp ../README.md ./source/index.md
 sed -i 's/http.*\.getreu\.net//g' ./source/index.md
 
-./md2docbook2html ./source/index.md ./build/html/index.html
+./markdown2html ./source/index.md ./build/html/index.html
 #rm index.md

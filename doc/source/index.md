@@ -42,7 +42,7 @@ When invoked with `stringsext -e ascii` **stringsext** can be used
 as *GNU strings* replacement.
 
 
-## Screenshot
+# Screenshot
 
 ```
 stringsext -tx -e utf-8 -e utf-16le -e utf-16be \
@@ -64,7 +64,7 @@ stringsext -tx -e utf-8 -e utf-16le -e utf-16be \
 ```
 
 
-## Documentation
+# Documentation
 
 User documentation
 
@@ -82,7 +82,7 @@ Developer documentation
 
 *   [Forensic Tool Development with Rust](/projects/forensic-tool-development-with-rust)
 
-## Source code
+# Source code
 
 Repository
 
@@ -90,7 +90,7 @@ Repository
 
 *   [Stringsext on Github (mirror)](https://github.com/getreu/stringsext)
 
-## Distribution
+# Distribution
 
 * Binaries for Ubuntu-Linux 18.04, Windows, MacOS (see below for
   Debian binaries)
@@ -137,7 +137,7 @@ Repository
 
 
 
-## Building and installing
+# Building and installing
 
 1. [Install Rust](https://www.rust-lang.org/tools/install), e.g.
 
@@ -152,7 +152,7 @@ This project follows [Semantic Versioning](https://semver.org/).
 
 
 
-## About
+# About
 
 Author
 

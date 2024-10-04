@@ -1,0 +1,61 @@
+#!/bin/bash
+# Author: Jens Getreu
+
+# apt install pandoc docbook-xsl-ns xsltproc
+render () {
+    ### parse args
+
+    #set -x
+    InPath="$1"
+    InFile="${InPath##*/}"
+    InFileExt="${InPath##*.}"
+    InBase="${InFile%.*}"
+    InDir="${InPath%/*}"
+    if [ "$InDir" = "$InPath" ] ; then
+        InDir="."
+    fi
+
+    OutPath="$2"
+    OutFile="${OutPath##*/}"
+    OutBase="${OutFile%.*}"
+    OutDir="${OutPath%/*}"
+    if [ "$OutDir" = "$OutPath" ] ; then
+        OutDir="."
+    fi
+
+
+    ### Prepare
+
+    mkdir -p "$OutDir"
+
+    cp -r -L  "$InDir/assets/" "$OutDir"
+    cp "$InDir/web.css" "$OutDir"
+    cp "$InPath" "$OutDir"
+    CssPath="web.css"
+    HtmlPath="$OutBase.html"
+
+    ### Generate HTML
+    cd "$OutDir"
+    pandoc -s --to=html --from=markdown+yaml_metadata_block \
+           --toc --number-sections -H "$CssPath" \
+           -o "$HtmlPath" "$InFile"
+
+    # Remove temp files
+    rm "$InFile"
+}
+
+
+
+### Main
+# usage:
+# render FILE [FILE]
+# render report.md ./rendition/report.html
+
+if [[ -n "${2/[ ]*\n/}" ]] ; then
+        OutPath="$2"
+else
+        OutPath="${1%.*}.html" # $2 is empty
+fi
+render "$1" "$OutPath"
+
+
