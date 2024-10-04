@@ -107,7 +107,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
             require_same_unicode_block: false,
             // this is a pass all filter
@@ -120,7 +120,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
             require_same_unicode_block: false,
             // this is a pass all filter
@@ -134,7 +134,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 3,
             require_same_unicode_block: false,
             // this is a pass all filter
@@ -152,7 +152,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
             chars_min_nb: 3,
             require_same_unicode_block: false,
             filter: UTF8_FILTER_ALL_VALID,
@@ -164,7 +164,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("x-user-defined").as_bytes()).unwrap(),
             chars_min_nb: 3,
             require_same_unicode_block: false,
             // this is a pass all filter
@@ -181,7 +181,7 @@ pub mod tests {
             mission_id: 0,
             counter_offset: 10_000,
             print_encoding_as_ascii: false,
-            encoding: &Encoding::for_label(("utf-8").as_bytes()).unwrap(),
+            encoding: Encoding::for_label(("utf-8").as_bytes()).unwrap(),
             chars_min_nb: 4,
             require_same_unicode_block: false,
             // this is a pass all filter
@@ -549,7 +549,7 @@ pub mod tests {
 
         // We test UTF-8 as input encoding.
         let m: &'static Mission = &MISSION_REAL_DATA_SCAN;
-        let mut ss = ScannerState::new(&m);
+        let mut ss = ScannerState::new(m);
 
         let input = b"\x00\x00\x00\x00\x40\x00\x38\x00\x0c\x00\x40\x00\x2c\x00\x2b\x00";
         let fc = FindingCollection::from(&mut ss, Some(0), input, false);

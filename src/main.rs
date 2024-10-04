@@ -104,7 +104,7 @@ fn run() -> Result<(), anyhow::Error> {
             // Set up output channel.
             let mut output = match ARGS.output {
                 Some(ref fname) => {
-                    let f = File::create(&Path::new(fname))?;
+                    let f = File::create(Path::new(fname))?;
                     // There is at least one `Mission` in `MISSIONS`.
                     let output_line_len =
                         2 * MISSIONS[0].output_line_char_nb_max + OUTPUT_LINE_METADATA_LEN;
@@ -152,15 +152,11 @@ fn run() -> Result<(), anyhow::Error> {
 
         for (slice, input_file_id, is_last_input_buffer) in input {
             pool.scoped(|scope| {
-                for mut ss in sss.v.iter_mut() {
+                for ss in sss.v.iter_mut() {
                     let tx = tx.clone();
                     scope.execute(move || {
-                        let fc = FindingCollection::from(
-                            &mut ss,
-                            input_file_id,
-                            slice,
-                            is_last_input_buffer,
-                        );
+                        let fc =
+                            FindingCollection::from(ss, input_file_id, slice, is_last_input_buffer);
                         // Send the result to the receiver thread.
                         tx.send(fc).expect(
                             "Error: Can not sent result through output channel. \

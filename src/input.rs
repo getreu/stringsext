@@ -75,7 +75,7 @@ impl Slicer<'_> {
             // `unwrap()` is save because we know `if` above, that there is at least one
             // filename.
             let filename = filename_iter.next().unwrap();
-            let reader = match File::open(&Path::new(filename)) {
+            let reader = match File::open(Path::new(filename)) {
                 Ok(file) => Box::new(file) as Box<dyn Read>,
                 Err(e) => {
                     eprintln!("Error: can not read file`{:?}`: {}", filename, e);
@@ -143,7 +143,7 @@ impl<'a> Iterator for Slicer<'a> {
                 self.current_input_idx += 1;
                 // The next run needs to know if there is more.
                 self.current_input_is_last = self.filename_iter.as_mut().unwrap().peek().is_none();
-                let reader = match File::open(&Path::new(filename)) {
+                let reader = match File::open(Path::new(filename)) {
                     Ok(file) => Box::new(file) as Box<dyn Read>,
                     Err(e) => {
                         eprintln!("Error: can not read file: {}", e);
