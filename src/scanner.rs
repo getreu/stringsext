@@ -81,7 +81,7 @@ impl<'a> ScannerState {
             // We multiply `mission.chars_min_nb` by 4, because it is
             // counted Unicode-codepoints and a codepoint can have
             // maximum 4 bytes in UTF-8.
-            last_scan_run_leftover: String::with_capacity(mission.output_line_char_nb_max as usize),
+            last_scan_run_leftover: String::with_capacity(mission.output_line_char_nb_max),
             last_run_str_was_printed_and_is_maybe_cut_str: false,
             consumed_bytes: mission.counter_offset,
         }

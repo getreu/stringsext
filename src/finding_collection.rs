@@ -313,7 +313,7 @@ impl FindingCollection<'_> {
                             ss.consumed_bytes,
                             ss.consumed_bytes + decoder_input_start as ByteCounter,
                             input_file_id,
-                            char::from((ss.mission.mission_id + 97) as u8),
+                            char::from(ss.mission.mission_id + 97)
                         );
                         decoder_output_start = 0;
                         debug_assert!(
