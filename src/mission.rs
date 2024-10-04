@@ -361,11 +361,7 @@ impl fmt::Debug for Utf8Filter {
 /// Needed for merging.
 impl PartialOrd for Utf8Filter {
     fn partial_cmp(&self, other: &Self) -> Option<cmp::Ordering> {
-        if self.ubf != other.ubf {
-            self.ubf.partial_cmp(&other.ubf)
-        } else {
-            (!self.af).partial_cmp(&!other.af)
-        }
+        Some(self.cmp(other))
     }
 }
 
