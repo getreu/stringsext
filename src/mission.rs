@@ -768,13 +768,13 @@ mod tests {
         };
 
         // Check lower bits
-        assert_eq!(utf8f.pass_af_filter("A".as_bytes()[0]), true);
-        assert_eq!(utf8f.pass_ubf_filter("€".as_bytes()[0]), false);
+        assert!(utf8f.pass_af_filter("A".as_bytes()[0]));
+        assert!(!utf8f.pass_ubf_filter("€".as_bytes()[0]));
         // Check upper bits
         // first byte of © in UTF-8 is 0xC2.       0xC2 & 0x80 = bit 0x42
-        assert_eq!(utf8f.pass_ubf_filter("©".as_bytes()[0]), true);
+        assert!(utf8f.pass_ubf_filter("©".as_bytes()[0]));
         // first byte of © in UTF-8 is 0xE2.       0xE2 & 0x80 = bit 0x62
-        assert_eq!(utf8f.pass_ubf_filter("€".as_bytes()[0]), false);
+        assert!(!utf8f.pass_ubf_filter("€".as_bytes()[0]));
     }
 
     #[test]

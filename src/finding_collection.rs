@@ -440,7 +440,7 @@ mod tests {
         //println!("{:#?}", fc.v);
 
         assert_eq!(fc.first_byte_position, 10_000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].position, 10_000);
@@ -461,7 +461,7 @@ mod tests {
 
         assert_eq!(ss.consumed_bytes, 10000 + 18);
         // false, because we told the `FindingCollection::scan()` this is the last run.
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "");
 
         // Second run.
@@ -478,7 +478,7 @@ mod tests {
 
         assert_eq!(fc.v.len(), 2);
         assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
 
         assert_eq!(fc.v[0].position, 10_000);
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
@@ -497,7 +497,7 @@ mod tests {
         );
 
         assert_eq!(ss.consumed_bytes, 10000 + 18);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "");
     }
 }

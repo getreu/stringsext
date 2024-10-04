@@ -489,7 +489,7 @@ mod tests {
         let mut iter = SplitStr::new(b, 3, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abc");
-        assert_eq!(r.s_completes_previous_s, false);
+        assert!(!r.s_completes_previous_s);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
         let r = iter.next().unwrap();
@@ -505,18 +505,18 @@ mod tests {
         // -> Printed although too short, because it completes string from last run.
         let r = iter.next().unwrap();
         assert_eq!(r.s, "ab");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_satisfies_min_char_rule, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_satisfies_min_char_rule);
+        assert!(!r.s_is_to_be_filtered_again);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "hijk");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "opq");
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
+        assert!(r.s_is_maybe_cut);
+        assert!(r.s_satisfies_min_char_rule);
+        assert!(r.s_is_to_be_filtered_again);
         assert_eq!(iter.next(), None);
 
         let b = "ab€€defg€hijk€lm€op";
@@ -524,14 +524,14 @@ mod tests {
         let mut iter = SplitStr::new(b, 3, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "defg");
-        assert_eq!(r.s_completes_previous_s, false);
+        assert!(!r.s_completes_previous_s);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "hijk");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "op");
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_min_char_rule, false);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
+        assert!(r.s_is_maybe_cut);
+        assert!(!r.s_satisfies_min_char_rule);
+        assert!(r.s_is_to_be_filtered_again);
         assert_eq!(iter.next(), None);
 
         let b = "€abc€defg€hijk€lm";
@@ -541,12 +541,12 @@ mod tests {
         assert_eq!(r.s, "defg");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "hijk");
-        assert_eq!(r.s_is_maybe_cut, false);
+        assert!(!r.s_is_maybe_cut);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "lm");
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_min_char_rule, false);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
+        assert!(r.s_is_maybe_cut);
+        assert!(!r.s_satisfies_min_char_rule);
+        assert!(r.s_is_to_be_filtered_again);
         assert_eq!(iter.next(), None);
 
         let b = "€abc€defg€hijk€lmno€";
@@ -558,9 +558,9 @@ mod tests {
         assert_eq!(r.s, "hijk");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "lmno");
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
+        assert!(!r.s_is_maybe_cut);
+        assert!(r.s_satisfies_min_char_rule);
+        assert!(!r.s_is_to_be_filtered_again);
         assert_eq!(iter.next(), None);
 
         // This tests the iterator's capability to cat substrings
@@ -571,24 +571,24 @@ mod tests {
         let r = iter.next().unwrap();
         // Note, this is longer than 7 bytes.
         assert_eq!(r.s, "defghiÜ");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(r.s_is_maybe_cut);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_satisfies_min_char_rule);
 
         let r = iter.next().unwrap();
         assert_eq!(r.s, "jklmnpq");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
+        assert!(r.s_completes_previous_s);
+        assert!(r.s_is_maybe_cut);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_satisfies_min_char_rule);
 
         let r = iter.next().unwrap();
         assert_eq!(r.s, "rs");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_satisfies_min_char_rule, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_maybe_cut);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_satisfies_min_char_rule);
 
         assert_eq!(iter.next(), None);
 
@@ -597,10 +597,10 @@ mod tests {
         let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abcdefghijklm");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(r.s_is_maybe_cut);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_satisfies_min_char_rule);
         assert_eq!(iter.next(), None);
 
         let b = "abcdefghijklm€";
@@ -608,10 +608,10 @@ mod tests {
         let mut iter = SplitStr::new(b, 4, false, false, false, utf8f, b.len());
         let r = iter.next().unwrap();
         assert_eq!(r.s, "abcdefghijklm");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_satisfies_min_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(!r.s_is_maybe_cut);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_satisfies_min_char_rule);
         assert_eq!(iter.next(), None);
 
         let b = "öö€€ääää€üü€éééé€";
@@ -692,18 +692,18 @@ mod tests {
         // -> Printed although too short, because it completes string from last run.
         let r = iter.next().unwrap();
         assert_eq!(r.s, "ac");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xefg");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xijk");
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xp");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
-        assert_eq!(r.s_is_maybe_cut, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(r.s_is_to_be_filtered_again);
+        assert!(r.s_is_maybe_cut);
         assert_eq!(iter.next(), None);
 
         // Next test, same input.
@@ -721,9 +721,9 @@ mod tests {
         // Only this have the compulsory "b".
         let r = iter.next().unwrap();
         assert_eq!(r.s, "ac");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
         assert_eq!(iter.next(), None);
 
         // Next test, same input.
@@ -743,46 +743,46 @@ mod tests {
         // All others have the compulsory "x", so they are printed.
         let r = iter.next().unwrap();
         assert_eq!(r.s, "ac");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_satisfies_grep_char_rule, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
+        assert!(!r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xef");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_grep_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_is_maybe_cut);
+        assert!(r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "g");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_satisfies_grep_char_rule, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
+        assert!(!r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xij");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_grep_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(r.s_is_maybe_cut);
+        assert!(r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "k");
-        assert_eq!(r.s_completes_previous_s, true);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_satisfies_grep_char_rule, false);
+        assert!(r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
+        assert!(!r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xm");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, false);
-        assert_eq!(r.s_is_maybe_cut, false);
-        assert_eq!(r.s_satisfies_grep_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(!r.s_is_to_be_filtered_again);
+        assert!(!r.s_is_maybe_cut);
+        assert!(r.s_satisfies_grep_char_rule);
         let r = iter.next().unwrap();
         assert_eq!(r.s, "xp");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
-        assert_eq!(r.s_is_maybe_cut, true);
-        assert_eq!(r.s_satisfies_grep_char_rule, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(r.s_is_to_be_filtered_again);
+        assert!(r.s_is_maybe_cut);
+        assert!(r.s_satisfies_grep_char_rule);
         assert_eq!(iter.next(), None);
 
         // Next test.
@@ -802,9 +802,9 @@ mod tests {
         // it might be completed.
         let r = iter.next().unwrap();
         assert_eq!(r.s, "üü");
-        assert_eq!(r.s_completes_previous_s, false);
-        assert_eq!(r.s_is_to_be_filtered_again, true);
-        assert_eq!(r.s_is_maybe_cut, true);
+        assert!(!r.s_completes_previous_s);
+        assert!(r.s_is_to_be_filtered_again);
+        assert!(r.s_is_maybe_cut);
         assert_eq!(iter.next(), None);
     }
 
@@ -825,8 +825,8 @@ mod tests {
 
     #[test]
     fn test_starts_with_multibyte_char() {
-        assert_eq!(starts_with_multibyte_char("abcdef"), false);
-        assert_eq!(starts_with_multibyte_char("aücdef"), false);
-        assert_eq!(starts_with_multibyte_char("übcdef"), true);
+        assert!(!starts_with_multibyte_char("abcdef"));
+        assert!(!starts_with_multibyte_char("aücdef"));
+        assert!(starts_with_multibyte_char("übcdef"));
     }
 }

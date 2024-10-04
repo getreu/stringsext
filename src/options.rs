@@ -159,20 +159,20 @@ mod tests {
 
         assert_eq!(args.inputs[0], PathBuf::from("infile1"));
         assert_eq!(args.inputs[1], PathBuf::from("infile2"));
-        assert_eq!(args.debug_option, true);
+        assert!(args.debug_option);
         assert_eq!(
             args.encoding,
             vec!["ascii".to_string(), "utf-8".to_string()]
         );
-        assert_eq!(args.version, true);
-        assert_eq!(args.list_encodings, true);
+        assert!(args.version);
+        assert!(args.list_encodings);
         assert_eq!(args.chars_min, Some("10".to_string()));
-        assert_eq!(args.same_unicode_block, true);
+        assert!(args.same_unicode_block);
         assert_eq!(args.grep_char, Some("64".to_string()));
         assert_eq!(args.radix, Some(Radix::O));
         assert_eq!(args.counter_offset, Some("1500".to_string()));
         assert_eq!(args.output, Some(PathBuf::from("outfile")));
         assert_eq!(args.output_line_len, Some("40".to_string()));
-        assert_eq!(args.no_metadata, false);
+        assert!(!args.no_metadata);
     }
 }

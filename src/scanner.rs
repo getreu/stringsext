@@ -212,11 +212,11 @@ pub mod tests {
         assert_eq!(fc.v[2].position, 10020);
         assert_eq!(fc.v[2].position_precision, Precision::Exact);
         assert_eq!(fc.v[2].s, "c234");
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
 
         assert_eq!(fc.first_byte_position, 10000);
         // This should never be true, since `OUTPUT_BUF_LEN` is 2* `INP_BUF_LEN`.
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10000 + 24);
     }
 
@@ -236,7 +236,7 @@ pub mod tests {
         assert_eq!(fc.v.len(), 3);
         assert_eq!(fc.first_byte_position, 10000);
         // This should never be true, since `OUTPUT_BUF_LEN` is 2* `INP_BUF_LEN`.
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
 
         assert_eq!(fc.v[0].position, 10000);
         assert_eq!(fc.v[0].position_precision, Precision::Exact);
@@ -250,7 +250,7 @@ pub mod tests {
         assert_eq!(fc.v[2].position_precision, Precision::Exact);
         assert_eq!(fc.v[2].s, "c2");
 
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.consumed_bytes, 10000 + 22);
     }
 
@@ -279,7 +279,7 @@ pub mod tests {
         assert_eq!(ss.last_scan_run_leftover, "co");
 
         assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10000 + 8);
 
         let input = b"me\xC0\x82\xC0home.";
@@ -299,7 +299,7 @@ pub mod tests {
         assert_eq!(ss.last_scan_run_leftover, "");
 
         assert_eq!(fc.first_byte_position, 10008);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10008 + 10);
     }
 
@@ -325,7 +325,7 @@ pub mod tests {
         assert_eq!(ss.last_scan_run_leftover, "co");
 
         assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10000 + 8);
 
         let input = b"me*\xC0\x82\xC0ho*me.\x82";
@@ -345,7 +345,7 @@ pub mod tests {
         assert_eq!(ss.last_scan_run_leftover, "");
 
         assert_eq!(fc.first_byte_position, 10008);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10008 + 13);
     }
 
@@ -383,7 +383,7 @@ pub mod tests {
         assert_eq!(fc.v[0].s, "word€oh");
 
         assert_eq!(fc.first_byte_position, 10006);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10006 + 9);
 
         // Third run.
@@ -407,7 +407,7 @@ pub mod tests {
         assert_eq!(fc.v[1].s, "am end.");
 
         assert_eq!(fc.first_byte_position, 10015);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(ss.consumed_bytes, 10015 + 14);
     }
 
@@ -428,7 +428,7 @@ pub mod tests {
         //println!("{:#?}", fc.v);
 
         assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].s, "abc");
@@ -441,7 +441,7 @@ pub mod tests {
         assert_eq!(fc.v[1].position_precision, Precision::Exact);
 
         assert_eq!(ss.consumed_bytes, 10000 + 18);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "ijk");
 
         // Second run
@@ -453,7 +453,7 @@ pub mod tests {
         //println!("{:#?}", fc.v);
 
         assert_eq!(fc.first_byte_position, 10018);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].position, 10018);
@@ -465,7 +465,7 @@ pub mod tests {
         assert_eq!(fc.v[1].s, "def");
 
         assert_eq!(ss.consumed_bytes, 10018 + 8);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "");
     }
 
@@ -486,7 +486,7 @@ pub mod tests {
         //println!("{:#?}", fc.v);
 
         assert_eq!(fc.first_byte_position, 10000);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].s, "ääà");
@@ -501,7 +501,7 @@ pub mod tests {
         assert_eq!(fc.v[1].position_precision, Precision::Before);
 
         assert_eq!(ss.consumed_bytes, 10000 + 31);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "ijk");
 
         // Second run
@@ -513,7 +513,7 @@ pub mod tests {
         //println!("{:#?}", fc.v);
 
         assert_eq!(fc.first_byte_position, 10031);
-        assert_eq!(fc.str_buf_overflow, false);
+        assert!(!fc.str_buf_overflow);
         assert_eq!(fc.v.len(), 2);
 
         assert_eq!(fc.v[0].position, 10031);
@@ -526,7 +526,7 @@ pub mod tests {
         assert_eq!(fc.v[1].s, "def");
 
         assert_eq!(ss.consumed_bytes, 10031 + 8);
-        assert_eq!(ss.last_run_str_was_printed_and_is_maybe_cut_str, false);
+        assert!(!ss.last_run_str_was_printed_and_is_maybe_cut_str);
         assert_eq!(ss.last_scan_run_leftover, "");
     }
 
