@@ -726,7 +726,7 @@ impl Missions {
         let mut i = enc_opt.split_terminator(',');
 
         let enc_name = match i.next() {
-            Some(s) if s.is_empty() => None,
+            Some("") => None,
             Some(s) => Some(s.trim()),
             None => None,
         };
