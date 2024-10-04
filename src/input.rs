@@ -57,7 +57,7 @@ pub struct Slicer<'a> {
     input_buffer: [u8; INPUT_BUF_LEN],
 }
 
-impl<'a> Slicer<'_> {
+impl Slicer<'_> {
     #[inline]
     pub fn new() -> Self {
         if (ARGS.inputs.is_empty())

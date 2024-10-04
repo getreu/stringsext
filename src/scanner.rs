@@ -68,7 +68,7 @@ pub struct ScannerState {
     pub consumed_bytes: ByteCounter,
 }
 
-impl<'a> ScannerState {
+impl ScannerState {
     /// Constructor.
     pub fn new(mission: &'static Mission) -> Self {
         Self {
