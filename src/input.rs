@@ -120,10 +120,12 @@ impl<'a> Iterator for Slicer<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         let input_buffer_slice = as_mut_slice_no_borrow_check!(self.input_buffer);
         // Fill the input buffer.
-        let no_bytes_received = self.reader.read(input_buffer_slice).expect(&*format!(
-            "Error: Could not read input stream no. {}",
-            self.current_input_idx
-        ));
+        let no_bytes_received = self.reader.read(input_buffer_slice).unwrap_or_else(|_| {
+            panic!(
+                "Error: Could not read input stream no. {}",
+                self.current_input_idx
+            )
+        });
         let result = &input_buffer_slice[..no_bytes_received];
         let this_stream_ended = no_bytes_received == 0;
         let input_ended = self.current_input_is_last && this_stream_ended;
