@@ -123,9 +123,18 @@ Repository
 
   - Package for Debian 10 Buster:
 
-    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.4_amd64.deb](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.4_amd64.deb)
+    [x86_64-unknown-linux-gnu/debian/stringsext_2.3.5_amd64.deb](/projects/stringsext/_downloads/x86_64-unknown-linux-gnu/debian/stringsext_2.3.5_amd64.deb)
 
-    [i686-unknown-linux-gnu/debian/stringsext_2.3.4_i386.deb](/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.4_i386.deb)
+    [i686-unknown-linux-gnu/debian/stringsext_2.3.5_i386.deb](/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.5_i386.deb)
+
+  - Package Raspberry Pi 32 bit:
+
+    [armv7-unknown-linux-gnueabihf/release/stringsext](/projects/stringsext/_downloads/armv7-unknown-linux-gnueabihf/release/stringsext)
+ 
+  - Package Raspberry Pi 64 bit:
+
+    [aarch64-unknown-linux-gnu/release/stringsext](/projects/stringsext/_downloads/aarch64-unknown-linux-gnu/release/stringsext)
+  
 
 * Installable Unix man-page:
 

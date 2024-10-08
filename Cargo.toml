@@ -1,6 +1,6 @@
 [package]
 name = "stringsext"
-version = "2.3.4"
+version = "2.3.5"
 authors = ["Jens Getreu <getreu@web.de>"]
 edition = "2021"
 readme = "README.md"
@@ -11,6 +11,7 @@ categories = ["command-line-utilities", "encoding", "text-processing",
 documentation = "https://blog.getreu.net/projects/stringsext/stringsext--manpage.html"
 homepage = "https://blog.getreu.net/projects/stringsext/"
 repository = "https://github.com/getreu/stringsext"
+rust-version = "1.80.1"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
