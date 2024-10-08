@@ -1,0 +1,15 @@
+#!/bin/sh
+# podman image ls
+podman pull rust:1.80.1-slim-bullseye
+podman build -t build-env-stringsext - < Dockerfile
+
+### Stop all containers with:
+#podman stop $(podman ps -q)
+
+### Remove unused images with:
+# podman image prune --all
+
+### Remove all dangling data, i.e. containers stopped, volumes excluding
+### containers and images with no containers:
+# podman system prune --all
+

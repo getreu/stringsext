@@ -1,10 +1,12 @@
 #!/bin/sh
 cd ..
 
+# [cargo-deb 2.7.0 - Docs.rs](https://docs.rs/crate/cargo-deb/latest)
+# See section "Cross-compilation"
+
 # Cargo deb saves the built package in
-# target/x86_64-unknown-linux-gnu/debian
 cargo deb --target=x86_64-unknown-linux-gnu
 
-rustup target add i686-unknown-linux-gnu
-sudo apt-get install libc6-dev-i386
+#rustup target add i686-unknown-linux-gnu
+CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER=/usr/bin/i686-linux-gnu-gcc \
 cargo deb --target=i686-unknown-linux-gnu

@@ -127,6 +127,15 @@ Repository
 
     [i686-unknown-linux-gnu/debian/stringsext_2.3.4_i386.deb](https://blog.getreu.net/projects/stringsext/_downloads/i686-unknown-linux-gnu/debian/stringsext_2.3.4_i386.deb)
 
+  - Package Raspberry Pi 32 bit:
+
+    [armv7-unknown-linux-gnueabihf/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/armv7-unknown-linux-gnueabihf/release/stringsext)
+ 
+  - Package Raspberry Pi 64 bit:
+
+    [aarch64-unknown-linux-gnu/release/stringsext](https://blog.getreu.net/projects/stringsext/_downloads/aarch64-unknown-linux-gnu/release/stringsext)
+  
+
 * Installable Unix man-page:
 
   - [stringsext.1.gz](https://blog.getreu.net/projects/stringsext/_downloads/stringsext.1.gz)
